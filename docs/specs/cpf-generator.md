@@ -124,9 +124,11 @@ export function formatCpf(cpf: string): string;
 
 ---
 
-## 5. Critérios de Aceite (Checklist para `@verifier`)
+## 5. Critérios de Aceite e UX Mobile-First (Checklist para `@verifier`)
+- [ ] **Above-the-Fold Mobile (`375x667`)**: O visor com o CPF gerado (`text-2xl sm:text-4xl font-mono`), os botões lado a lado (`grid-cols-2 gap-2.5`: `Copiar CPF` + `Gerar Novo`) e os controles de `Estado (UF)` e `Pontuação` aparecem imediatamente na primeira tela sem precisar rolar.
+- [ ] **Abas Compactas em 1 Linha**: `TabsList` com `grid w-full grid-cols-3 h-10 p-1` e rótulos curtos (`Gerar CPF`, `Validar`, `Em Lote`).
+- [ ] **Zero Jargões/Referências**: Nenhuma menção a `"4Devs"`, `"Módulo 11"`, `"Motor"` ou `"Client-side"` na UI.
 - [ ] Gerar CPF com e sem pontuação funciona instantaneamente e alternar o switch re-formata o valor exibido.
 - [ ] Selecionar qualquer uma das 27 UFs gera sempre um CPF cujo 9º dígito corresponde exatamente à Região Fiscal daquela UF.
 - [ ] Todo CPF gerado passa em `validateCpf(cpf).isValid === true`.
 - [ ] Sequências como `111.111.111-11` ou `000.000.000-00` são rejeitadas como `REPEATED_DIGITS` no validador.
-- [ ] Layout 100% responsivo no celular (botões grandes, `inputMode="numeric"` no validador, cópia em 1 toque com feedback visual).

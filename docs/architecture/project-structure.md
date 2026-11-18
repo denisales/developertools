@@ -159,16 +159,15 @@ Para eliminar esse gargalo, adotamos o padrão **Pre-Seeded Declarative Tool Reg
 
 O site original do 4Devs possui layout legado focado em desktop. Nossa releitura utiliza uma estética moderna inspirada em **Vercel / Linear / Raycast / Investidor10**, priorizando usabilidade no celular (uma mão / polegar) e produtividade para desenvolvedores.
 
-### 5.1. Diretrizes Mobile-First (Responsividade no Celular)
-- **Navegação em Gaveta (Sheet / Drawer):** No mobile (`< 768px`), a sidebar lateral dá lugar a um menu deslizante (`Sheet` do `shadcn/ui`) com busca integrada no topo e filtros rápidos por categoria em formato de *chips* horizontais roláveis.
-- **Alvos de Toque Amplos (Touch Targets >= 48px):** Botões principais ("Gerar CPF", "Copiar", "Calcular") possuem altura mínima de `h-12` (48px) no mobile, posicionados estrategicamente para fácil alcance do polegar.
-- **Zero Zoom Indesejado no iOS/Android:** Todos os campos `<Input />` e `<Select />` utilizam fonte mínima `text-base` (`16px`) no mobile para evitar o auto-zoom forçado de navegadores móveis.
-- **Ações de Cópia com 1 Toque (One-Tap Copy):**
-  - Ao tocar no resultado gerado ou no botão "Copiar", o valor é copiado imediatamente para a área de transferência (`navigator.clipboard`), exibindo feedback visual no próprio botão (`Check` verde por 2s) + notificação discreta (`sonner` / Toast) na parte inferior.
-- **Geração Instantânea no Carregamento:**
-  - Ao abrir o Gerador de CPF ou CNPJ, o usuário já encontra um documento válido pré-gerado na tela (no client mount), permitindo abrir a página e copiar em menos de 1 segundo.
-- **Tabelas e Gráficos Responsivos (Juros Compostos):**
-  - Na calculadora de Juros Compostos, os 3 cards de destaque empilham verticalmente no mobile (`grid-cols-1 md:grid-cols-3`), o gráfico redimensiona via `ResponsiveContainer` com legenda simplificada, e a tabela mensal/anual possui scroll horizontal suave com a primeira coluna (`Mês/Ano`) fixa (`sticky left-0`).
+### 5.1. Diretrizes Mobile-First (Responsividade no Celular — ver [`mobile-ux-guidelines.md`](./mobile-ux-guidelines.md))
+- **Regra Above-the-Fold (`375x667`)**: O resultado principal da ferramenta, os botões de ação (`Copiar` / `Gerar Novo`) e os controles essenciais devem caber integralmente na primeira tela do celular (`< 600px` de altura) sem necessidade de scroll.
+- **Ordem do DOM = Prioridade Mobile**: O card do valor gerado e seus botões de ação vêm **sempre antes** dos controles secundários e seções explicativas no JSX.
+- **Abas em Linha Única (`grid-cols-3`)**: Usar rótulos curtos (`Gerar CPF`, `Validar`, `Em Lote`) em `grid w-full grid-cols-3 h-10 p-1` para nunca quebrar linha nem sobrepor textos em `375px`.
+- **Botões Lado a Lado (`grid-cols-2 gap-2.5`)**: Botões `Copiar` e `Gerar Novo` dispostos lado a lado no mobile (`h-10 sm:h-11`), evitando empilhamento vertical excessivo.
+- **Busca Mobile em Overlay de Largura Total & Gaveta 60fps**:
+  - Usar sempre `type="text"` (nunca `type="search"`, evitando duplo ícone `x`).
+  - No mobile (`< sm`), a busca abre um modal/popover de largura total (`fixed inset-x-3 top-16`), e a gaveta lateral (`Sheet`) usa animações aceleradas por hardware com categorias futuras colapsadas por padrão.
+- **Linguagem Limpa**: Proibido citar sites externos ou jargões como *"Módulo 11"*, *"Motor"* ou *"Client-Side"* na interface do usuário.
 
 ### 5.2. Temas (Dark / Light Mode) e Acessibilidade
 - Suporte nativo a **Dark Mode** e **Light Mode** via variáveis CSS em HSL no `globals.css`.

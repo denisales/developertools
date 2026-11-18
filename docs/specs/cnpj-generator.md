@@ -121,9 +121,11 @@ export function formatCnpj(cnpj: string): string;
 
 ---
 
-## 5. Critérios de Aceite (Checklist para `@verifier`)
-- [ ] Gerar CNPJ no modo **Numérico** produz 14 dígitos (`XX.XXX.XXX/0001-XX`) válidos segundo o Módulo 11 clássico.
+## 5. Critérios de Aceite e UX Mobile-First (Checklist para `@verifier`)
+- [ ] **Ordem Mobile & Above-the-Fold (`375x667`)**: O card com o CNPJ gerado (`text-xl sm:text-4xl font-mono`) e os botões lado a lado (`grid-cols-2 gap-2.5`: `Copiar CNPJ` + `Gerar Novo`) vêm **no topo** (antes dos controles de formato/pontuação/estabelecimento), cabendo na primeira tela do celular.
+- [ ] **Abas Compactas em 1 Linha Sem Sobreposição**: `TabsList` com `grid w-full grid-cols-3 h-10 p-1` e rótulos curtos (`Gerar CNPJ`, `Validar`, `Em Lote`).
+- [ ] **Zero Jargões/Referências**: Nenhuma menção a `"4Devs"`, `"Módulo 11"`, `"Motor"` ou `"Client-side"` na UI.
+- [ ] Gerar CNPJ no modo **Numérico** produz 14 dígitos (`XX.XXX.XXX/0001-XX`) válidos.
 - [ ] Gerar CNPJ no modo **Alfanumérico (IN RFB 2.229/2024)** produz raiz alfanumérica + DVs numéricos calculados via `ASCII - 48`.
 - [ ] Alternar o switch de pontuação formata/desformata instantaneamente os CNPJs na tela.
 - [ ] O validador reconhece e valida corretamente tanto CNPJs numéricos quanto alfanuméricos e rejeita sequências repetidas (`00.000.000/0000-00`, `11.111.111/1111-11`).
-- [ ] Interface responsiva e amigável para uso em telas móveis.

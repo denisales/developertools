@@ -35,7 +35,7 @@ function SheetOverlay({
     <SheetPrimitive.Overlay
       data-slot="sheet-overlay"
       className={cn(
-        "fixed inset-0 z-50 bg-black/50 backdrop-blur-xs transition-opacity",
+        "fixed inset-0 z-50 bg-black/50 backdrop-blur-xs will-change-[opacity] data-[state=open]:animate-[sheet-fade-in_200ms_cubic-bezier(0.32,0.72,0,1)] data-[state=closed]:animate-[sheet-fade-out_180ms_cubic-bezier(0.32,0.72,0,1)]",
         className
       )}
       {...props}
@@ -57,11 +57,11 @@ function SheetContent({
       <SheetPrimitive.Content
         data-slot="sheet-content"
         className={cn(
-          "bg-background fixed z-50 flex flex-col gap-4 shadow-lg transition ease-in-out",
+          "bg-background fixed z-50 flex flex-col gap-4 shadow-2xl will-change-transform",
           side === "right" &&
-            "inset-y-0 right-0 h-full w-3/4 border-l sm:max-w-sm",
+            "inset-y-0 right-0 h-full w-3/4 border-l sm:max-w-sm data-[state=open]:animate-[sheet-in-right_240ms_cubic-bezier(0.32,0.72,0,1)] data-[state=closed]:animate-[sheet-out-right_200ms_cubic-bezier(0.32,0.72,0,1)]",
           side === "left" &&
-            "inset-y-0 left-0 h-full w-4/5 border-r sm:max-w-xs",
+            "inset-y-0 left-0 h-full w-[82vw] max-w-[300px] border-r data-[state=open]:animate-[sheet-in-left_240ms_cubic-bezier(0.32,0.72,0,1)] data-[state=closed]:animate-[sheet-out-left_200ms_cubic-bezier(0.32,0.72,0,1)]",
           side === "top" && "inset-x-0 top-0 h-auto border-b",
           side === "bottom" && "inset-x-0 bottom-0 h-auto border-t",
           className

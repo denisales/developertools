@@ -28,6 +28,8 @@ Bem-vindo à documentação oficial do projeto **DeveloperTools**, uma plataform
   Mapeamento completo da calculadora do Investidor10: Valor Inicial, Aporte Mensal, conversão exata de Taxa Anual/Mensal $(1 + i_a)^{1/12} - 1$, Período, 3 Cards de Resumo, Gráfico evolutivo e Tabela mês a mês.
 
 ### Arquitetura e Design System (`docs/architecture/`)
+- [**Diretrizes Obrigatórias de UX Mobile-First (`architecture/mobile-ux-guidelines.md`)**](./architecture/mobile-ux-guidelines.md)
+  Regras inegociáveis para viewport móvel (`375x667`): regra Above-the-Fold (`< 600px`), ordem do DOM = prioridade mobile, abas compactas `grid-cols-3` em linha única, botões lado a lado (`grid-cols-2 gap-2.5`), overlay de busca mobile, gaveta animada a 60fps e linguagem limpa sem jargões.
 - [**Estrutura do Projeto e Arquitetura Modular (`architecture/project-structure.md`)**](./architecture/project-structure.md)
   Organização de pastas `src/features/<category>/<tool-slug>/`, funcionamento do registro central `src/config/tools-registry.ts` livre de conflitos e diretrizes de UI/UX Mobile-First com `shadcn/ui`.
 

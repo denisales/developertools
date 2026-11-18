@@ -21,7 +21,7 @@ export function AppShell({ children }: AppShellProps) {
         </aside>
 
         {/* Main Workspace */}
-        <main className="min-w-0 flex-1 px-4 py-5 sm:px-6 sm:py-6 lg:px-8">
+        <main className="min-w-0 flex-1 px-3 py-3 sm:px-6 sm:py-6 lg:px-8">
           <div className="mx-auto w-full max-w-[1440px]">{children}</div>
         </main>
       </div>

@@ -204,9 +204,11 @@ export function calculateCompoundInterest(input: CompoundInterestInput): Compoun
 
 ---
 
-## 7. Critérios de Aceite (Checklist para `@verifier`)
+## 7. Critérios de Aceite e UX Mobile-First (Checklist para `@verifier`)
+- [ ] **Above-the-Fold Mobile (`375x667`)**: Presets de mercado integrados em uma **única faixa horizontal rolável** (`overflow-x-auto no-scrollbar`) no topo do card de simulação, seguidos imediatamente pelos 4 inputs compactos (`h-9 sm:h-10`) e pelos 3 cards de resumo (`Valor Total Final`, `Total Investido`, `Total em Juros`), sem que uma caixa gigante de presets empurre o formulário para fora da tela.
+- [ ] **Zero Jargões/Referências**: Nenhuma menção a `"Investidor10"`, `"4Devs"`, `"Motor"` ou `"Client-side"` na UI.
 - [ ] Conversão de taxa anual para mensal usa rigorosamente $(1 + i_a)^{1/12} - 1$.
-- [ ] Os 3 cards de destaque (`Valor Total Final`, `Valor Total Investido`, `Total em Juros`) batem no centavo com o Investidor10 nos casos de teste.
+- [ ] Os 3 cards de destaque (`Valor Total Final`, `Valor Total Investido`, `Total em Juros`) batem no centavo nos casos de teste.
 - [ ] A tabela exibe o `Mês 0` inicial e todas as 5 colunas (`Meses/Anos`, `Juros`, `Total Investido`, `Total Juros`, `Acumulado`).
 - [ ] O gráfico exibe a evolução empilhada (`Total Investido` + `Total em Juros`) com tooltip detalhado e responsividade mobile.
-- [ ] Botão `Limpar` reseta o formulário e permite nova simulação limpa.
+- [ ] Botão `Restaurar`/`Limpar` reseta o formulário e permite nova simulação limpa.

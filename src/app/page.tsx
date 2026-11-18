@@ -7,6 +7,7 @@ import {
   CheckCircle2,
   Search,
   Sparkles,
+  X,
   Zap,
 } from "lucide-react";
 import {
@@ -51,42 +52,112 @@ export default function HomePage() {
   });
 
   return (
-    <div className="w-full space-y-6 pb-8">
-      {/* Hero Banner */}
-      <section className="relative overflow-hidden rounded-xl border border-border/80 bg-gradient-to-br from-primary/10 via-background to-accent/40 p-5 sm:p-6 shadow-2xs">
-        <div className="max-w-3xl space-y-3.5">
-          <div className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-background/90 px-3 py-1 text-xs font-semibold text-primary shadow-2xs">
+    <div className="w-full space-y-4 sm:space-y-6 pb-8">
+      {/* Ferramentas Principais em Destaque (Prioridade #1 Above the Fold no Mobile) */}
+      {!query && selectedCategory === "all" && (
+        <section className="space-y-2.5 sm:space-y-4">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <div className="flex size-7 sm:size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <Sparkles className="size-3.5 sm:size-4" />
+              </div>
+              <div>
+                <h2 className="text-base font-bold tracking-tight sm:text-xl">
+                  Ferramentas Ativas
+                </h2>
+                <p className="text-xs text-muted-foreground hidden sm:block">
+                  Acesso direto às ferramentas completas de geração, validação e simulação
+                </p>
+              </div>
+            </div>
+            <Badge variant="secondary" className="text-xs">
+              Acesso imediato
+            </Badge>
+          </div>
+
+          <div className="grid grid-cols-1 gap-2.5 sm:gap-4 md:grid-cols-3">
+            {priorityTools.map((tool) => (
+              <Card
+                key={tool.id}
+                className="group relative flex flex-col justify-between gap-2.5 border-primary/25 bg-gradient-to-b from-card to-accent/20 py-3 sm:py-5 transition-all hover:-translate-y-0.5 hover:border-primary hover:shadow-sm"
+              >
+                <CardHeader className="space-y-1.5 px-3.5 sm:px-5 pb-0">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="flex size-8 sm:size-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-2xs">
+                        <ToolIcon name={tool.iconName} className="size-4 sm:size-5" />
+                      </div>
+                      <CardTitle className="truncate text-sm sm:text-lg font-bold group-hover:text-primary transition-colors">
+                        {tool.name}
+                      </CardTitle>
+                    </div>
+                    <Badge variant="default" className="shrink-0 gap-1 text-xs">
+                      <CheckCircle2 className="size-3" />
+                      <span>{tool.badge ?? "Ativo"}</span>
+                    </Badge>
+                  </div>
+                  <CardDescription className="line-clamp-2 text-xs sm:text-sm leading-snug sm:leading-relaxed">
+                    {tool.description}
+                  </CardDescription>
+                </CardHeader>
+                <CardFooter className="px-3.5 sm:px-5 pt-0.5">
+                  <Button asChild className="h-9 sm:h-10 w-full justify-between text-xs sm:text-sm">
+                    <Link href={tool.href}>
+                      <span>Abrir Ferramenta</span>
+                      <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
+                    </Link>
+                  </Button>
+                </CardFooter>
+              </Card>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Compact Hero & Filter Banner */}
+      <section className="relative overflow-hidden rounded-xl border border-border/80 bg-gradient-to-br from-primary/10 via-background to-accent/40 p-4 sm:p-6 shadow-2xs">
+        <div className="max-w-3xl space-y-2.5 sm:space-y-3.5">
+          <div className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-background/90 px-2.5 py-0.5 text-xs font-semibold text-primary shadow-2xs">
             <Zap className="size-3.5" />
             <span>Rápido, Prático e Gratuito</span>
           </div>
-          <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl leading-tight">
+          <h1 className="text-xl font-extrabold tracking-tight sm:text-3xl leading-tight">
             Geradores, Validadores &{" "}
             <span className="text-primary">Calculadoras Financeiras</span>
           </h1>
-          <p className="text-sm leading-relaxed text-muted-foreground sm:text-base">
+          <p className="text-xs leading-relaxed text-muted-foreground sm:text-base">
             Gere CPFs e CNPJs válidos para testes de software, valide documentos
-            ou simule a evolução dos seus investimentos com juros compostos de
-            forma rápida e direta no computador ou celular.
+            ou simule a evolução dos seus investimentos com juros compostos.
           </p>
 
           {/* Hero Filter Input & Category Pills */}
-          <div className="flex flex-col gap-3 pt-1">
+          <div className="flex flex-col gap-2.5 pt-0.5">
             <div className="relative max-w-lg">
               <Search className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                type="search"
+                type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Filtrar ferramentas (ex: CPF, CNPJ, Juros, Cartão, RG)..."
-                className="h-10 rounded-lg bg-background pl-10 text-sm shadow-2xs"
+                className="h-9 sm:h-10 rounded-lg bg-background pr-9 pl-10 text-xs sm:text-sm shadow-2xs"
               />
+              {query && (
+                <button
+                  type="button"
+                  onClick={() => setQuery("")}
+                  className="absolute top-1/2 right-2.5 -translate-y-1/2 rounded-md p-1 text-muted-foreground hover:text-foreground cursor-pointer"
+                  aria-label="Limpar filtro"
+                >
+                  <X className="size-3.5" />
+                </button>
+              )}
             </div>
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar sm:flex-wrap sm:overflow-visible sm:pb-0">
               <button
                 type="button"
                 onClick={() => setSelectedCategory("all")}
                 className={cn(
-                  "rounded-lg px-3 py-1.5 text-xs sm:text-sm font-semibold transition-all cursor-pointer",
+                  "shrink-0 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-all cursor-pointer",
                   selectedCategory === "all"
                     ? "bg-primary text-primary-foreground shadow-2xs"
                     : "bg-background/90 text-muted-foreground hover:text-foreground border border-border/80"
@@ -100,7 +171,7 @@ export default function HomePage() {
                   type="button"
                   onClick={() => setSelectedCategory(cat.id)}
                   className={cn(
-                    "rounded-lg px-3 py-1.5 text-xs sm:text-sm font-semibold transition-all cursor-pointer",
+                    "shrink-0 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-all cursor-pointer",
                     selectedCategory === cat.id
                       ? "bg-primary text-primary-foreground shadow-2xs"
                       : "bg-background/90 text-muted-foreground hover:text-foreground border border-border/80"
@@ -114,67 +185,8 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Destaques / Mais Acessados */}
-      {!query && selectedCategory === "all" && (
-        <section className="space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="flex items-center gap-2.5">
-              <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                <Sparkles className="size-4" />
-              </div>
-              <div>
-                <h2 className="text-lg font-bold tracking-tight sm:text-xl">
-                  Ferramentas Principais em Destaque
-                </h2>
-                <p className="text-xs sm:text-sm text-muted-foreground">
-                  Acesso direto às ferramentas completas de geração, validação e simulação
-                </p>
-              </div>
-            </div>
-            <Badge variant="secondary" className="hidden sm:inline-flex">
-              Prontas para uso imediato
-            </Badge>
-          </div>
-
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            {priorityTools.map((tool) => (
-              <Card
-                key={tool.id}
-                className="group relative flex flex-col justify-between gap-3 border-primary/25 bg-gradient-to-b from-card to-accent/20 py-4 sm:py-5 transition-all hover:-translate-y-0.5 hover:border-primary hover:shadow-sm"
-              >
-                <CardHeader className="space-y-2 px-4 sm:px-5 pb-0">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex size-10 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-2xs">
-                      <ToolIcon name={tool.iconName} className="size-5" />
-                    </div>
-                    <Badge variant="default" className="gap-1">
-                      <CheckCircle2 className="size-3" />
-                      <span>{tool.badge ?? "Ativo"}</span>
-                    </Badge>
-                  </div>
-                  <CardTitle className="pt-1 text-base sm:text-lg group-hover:text-primary transition-colors">
-                    {tool.name}
-                  </CardTitle>
-                  <CardDescription className="line-clamp-2 text-xs sm:text-sm leading-relaxed">
-                    {tool.description}
-                  </CardDescription>
-                </CardHeader>
-                <CardFooter className="px-4 sm:px-5 pt-1">
-                  <Button asChild className="w-full justify-between" size="default">
-                    <Link href={tool.href}>
-                      <span>Abrir Ferramenta</span>
-                      <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
-                    </Link>
-                  </Button>
-                </CardFooter>
-              </Card>
-            ))}
-          </div>
-        </section>
-      )}
-
       {/* Catálogo Completo por Categoria */}
-      <section className="space-y-6">
+      <section className="space-y-5 sm:space-y-6">
         {TOOL_CATEGORIES.map((category) => {
           const categoryTools = filteredTools.filter(
             (t) => t.category === category.id
@@ -182,9 +194,9 @@ export default function HomePage() {
           if (categoryTools.length === 0) return null;
 
           return (
-            <div key={category.id} className="space-y-3.5">
-              <div className="border-b border-border/80 pb-2.5">
-                <h2 className="text-lg font-bold tracking-tight sm:text-xl">
+            <div key={category.id} className="space-y-3">
+              <div className="border-b border-border/80 pb-2">
+                <h2 className="text-base font-bold tracking-tight sm:text-xl">
                   {category.label}
                 </h2>
                 <p className="mt-0.5 text-xs sm:text-sm text-muted-foreground">
@@ -192,7 +204,7 @@ export default function HomePage() {
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              <div className="grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {categoryTools.map((tool) => {
                   const isReady = tool.status === "ready";
                   return (
@@ -203,16 +215,16 @@ export default function HomePage() {
                     >
                       <Card
                         className={cn(
-                          "h-full justify-between gap-2.5 py-4 sm:py-4 transition-all hover:border-primary/60 hover:shadow-xs",
+                          "h-full justify-between gap-2 py-3.5 sm:py-4 transition-all hover:border-primary/60 hover:shadow-xs",
                           !isReady && "opacity-85"
                         )}
                       >
-                        <CardHeader className="px-4 sm:px-4 py-0">
-                          <div className="flex items-start justify-between gap-2.5">
+                        <CardHeader className="px-3.5 sm:px-4 py-0">
+                          <div className="flex items-start justify-between gap-2">
                             <div className="flex items-center gap-2.5 min-w-0">
                               <div
                                 className={cn(
-                                  "flex size-9 shrink-0 items-center justify-center rounded-lg",
+                                  "flex size-8 sm:size-9 shrink-0 items-center justify-center rounded-lg",
                                   isReady
                                     ? "bg-primary/10 text-primary"
                                     : "bg-muted text-muted-foreground"
@@ -235,7 +247,7 @@ export default function HomePage() {
                             </Badge>
                           </div>
                         </CardHeader>
-                        <CardContent className="px-4 sm:px-4 py-0">
+                        <CardContent className="px-3.5 sm:px-4 py-0">
                           <p className="line-clamp-2 text-xs sm:text-sm leading-relaxed text-muted-foreground">
                             {tool.description}
                           </p>
@@ -250,7 +262,7 @@ export default function HomePage() {
         })}
 
         {filteredTools.length === 0 && (
-          <div className="rounded-xl border border-dashed p-8 text-center space-y-3">
+          <div className="rounded-xl border border-dashed p-6 sm:p-8 text-center space-y-3">
             <p className="text-sm font-semibold">
               Nenhuma ferramenta encontrada para o filtro selecionado.
             </p>

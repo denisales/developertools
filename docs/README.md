@@ -27,6 +27,8 @@ Bem-vindo à documentação oficial do projeto **DeveloperTools**, uma plataform
   Regras do algoritmo Mod-11 (pesos de 1º e 2º dígitos verificadores), suporte a Matriz (`0001`)/Filial, suporte numérico e alfanumérico (padrão RFB 2026) e geração em lote.
 - [**Especificação: Calculadora de Juros Compostos (`specs/compound-interest.md`)**](./specs/compound-interest.md)
   Mapeamento completo da calculadora do Investidor10: Valor Inicial, Aporte Mensal, conversão exata de Taxa Anual/Mensal $(1 + i_a)^{1/12} - 1$, Período, 3 Cards de Resumo, Gráfico evolutivo e Tabela mês a mês.
+- [**Especificação: Tabela de IR (Renda Fixa) e Visão de Valor Líquido (`specs/compound-interest-net-ir.md`)**](./specs/compound-interest-net-ir.md)
+  Regras tributárias da Lei nº 11.033/2004 (`22,5%` a `15,0%` regressivo) + opção Isento (`0%` para LCI/LCA/CRI/CRA/Poupança), fórmulas de valor líquido, Golden Tests, UX Mobile Above-the-Fold (`TASK-003B`) e gates de qualidade.
 
 ### Arquitetura e Design System (`docs/architecture/`)
 - [**Diretrizes Obrigatórias de UX Mobile-First (`architecture/mobile-ux-guidelines.md`)**](./architecture/mobile-ux-guidelines.md)

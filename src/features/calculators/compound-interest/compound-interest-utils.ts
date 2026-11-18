@@ -1,3 +1,5 @@
+import type { MarketIndicators } from "@/services/bcb/bcb-client";
+
 export type RatePeriodUnit = "month" | "year";
 export type TimePeriodUnit = "months" | "years";
 
@@ -359,4 +361,120 @@ export function generateEvolutionCsv(
   );
 
   return [header, ...lines].join("\n");
+}
+
+function isValidIndicatorPoint(value: unknown): boolean {
+  if (typeof value !== "object" || value === null) return false;
+  const candidate = value as Record<string, unknown>;
+  return (
+    typeof candidate.value === "number" &&
+    Number.isFinite(candidate.value) &&
+    typeof candidate.date === "string"
+  );
+}
+
+/**
+ * Valida em tempo de execução o payload JSON retornado por `/api/indicators`.
+ */
+export function isMarketIndicators(value: unknown): value is MarketIndicators {
+  if (typeof value !== "object" || value === null) return false;
+  const candidate = value as Record<string, unknown>;
+  return (
+    isValidIndicatorPoint(candidate.selicMeta) &&
+    isValidIndicatorPoint(candidate.taxaDi) &&
+    isValidIndicatorPoint(candidate.ipca12Meses) &&
+    isValidIndicatorPoint(candidate.dolarPtaxVenda) &&
+    isValidIndicatorPoint(candidate.poupancaAnual) &&
+    isValidIndicatorPoint(candidate.ipcaPlus6Anual)
+  );
+}
+
+/**
+ * Formata uma taxa percentual com 2 casas decimais em padrão PT-BR (`14,25`).
+ */
+export function formatRatePtBr(value: number): string {
+  const safe = Number.isFinite(value) ? value : 0;
+  return safe.toFixed(2).replace(".", ",");
+}
+
+/**
+ * Constrói a lista de presets da calculadora a partir dos indicadores dinâmicos do BCB,
+ * mantendo os valores padrão estáticos como fallback quando indisponível.
+ */
+export function buildPresetsFromIndicators(
+  indicators?: MarketIndicators | null
+): CompoundInterestPreset[] {
+  if (!indicators) {
+    return COMPOUND_INTEREST_PRESETS;
+  }
+
+  const selicRate = indicators.selicMeta.value;
+  const diRate = indicators.taxaDi.value;
+  const ipcaPlus6Rate = indicators.ipcaPlus6Anual.value;
+  const ipca12mRate = indicators.ipca12Meses.value;
+  const poupancaRate = indicators.poupancaAnual.value;
+
+  return [
+    {
+      id: "selic",
+      label: "Tesouro Selic",
+      description: `Taxa Selic Meta BCB (Ref. ${indicators.selicMeta.date})`,
+      rate: selicRate,
+      rateUnit: "year",
+      badge: `${formatRatePtBr(selicRate)}% a.a.`,
+    },
+    {
+      id: "cdi-100",
+      label: "100% do CDI",
+      description: `Taxa DI anualizada BCB (Ref. ${indicators.taxaDi.date})`,
+      rate: diRate,
+      rateUnit: "year",
+      badge: `${formatRatePtBr(diRate)}% a.a.`,
+    },
+    {
+      id: "ipca-plus",
+      label: "Tesouro IPCA+ 6%",
+      description: `IPCA 12m (${formatRatePtBr(ipca12mRate)}%) + 6% a.a. real (Ref. ${indicators.ipca12Meses.date})`,
+      rate: ipcaPlus6Rate,
+      rateUnit: "year",
+      badge: `${formatRatePtBr(ipcaPlus6Rate)}% a.a.`,
+    },
+    {
+      id: "carteira-1",
+      label: "1% ao Mês",
+      description: "Meta clássica do investidor de longo prazo",
+      rate: 1.0,
+      rateUnit: "month",
+      badge: "1,00% a.m.",
+    },
+    {
+      id: "poupanca",
+      label: "Poupança",
+      description: `Rendimento anualizado da Poupança BCB (Ref. ${indicators.poupancaAnual.date})`,
+      rate: poupancaRate,
+      rateUnit: "year",
+      badge: `${formatRatePtBr(poupancaRate)}% a.a.`,
+    },
+  ];
+}
+
+/**
+ * Formata o rótulo compacto exibido no botão de preset da barra horizontal.
+ */
+export function formatPresetChipLabel(preset: CompoundInterestPreset): string {
+  const formatted = formatRatePtBr(preset.rate);
+  switch (preset.id) {
+    case "selic":
+      return `Selic ${formatted}%`;
+    case "cdi-100":
+      return `CDI ${formatted}%`;
+    case "ipca-plus":
+      return `IPCA+ ${formatted}%`;
+    case "carteira-1":
+      return "1% a.m.";
+    case "poupanca":
+      return `Poupança ${formatted}%`;
+    default:
+      return `${preset.label} ${preset.badge}`;
+  }
 }

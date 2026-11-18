@@ -51,14 +51,18 @@ import {
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 
+import type { MarketIndicators } from "@/services/bcb/bcb-client";
 import {
-  COMPOUND_INTEREST_PRESETS,
   DEFAULT_COMPOUND_INTEREST_INPUT,
+  buildPresetsFromIndicators,
   calculateCompoundInterest,
   formatCompactBRL,
   formatCurrencyBRL,
   formatDecimalBR,
+  formatPresetChipLabel,
+  formatRatePtBr,
   generateEvolutionCsv,
+  isMarketIndicators,
   parseCurrencyInputBR,
   type CompoundInterestPreset,
   type EvolutionRow,
@@ -66,15 +70,59 @@ import {
   type TimePeriodUnit,
 } from "./compound-interest-utils";
 
-const COMPACT_PRESET_LABELS: Record<string, string> = {
-  selic: "Selic 14,25%",
-  "cdi-100": "CDI 14,15%",
-  "ipca-plus": "IPCA+ 10,77%",
-  "carteira-1": "1% a.m.",
-  poupanca: "Poupança 6,17%",
-};
+export interface CompoundInterestFeatureProps {
+  initialIndicators?: MarketIndicators;
+}
 
-export function CompoundInterestFeature() {
+export function CompoundInterestFeature({
+  initialIndicators,
+}: CompoundInterestFeatureProps = {}) {
+  // Indicadores econômicos dinâmicos do Banco Central (BCB SGS)
+  const [indicators, setIndicators] = React.useState<MarketIndicators | null>(
+    initialIndicators ?? null
+  );
+  const [isLoadingIndicators, setIsLoadingIndicators] = React.useState<boolean>(
+    initialIndicators === undefined
+  );
+
+  React.useEffect(() => {
+    const controller = new AbortController();
+    let isMounted = true;
+
+    async function loadIndicators() {
+      try {
+        const response = await fetch("/api/indicators", {
+          cache: "no-store",
+          signal: controller.signal,
+        });
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        const data: unknown = await response.json();
+        if (isMounted && isMarketIndicators(data)) {
+          setIndicators(data);
+        }
+      } catch {
+        // Fallback estático permanece ativo caso offline, erro HTTP ou abortado
+      } finally {
+        if (isMounted) {
+          setIsLoadingIndicators(false);
+        }
+      }
+    }
+
+    void loadIndicators();
+
+    return () => {
+      isMounted = false;
+      controller.abort();
+    };
+  }, []);
+
+  const presets = React.useMemo(
+    () => buildPresetsFromIndicators(indicators),
+    [indicators]
+  );
   // Estados dos inputs financeiros
   const [initialValue, setInitialValue] = React.useState<number>(
     DEFAULT_COMPOUND_INTEREST_INPUT.initialValue
@@ -251,9 +299,9 @@ export function CompoundInterestFeature() {
     result.totalInvested > 0 ? result.finalAmount / result.totalInvested : 1;
 
   return (
-    <div className="w-full space-y-2.5 sm:space-y-5 pb-8">
+    <div className="w-full space-y-2 sm:space-y-5 pb-8">
       {/* Cabeçalho Compacto da Ferramenta */}
-      <div className="mb-1.5 sm:mb-2 space-y-0.5 sm:space-y-1">
+      <div className="mb-1 sm:mb-2 space-y-0.5 sm:space-y-1">
         <div className="flex items-center justify-between gap-2">
           <div className="flex min-w-0 flex-1 items-center gap-2">
             <div className="flex size-7 sm:size-8 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
@@ -302,35 +350,65 @@ export function CompoundInterestFeature() {
       </div>
 
       {/* Card Principal de Simulação com Presets Integrados (#feesCompostosForm) */}
-      <Card className="border-border/80 p-3 sm:p-5 shadow-xs">
-        <CardContent className="p-0 space-y-2.5 sm:space-y-4">
+      <Card className="border-border/80 p-2.5 sm:p-5 shadow-xs">
+        <CardContent className="p-0 space-y-2 sm:space-y-4">
           {/* Barra Horizontal Compacta de Presets (1 linha rolável sem barra visível) */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 no-scrollbar">
-            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-muted-foreground shrink-0 pr-1">
-              <Sparkles className="size-3 text-amber-500" />
-              Taxas:
-            </span>
-            {COMPOUND_INTEREST_PRESETS.map((preset) => {
-              const isSelected =
-                Math.abs(parsedRate - preset.rate) < 0.005 &&
-                rateUnit === preset.rateUnit;
-              const chipLabel = COMPACT_PRESET_LABELS[preset.id] ?? `${preset.label} ${preset.badge}`;
-              return (
-                <button
-                  key={preset.id}
-                  type="button"
-                  onClick={() => handleApplyPreset(preset)}
-                  title={preset.description}
-                  className={`inline-flex h-7 items-center px-2.5 text-xs font-medium rounded-md border shrink-0 transition-colors cursor-pointer ${
-                    isSelected
-                      ? "border-emerald-500 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 shadow-2xs"
-                      : "border-border bg-background hover:bg-muted/80 text-foreground"
-                  }`}
-                >
-                  {chipLabel}
-                </button>
-              );
-            })}
+          <div className="space-y-1">
+            <div
+              id="presets-bar"
+              data-testid="bcb-presets-bar"
+              className="flex items-center gap-1.5 overflow-x-auto pb-0.5 no-scrollbar"
+            >
+              <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-muted-foreground shrink-0 pr-1">
+                <Sparkles className="size-3 text-amber-500" />
+                Taxas:
+              </span>
+              {presets.map((preset) => {
+                const isSelected =
+                  Math.abs(parsedRate - preset.rate) < 0.005 &&
+                  rateUnit === preset.rateUnit;
+                const chipLabel = formatPresetChipLabel(preset);
+                return (
+                  <button
+                    key={preset.id}
+                    type="button"
+                    data-testid={`preset-${preset.id}`}
+                    onClick={() => handleApplyPreset(preset)}
+                    title={preset.description}
+                    className={`inline-flex h-7 items-center px-2.5 text-xs font-medium rounded-md border shrink-0 transition-colors cursor-pointer ${
+                      isSelected
+                        ? "border-emerald-500 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 shadow-2xs"
+                        : "border-border bg-background hover:bg-muted/80 text-foreground"
+                    }`}
+                  >
+                    {chipLabel}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div
+              data-testid="bcb-indicators-status"
+              className="flex items-center gap-1.5 overflow-x-auto whitespace-nowrap text-[10px] sm:text-xs leading-none text-muted-foreground no-scrollbar"
+            >
+              {indicators ? (
+                <span>
+                  {indicators.usedFallback
+                    ? "Taxas BCB (ref. reserva)"
+                    : "Taxas BCB"}{" "}
+                  • Ref. {indicators.taxaDi.date} • IPCA 12m:{" "}
+                  {formatRatePtBr(indicators.ipca12Meses.value)}% • Dólar PTAX:
+                  R$ {formatRatePtBr(indicators.dolarPtaxVenda.value)}
+                </span>
+              ) : isLoadingIndicators ? (
+                <span>Taxas BCB • Atualizando cotações oficiais...</span>
+              ) : (
+                <span>
+                  Taxas de referência padrão • Selic 14,25% • CDI 14,15% •
+                  IPCA+ 10,77%
+                </span>
+              )}
+            </div>
           </div>
 
           <form
@@ -339,11 +417,11 @@ export function CompoundInterestFeature() {
               e.preventDefault();
               toast.success("Simulação de juros compostos atualizada!");
             }}
-            className="space-y-2.5 sm:space-y-4"
+            className="space-y-2 sm:space-y-4"
           >
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
               {/* Campo 1: Valor Inicial */}
-              <div className="space-y-1.5">
+              <div className="space-y-1 sm:space-y-1.5">
                 <div className="flex items-center justify-between gap-1.5">
                   <Label htmlFor="mainValue" className="text-xs font-medium">
                     Valor Inicial
@@ -381,7 +459,7 @@ export function CompoundInterestFeature() {
               </div>
 
               {/* Campo 2: Aporte Mensal */}
-              <div className="space-y-1.5">
+              <div className="space-y-1 sm:space-y-1.5">
                 <div className="flex items-center justify-between gap-1.5">
                   <Label htmlFor="investment" className="text-xs font-medium">
                     Aporte Mensal
@@ -421,7 +499,7 @@ export function CompoundInterestFeature() {
               </div>
 
               {/* Campo 3: Taxa de Juros */}
-              <div className="space-y-1.5">
+              <div className="space-y-1 sm:space-y-1.5">
                 <div className="flex items-center justify-between gap-1.5">
                   <Label htmlFor="rate" className="text-xs font-medium">
                     Taxa de Juros
@@ -468,7 +546,7 @@ export function CompoundInterestFeature() {
               </div>
 
               {/* Campo 4: Período */}
-              <div className="space-y-1.5">
+              <div className="space-y-1 sm:space-y-1.5">
                 <div className="flex items-center justify-between gap-1.5">
                   <Label htmlFor="period" className="text-xs font-medium">
                     Período ({result.totalMonths}m)
@@ -527,7 +605,7 @@ export function CompoundInterestFeature() {
             </div>
 
             {/* Barra de Ações Compacta */}
-            <div className="flex items-center justify-between gap-2 border-t pt-2.5 sm:pt-3">
+            <div className="flex items-center justify-between gap-2 border-t pt-2 sm:pt-3">
               <Button
                 id="btn-clear"
                 type="button"
@@ -557,7 +635,7 @@ export function CompoundInterestFeature() {
         className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-4"
       >
         {/* Card 1: Valor Total Final */}
-        <Card className="relative overflow-hidden border-emerald-500/40 bg-gradient-to-br from-emerald-500/10 via-background to-background p-3.5 sm:p-4 shadow-sm">
+        <Card className="relative overflow-hidden border-emerald-500/40 bg-gradient-to-br from-emerald-500/10 via-background to-background p-3 sm:p-4 shadow-sm">
           <CardHeader className="p-0 pb-1">
             <div className="flex items-center justify-between gap-2">
               <span className="text-xs font-semibold tracking-wider text-emerald-700 uppercase dark:text-emerald-400">

@@ -145,13 +145,29 @@ describe("bcb-client", () => {
       );
     });
 
-    it("throws on non-OK HTTP status", async () => {
+    it("throws on non-OK HTTP status including 304 and empty response body", async () => {
       globalThis.fetch = vi
         .fn<typeof fetch>()
         .mockResolvedValue(new Response("A serie nao existe!", { status: 404 }));
 
       await expect(fetchBcbSeries(999999)).rejects.toThrow(
         "BCB SGS HTTP 404 for series 999999",
+      );
+
+      globalThis.fetch = vi
+        .fn<typeof fetch>()
+        .mockResolvedValue(new Response(null, { status: 304 }));
+
+      await expect(fetchBcbSeries(4389)).rejects.toThrow(
+        "BCB SGS HTTP 304 for series 4389",
+      );
+
+      globalThis.fetch = vi
+        .fn<typeof fetch>()
+        .mockResolvedValue(new Response("   ", { status: 200 }));
+
+      await expect(fetchBcbSeries(4389)).rejects.toThrow(
+        "BCB SGS returned empty response body for series 4389",
       );
     });
 
@@ -260,6 +276,126 @@ describe("bcb-client", () => {
         date: "01/10/2026",
         source: "fallback",
       });
+    });
+
+    it("retries once with ultimos/2 when ultimos/1 returns HTTP 304 and picks newest date in descending order", async () => {
+      const fetchMock = vi
+        .fn<typeof fetch>()
+        .mockResolvedValueOnce(new Response(null, { status: 304 }))
+        .mockResolvedValueOnce(
+          jsonResponse([
+            { data: "16/11/2026", valor: "13.65" },
+            { data: "13/11/2026", valor: "13.60" },
+          ]),
+        );
+      globalThis.fetch = fetchMock;
+
+      const point = await fetchBcbSeriesLatest(4389, {
+        name: "Taxa DI (CDI)",
+        unit: "% a.a.",
+        fallbackValue: 13.5,
+      });
+
+      expect(point).toEqual({
+        seriesId: 4389,
+        name: "Taxa DI (CDI)",
+        unit: "% a.a.",
+        value: 13.65,
+        date: "16/11/2026",
+        source: "bcb",
+      });
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+      expect(fetchMock).toHaveBeenNthCalledWith(
+        1,
+        "https://api.bcb.gov.br/dados/serie/bcdata.sgs.4389/dados/ultimos/1?formato=json",
+        expect.objectContaining({ method: "GET" }),
+      );
+      expect(fetchMock).toHaveBeenNthCalledWith(
+        2,
+        "https://api.bcb.gov.br/dados/serie/bcdata.sgs.4389/dados/ultimos/2?formato=json",
+        expect.objectContaining({ method: "GET" }),
+      );
+    });
+
+    it("retries once with ultimos/2 on empty response body and picks newest date in ascending order", async () => {
+      const fetchMock = vi
+        .fn<typeof fetch>()
+        .mockResolvedValueOnce(new Response("", { status: 200 }))
+        .mockResolvedValueOnce(
+          jsonResponse([
+            { data: "31/12/2025", valor: "12.15" },
+            { data: "02/01/2026", valor: "12.25" },
+          ]),
+        );
+      globalThis.fetch = fetchMock;
+
+      const point = await fetchBcbSeriesLatest(4389, {
+        name: "Taxa DI (CDI)",
+        unit: "% a.a.",
+        fallbackValue: 13.5,
+      });
+
+      expect(point).toEqual({
+        seriesId: 4389,
+        name: "Taxa DI (CDI)",
+        unit: "% a.a.",
+        value: 12.25,
+        date: "02/01/2026",
+        source: "bcb",
+      });
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+      expect(fetchMock).toHaveBeenNthCalledWith(
+        2,
+        "https://api.bcb.gov.br/dados/serie/bcdata.sgs.4389/dados/ultimos/2?formato=json",
+        expect.objectContaining({ method: "GET" }),
+      );
+    });
+
+    it("handles non-DD/MM/YYYY date formats gracefully when picking latest point", async () => {
+      globalThis.fetch = vi.fn<typeof fetch>().mockResolvedValueOnce(
+        jsonResponse([
+          { data: "2026-11-13", valor: "13.60" },
+          { data: "16/11/2026", valor: "13.65" },
+        ]),
+      );
+
+      const point = await fetchBcbSeriesLatest(4389, {
+        name: "Taxa DI (CDI)",
+        unit: "% a.a.",
+        fallbackValue: 13.5,
+      });
+
+      expect(point.date).toBe("16/11/2026");
+      expect(point.value).toBe(13.65);
+    });
+
+    it("falls back after single ultimos/2 retry fails and does not retry non-304 HTTP errors", async () => {
+      const retryFailMock = vi
+        .fn<typeof fetch>()
+        .mockResolvedValueOnce(new Response(null, { status: 304 }))
+        .mockResolvedValueOnce(new Response(null, { status: 304 }));
+      globalThis.fetch = retryFailMock;
+
+      const retryFallback = await fetchBcbSeriesLatest(4389, {
+        name: "Taxa DI (CDI)",
+        unit: "% a.a.",
+        fallbackValue: 13.65,
+      });
+      expect(retryFallback.source).toBe("fallback");
+      expect(retryFailMock).toHaveBeenCalledTimes(2);
+
+      const nonRetryMock = vi
+        .fn<typeof fetch>()
+        .mockResolvedValueOnce(new Response("Not found", { status: 404 }));
+      globalThis.fetch = nonRetryMock;
+
+      const nonRetryFallback = await fetchBcbSeriesLatest(4389, {
+        name: "Taxa DI (CDI)",
+        unit: "% a.a.",
+        fallbackValue: 13.65,
+      });
+      expect(nonRetryFallback.source).toBe("fallback");
+      expect(nonRetryMock).toHaveBeenCalledTimes(1);
     });
   });
 

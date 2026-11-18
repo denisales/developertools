@@ -66,6 +66,14 @@ import {
   type TimePeriodUnit,
 } from "./compound-interest-utils";
 
+const COMPACT_PRESET_LABELS: Record<string, string> = {
+  selic: "Selic 14,25%",
+  "cdi-100": "CDI 14,15%",
+  "ipca-plus": "IPCA+ 10,77%",
+  "carteira-1": "1% a.m.",
+  poupanca: "Poupança 6,17%",
+};
+
 export function CompoundInterestFeature() {
   // Estados dos inputs financeiros
   const [initialValue, setInitialValue] = React.useState<number>(
@@ -243,122 +251,102 @@ export function CompoundInterestFeature() {
     result.totalInvested > 0 ? result.finalAmount / result.totalInvested : 1;
 
   return (
-    <div className="w-full space-y-5 pb-8">
-      {/* Cabeçalho da Ferramenta */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-start gap-3.5">
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-            <TrendingUp className="size-5" />
-          </div>
-          <div className="space-y-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-xl font-bold tracking-tight sm:text-2xl">
-                Calculadora de Juros Compostos
-              </h1>
+    <div className="w-full space-y-3.5 sm:space-y-5 pb-8">
+      {/* Cabeçalho Compacto da Ferramenta */}
+      <div className="mb-2 space-y-1">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <div className="flex size-7 sm:size-8 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+              <TrendingUp className="size-4" />
             </div>
-            <p className="max-w-3xl text-xs leading-relaxed text-muted-foreground sm:text-sm">
-              Simule a evolução do seu patrimônio com aportes mensais, equivalência
-              de taxas, gráficos interativos e tabela de evolução mês a mês.
-            </p>
+            <h1 className="text-lg sm:text-2xl font-bold tracking-tight">
+              Calculadora de Juros Compostos
+            </h1>
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={handleResetDefaults}
+              className="h-8 px-2.5 text-xs font-medium text-muted-foreground hover:text-foreground"
+            >
+              Restaurar
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleCopySummary}
+              className="h-8 gap-1.5 px-2.5 text-xs font-medium"
+            >
+              {copiedSummary ? (
+                <Check className="size-3.5 text-emerald-500" />
+              ) : (
+                <Copy className="size-3.5" />
+              )}
+              {copiedSummary ? "Copiado" : "Copiar Resumo"}
+            </Button>
           </div>
         </div>
-
-        <div className="flex items-center gap-2 self-start sm:self-center">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleCopySummary}
-            className="h-9 gap-2 px-3.5 text-xs font-medium sm:h-10 sm:text-sm"
-          >
-            {copiedSummary ? (
-              <Check className="size-4 text-emerald-500" />
-            ) : (
-              <Copy className="size-4" />
-            )}
-            {copiedSummary ? "Copiado" : "Copiar Resumo"}
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={handleResetDefaults}
-            className="h-9 px-3 text-xs font-medium text-muted-foreground sm:h-10 sm:text-sm"
-          >
-            Exemplo Padrão
-          </Button>
-        </div>
+        <p className="text-xs sm:text-sm text-muted-foreground line-clamp-1 sm:line-clamp-none">
+          Simule aportes mensais, equivalência de taxas, evolução patrimonial e tabela mês a mês.
+        </p>
       </div>
 
-      {/* Presets Rápidos de Indexadores Brasileiros */}
-      <div className="rounded-xl border bg-card/60 px-4 py-3 shadow-2xs">
-        <div className="mb-2.5 flex items-center gap-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-          <Sparkles className="size-3.5 text-amber-500" />
-          <span>Preencher com taxas de referência do mercado:</span>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {COMPOUND_INTEREST_PRESETS.map((preset) => {
-            const isSelected =
-              Math.abs(parsedRate - preset.rate) < 0.005 &&
-              rateUnit === preset.rateUnit;
-            return (
-              <button
-                key={preset.id}
-                type="button"
-                onClick={() => handleApplyPreset(preset)}
-                title={preset.description}
-                className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-all cursor-pointer ${
-                  isSelected
-                    ? "border-emerald-500 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 shadow-2xs"
-                    : "border-border bg-background hover:bg-muted/80 text-foreground"
-                }`}
-              >
-                <span>{preset.label}</span>
-                <span className="rounded bg-muted px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground">
-                  {preset.badge}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
+      {/* Card Principal de Simulação com Presets Integrados (#feesCompostosForm) */}
+      <Card className="border-border/80 p-3.5 sm:p-5 shadow-xs">
+        <CardContent className="p-0 space-y-3 sm:space-y-4">
+          {/* Barra Horizontal Compacta de Presets (1 linha rolável sem barra visível) */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-muted-foreground shrink-0 pr-1">
+              <Sparkles className="size-3 text-amber-500" />
+              Taxas:
+            </span>
+            {COMPOUND_INTEREST_PRESETS.map((preset) => {
+              const isSelected =
+                Math.abs(parsedRate - preset.rate) < 0.005 &&
+                rateUnit === preset.rateUnit;
+              const chipLabel = COMPACT_PRESET_LABELS[preset.id] ?? `${preset.label} ${preset.badge}`;
+              return (
+                <button
+                  key={preset.id}
+                  type="button"
+                  onClick={() => handleApplyPreset(preset)}
+                  title={preset.description}
+                  className={`inline-flex h-7 items-center px-2.5 text-xs font-medium rounded-md border shrink-0 transition-colors cursor-pointer ${
+                    isSelected
+                      ? "border-emerald-500 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 shadow-2xs"
+                      : "border-border bg-background hover:bg-muted/80 text-foreground"
+                  }`}
+                >
+                  {chipLabel}
+                </button>
+              );
+            })}
+          </div>
 
-      {/* Formulário de Simulação (#feesCompostosForm) */}
-      <Card className="border-border/80 p-4 sm:p-5 shadow-xs">
-        <CardHeader className="px-0 pt-0 pb-1">
-          <CardTitle className="flex items-center gap-2 text-base font-bold sm:text-lg">
-            <Calculator className="size-4 text-primary sm:size-5" />
-            Parâmetros da Simulação
-          </CardTitle>
-          <CardDescription className="text-xs sm:text-sm leading-relaxed">
-            Preencha os campos abaixo. O cálculo é atualizado instantaneamente a
-            cada alteração.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="px-0 pb-0">
           <form
             id="feesCompostosForm"
             onSubmit={(e) => {
               e.preventDefault();
               toast.success("Simulação de juros compostos atualizada!");
             }}
-            className="space-y-5"
+            className="space-y-3 sm:space-y-4"
           >
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               {/* Campo 1: Valor Inicial */}
-              <div className="space-y-2">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <Label
-                    htmlFor="mainValue"
-                    className="text-xs sm:text-sm font-semibold"
-                  >
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between gap-1.5">
+                  <Label htmlFor="mainValue" className="text-xs font-medium">
                     Valor Inicial
                   </Label>
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-1">
                     {[1000, 5000, 10000].map((inc) => (
                       <button
                         key={inc}
                         type="button"
                         onClick={() => setInitialValue((prev) => prev + inc)}
-                        className="rounded-md border bg-muted/50 px-2 py-0.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground cursor-pointer"
+                        className="rounded border bg-muted/50 px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground cursor-pointer"
                       >
                         +{inc >= 1000 ? `${inc / 1000}k` : inc}
                       </button>
@@ -366,7 +354,7 @@ export function CompoundInterestFeature() {
                   </div>
                 </div>
                 <div className="relative">
-                  <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-xs sm:text-sm font-semibold text-muted-foreground">
+                  <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2.5 text-xs font-semibold text-muted-foreground">
                     R$
                   </span>
                   <Input
@@ -377,26 +365,20 @@ export function CompoundInterestFeature() {
                     onChange={(e) =>
                       setInitialValue(parseCurrencyInputBR(e.target.value))
                     }
-                    className="h-10 pl-10 text-sm sm:text-base font-mono font-medium"
+                    className="h-9 sm:h-10 pl-8 text-sm font-mono font-medium"
                     placeholder="0,00"
                     aria-label="Valor Inicial em Reais"
                   />
                 </div>
-                <p className="text-xs leading-relaxed text-muted-foreground">
-                  Montante aplicado no momento zero (Mês 0).
-                </p>
               </div>
 
-              {/* Campo 2: Investimento Mensal */}
-              <div className="space-y-2">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <Label
-                    htmlFor="investment"
-                    className="text-xs sm:text-sm font-semibold"
-                  >
-                    Investimento Mensal
+              {/* Campo 2: Aporte Mensal */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between gap-1.5">
+                  <Label htmlFor="investment" className="text-xs font-medium">
+                    Aporte Mensal
                   </Label>
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-1">
                     {[200, 500, 1000].map((inc) => (
                       <button
                         key={inc}
@@ -404,7 +386,7 @@ export function CompoundInterestFeature() {
                         onClick={() =>
                           setMonthlyContribution((prev) => prev + inc)
                         }
-                        className="rounded-md border bg-muted/50 px-2 py-0.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground cursor-pointer"
+                        className="rounded border bg-muted/50 px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground cursor-pointer"
                       >
                         +{inc >= 1000 ? `${inc / 1000}k` : inc}
                       </button>
@@ -412,7 +394,7 @@ export function CompoundInterestFeature() {
                   </div>
                 </div>
                 <div className="relative">
-                  <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-xs sm:text-sm font-semibold text-muted-foreground">
+                  <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2.5 text-xs font-semibold text-muted-foreground">
                     R$
                   </span>
                   <Input
@@ -423,31 +405,28 @@ export function CompoundInterestFeature() {
                     onChange={(e) =>
                       setMonthlyContribution(parseCurrencyInputBR(e.target.value))
                     }
-                    className="h-10 pl-10 text-sm sm:text-base font-mono font-medium"
+                    className="h-9 sm:h-10 pl-8 text-sm font-mono font-medium"
                     placeholder="0,00"
-                    aria-label="Investimento Mensal em Reais"
+                    aria-label="Aporte Mensal em Reais"
                   />
                 </div>
-                <p className="text-xs leading-relaxed text-muted-foreground">
-                  Valor aportado todos os meses após o rendimento mensal.
-                </p>
               </div>
 
               {/* Campo 3: Taxa de Juros */}
-              <div className="space-y-2">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <Label htmlFor="rate" className="text-xs sm:text-sm font-semibold">
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between gap-1.5">
+                  <Label htmlFor="rate" className="text-xs font-medium">
                     Taxa de Juros
                   </Label>
-                  <span className="rounded-md bg-emerald-500/10 px-2 py-0.5 font-mono text-xs font-medium text-emerald-700 dark:text-emerald-300">
+                  <span className="rounded bg-emerald-500/10 px-1.5 py-0.5 font-mono text-[11px] font-medium text-emerald-700 dark:text-emerald-300">
                     {rateUnit === "year"
-                      ? `≈ ${(result.effectiveMonthlyRate * 100).toFixed(4).replace(".", ",")}% ao mês`
-                      : `≈ ${(result.effectiveAnnualRate * 100).toFixed(2).replace(".", ",")}% ao ano`}
+                      ? `≈ ${(result.effectiveMonthlyRate * 100).toFixed(2).replace(".", ",")}% a.m.`
+                      : `≈ ${(result.effectiveAnnualRate * 100).toFixed(2).replace(".", ",")}% a.a.`}
                   </span>
                 </div>
-                <div className="flex items-center gap-2.5">
+                <div className="flex items-center gap-2">
                   <div className="relative flex-1">
-                    <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-xs sm:text-sm font-semibold text-muted-foreground">
+                    <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2.5 text-xs font-semibold text-muted-foreground">
                       %
                     </span>
                     <Input
@@ -456,7 +435,7 @@ export function CompoundInterestFeature() {
                       inputMode="decimal"
                       value={rateText}
                       onChange={(e) => setRateText(e.target.value)}
-                      className="h-10 pl-9 text-sm sm:text-base font-mono font-medium"
+                      className="h-9 sm:h-10 pl-7 text-sm font-mono font-medium"
                       placeholder="10,00"
                       aria-label="Taxa de Juros"
                     />
@@ -467,7 +446,7 @@ export function CompoundInterestFeature() {
                   >
                     <SelectTrigger
                       id="select-rate"
-                      className="h-10 w-[125px] shrink-0 px-3 text-xs sm:text-sm font-medium"
+                      className="h-9 sm:h-10 w-[105px] sm:w-[120px] shrink-0 px-2.5 text-xs font-medium"
                       aria-label="Unidade da Taxa de Juros"
                     >
                       <SelectValue />
@@ -478,25 +457,15 @@ export function CompoundInterestFeature() {
                     </SelectContent>
                   </Select>
                 </div>
-                <p className="text-xs leading-relaxed text-muted-foreground">
-                  Conversão composta exata:{" "}
-                  <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">
-                    (1 + i_a)^(1/12) - 1
-                  </code>
-                  .
-                </p>
               </div>
 
               {/* Campo 4: Período */}
-              <div className="space-y-2">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <Label
-                    htmlFor="period"
-                    className="text-xs sm:text-sm font-semibold"
-                  >
-                    Período
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between gap-1.5">
+                  <Label htmlFor="period" className="text-xs font-medium">
+                    Período ({result.totalMonths}m)
                   </Label>
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-1">
                     {[1, 5, 10, 20, 30].map((yr) => (
                       <button
                         key={yr}
@@ -505,7 +474,7 @@ export function CompoundInterestFeature() {
                           setPeriodUnit("years");
                           setPeriodText(String(yr));
                         }}
-                        className={`rounded-md border px-2 py-0.5 text-xs font-medium transition-colors cursor-pointer ${
+                        className={`rounded border px-1.5 py-0.5 text-[11px] font-medium transition-colors cursor-pointer ${
                           periodUnit === "years" && parsedPeriod === yr
                             ? "border-primary bg-primary/10 text-primary"
                             : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -516,14 +485,14 @@ export function CompoundInterestFeature() {
                     ))}
                   </div>
                 </div>
-                <div className="flex items-center gap-2.5">
+                <div className="flex items-center gap-2">
                   <Input
                     id="period"
                     type="text"
                     inputMode="numeric"
                     value={periodText}
                     onChange={(e) => setPeriodText(e.target.value)}
-                    className="h-10 flex-1 text-sm sm:text-base font-mono font-medium"
+                    className="h-9 sm:h-10 flex-1 text-sm font-mono font-medium"
                     placeholder="10"
                     aria-label="Período da Simulação"
                   />
@@ -535,7 +504,7 @@ export function CompoundInterestFeature() {
                   >
                     <SelectTrigger
                       id="select-period"
-                      className="h-10 w-[125px] shrink-0 px-3 text-xs sm:text-sm font-medium"
+                      className="h-9 sm:h-10 w-[105px] sm:w-[120px] shrink-0 px-2.5 text-xs font-medium"
                       aria-label="Unidade do Período"
                     >
                       <SelectValue />
@@ -546,66 +515,62 @@ export function CompoundInterestFeature() {
                     </SelectContent>
                   </Select>
                 </div>
-                <p className="text-xs leading-relaxed text-muted-foreground">
-                  Total simulado: <strong>{result.totalMonths} meses</strong> (
-                  {(result.totalMonths / 12).toFixed(1).replace(".0", "")}{" "}
-                  {result.totalMonths === 12 ? "ano" : "anos"}).
-                </p>
               </div>
             </div>
 
-            {/* Barra de Ações do Formulário */}
-            <div className="flex flex-col-reverse gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-between">
+            {/* Barra de Ações Compacta */}
+            <div className="flex items-center justify-between gap-2 border-t pt-2.5 sm:pt-3">
               <Button
                 id="btn-clear"
                 type="button"
                 variant="outline"
                 onClick={handleClear}
-                className="h-10 w-full gap-2 px-4 text-xs sm:text-sm font-medium sm:w-auto"
+                className="h-8 sm:h-9 gap-1.5 px-3 text-xs font-medium"
               >
-                <RotateCcw className="size-4" />
+                <RotateCcw className="size-3.5" />
                 Limpar
               </Button>
 
-              <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center">
-                <Button
-                  type="submit"
-                  className="h-10 w-full gap-2 bg-emerald-600 px-6 text-xs sm:text-sm font-semibold text-white hover:bg-emerald-700 sm:w-auto"
-                >
-                  <Calculator className="size-4" />
-                  Calcular Juros Compostos
-                </Button>
-              </div>
+              <Button
+                type="submit"
+                className="h-8 sm:h-9 gap-1.5 bg-emerald-600 px-4 text-xs font-semibold text-white hover:bg-emerald-700"
+              >
+                <Calculator className="size-3.5" />
+                Calcular Juros Compostos
+              </Button>
             </div>
           </form>
         </CardContent>
       </Card>
 
-      {/* Seção 1: Os 3 Cards de Destaque (#result) */}
-      <div id="result" className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5">
+      {/* Seção 1: Os 3 Cards de Resumo Imediatamente Abaixo dos Inputs (#result) */}
+      <div
+        id="result"
+        className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-4"
+      >
         {/* Card 1: Valor Total Final */}
-        <Card className="relative overflow-hidden border-emerald-500/40 bg-gradient-to-br from-emerald-500/10 via-background to-background p-4 sm:p-5 shadow-sm">
-          <CardHeader className="p-0 pb-2">
-            <div className="flex items-center justify-between gap-2.5">
+        <Card className="relative overflow-hidden border-emerald-500/40 bg-gradient-to-br from-emerald-500/10 via-background to-background p-3.5 sm:p-4 shadow-sm">
+          <CardHeader className="p-0 pb-1">
+            <div className="flex items-center justify-between gap-2">
               <span className="text-xs font-semibold tracking-wider text-emerald-700 uppercase dark:text-emerald-400">
                 Valor Total Final
               </span>
-              <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
-                <Wallet className="size-4" />
+              <div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+                <Wallet className="size-3.5" />
               </div>
             </div>
           </CardHeader>
-          <CardContent className="space-y-2 p-0">
+          <CardContent className="space-y-1 p-0">
             <div
               id="amount"
-              className="text-xl sm:text-2xl lg:text-[26px] font-bold font-mono tracking-tight text-emerald-700 dark:text-emerald-300"
+              className="text-lg sm:text-2xl font-bold font-mono tracking-tight text-emerald-700 dark:text-emerald-300"
             >
               {formatCurrencyBRL(result.finalAmount)}
             </div>
-            <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+            <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
               <Badge
                 variant="secondary"
-                className="bg-emerald-500/15 px-2 py-0.5 font-mono text-xs text-emerald-700 dark:text-emerald-300"
+                className="bg-emerald-500/15 px-1.5 py-0 font-mono text-[11px] text-emerald-700 dark:text-emerald-300"
               >
                 {multiplier.toFixed(2).replace(".", ",")}x o investido
               </Badge>
@@ -614,29 +579,29 @@ export function CompoundInterestFeature() {
           </CardContent>
         </Card>
 
-        {/* Card 2: Valor Total Investido */}
-        <Card className="border-blue-500/30 bg-gradient-to-br from-blue-500/5 via-background to-background p-4 sm:p-5 shadow-xs">
-          <CardHeader className="p-0 pb-2">
-            <div className="flex items-center justify-between gap-2.5">
+        {/* Card 2: Total Investido */}
+        <Card className="border-blue-500/30 bg-gradient-to-br from-blue-500/5 via-background to-background p-3.5 sm:p-4 shadow-xs">
+          <CardHeader className="p-0 pb-1">
+            <div className="flex items-center justify-between gap-2">
               <span className="text-xs font-semibold tracking-wider text-blue-700 uppercase dark:text-blue-400">
-                Valor Total Investido
+                Total Investido
               </span>
-              <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-blue-500/15 text-blue-600 dark:text-blue-400">
-                <PiggyBank className="size-4" />
+              <div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-blue-500/15 text-blue-600 dark:text-blue-400">
+                <PiggyBank className="size-3.5" />
               </div>
             </div>
           </CardHeader>
-          <CardContent className="space-y-2 p-0">
+          <CardContent className="space-y-1 p-0">
             <div
               id="invested"
-              className="text-xl sm:text-2xl lg:text-[26px] font-bold font-mono tracking-tight"
+              className="text-lg sm:text-2xl font-bold font-mono tracking-tight"
             >
               {formatCurrencyBRL(result.totalInvested)}
             </div>
-            <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+            <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
               <Badge
                 variant="secondary"
-                className="bg-blue-500/15 px-2 py-0.5 font-mono text-xs text-blue-700 dark:text-blue-300"
+                className="bg-blue-500/15 px-1.5 py-0 font-mono text-[11px] text-blue-700 dark:text-blue-300"
               >
                 {result.investedPercentage.toFixed(1).replace(".", ",")}% do
                 total
@@ -647,28 +612,28 @@ export function CompoundInterestFeature() {
         </Card>
 
         {/* Card 3: Total em Juros */}
-        <Card className="border-amber-500/30 bg-gradient-to-br from-amber-500/10 via-background to-background p-4 sm:p-5 shadow-xs">
-          <CardHeader className="p-0 pb-2">
-            <div className="flex items-center justify-between gap-2.5">
+        <Card className="border-amber-500/30 bg-gradient-to-br from-amber-500/10 via-background to-background p-3.5 sm:p-4 shadow-xs">
+          <CardHeader className="p-0 pb-1">
+            <div className="flex items-center justify-between gap-2">
               <span className="text-xs font-semibold tracking-wider text-amber-700 uppercase dark:text-amber-400">
                 Total em Juros
               </span>
-              <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-amber-500/15 text-amber-600 dark:text-amber-400">
-                <Coins className="size-4" />
+              <div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-amber-500/15 text-amber-600 dark:text-amber-400">
+                <Coins className="size-3.5" />
               </div>
             </div>
           </CardHeader>
-          <CardContent className="space-y-2 p-0">
+          <CardContent className="space-y-1 p-0">
             <div
               id="interest"
-              className="text-xl sm:text-2xl lg:text-[26px] font-bold font-mono tracking-tight text-amber-700 dark:text-amber-300"
+              className="text-lg sm:text-2xl font-bold font-mono tracking-tight text-amber-700 dark:text-amber-300"
             >
               {formatCurrencyBRL(result.totalInterest)}
             </div>
-            <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+            <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
               <Badge
                 variant="secondary"
-                className="bg-amber-500/15 px-2 py-0.5 font-mono text-xs text-amber-800 dark:text-amber-300"
+                className="bg-amber-500/15 px-1.5 py-0 font-mono text-[11px] text-amber-800 dark:text-amber-300"
               >
                 {result.interestPercentage.toFixed(1).replace(".", ",")}% do
                 total
@@ -682,10 +647,10 @@ export function CompoundInterestFeature() {
       {/* Seção 2: Visualização Gráfica Dupla (#resultGraphic) */}
       <div
         id="resultGraphic"
-        className="grid grid-cols-1 gap-4 sm:gap-5 lg:grid-cols-12"
+        className="grid grid-cols-1 gap-3.5 sm:gap-5 lg:grid-cols-12"
       >
         {/* Gráfico 1: Rosca (Donut) de Composição */}
-        <Card className="p-4 sm:p-5 lg:col-span-5">
+        <Card className="p-3.5 sm:p-5 lg:col-span-5">
           <CardHeader className="p-0 pb-2">
             <CardTitle className="flex items-center gap-2 text-base font-bold sm:text-lg">
               <PieChartIcon className="size-4 text-primary sm:size-5" />
@@ -696,7 +661,7 @@ export function CompoundInterestFeature() {
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col items-center justify-between gap-4 p-0 pt-2">
-            <div className="relative flex size-44 items-center justify-center">
+            <div className="relative flex size-40 sm:size-44 items-center justify-center">
               <svg
                 viewBox="0 0 160 160"
                 className="size-full -rotate-90 transform"
@@ -732,17 +697,17 @@ export function CompoundInterestFeature() {
                 <span className="text-xs font-medium text-muted-foreground">
                   Juros no Final
                 </span>
-                <span className="mt-0.5 font-mono text-xl sm:text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+                <span className="mt-0.5 font-mono text-lg sm:text-2xl font-bold text-emerald-600 dark:text-emerald-400">
                   {result.interestPercentage.toFixed(1).replace(".", ",")}%
                 </span>
               </div>
             </div>
 
             {/* Legenda Detalhada com Barras de Proporção */}
-            <div className="w-full space-y-3 pt-1">
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between gap-3 text-xs sm:text-sm">
-                  <span className="flex items-center gap-2 font-medium">
+            <div className="w-full space-y-2.5 pt-1">
+              <div className="space-y-1">
+                <div className="flex items-center justify-between gap-2 text-xs sm:text-sm">
+                  <span className="flex items-center gap-1.5 font-medium">
                     <span className="size-2.5 rounded-full bg-blue-500" />
                     Valor Investido
                   </span>
@@ -761,9 +726,9 @@ export function CompoundInterestFeature() {
                 </div>
               </div>
 
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between gap-3 text-xs sm:text-sm">
-                  <span className="flex items-center gap-2 font-medium">
+              <div className="space-y-1">
+                <div className="flex items-center justify-between gap-2 text-xs sm:text-sm">
+                  <span className="flex items-center gap-1.5 font-medium">
                     <span className="size-2.5 rounded-full bg-emerald-500" />
                     Total em Juros
                   </span>
@@ -786,7 +751,7 @@ export function CompoundInterestFeature() {
         </Card>
 
         {/* Gráfico 2: Evolução Patrimonial no Tempo (Barras Empilhadas Interativas) */}
-        <Card className="p-4 sm:p-5 lg:col-span-7">
+        <Card className="p-3.5 sm:p-5 lg:col-span-7">
           <CardHeader className="p-0 pb-2">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div className="space-y-0.5">
@@ -795,11 +760,11 @@ export function CompoundInterestFeature() {
                   Evolução Patrimonial no Tempo
                 </CardTitle>
                 <CardDescription className="text-xs sm:text-sm leading-relaxed">
-                  Passe o mouse ou toque nas colunas para inspecionar cada{" "}
+                  Toque ou passe o mouse nas colunas para inspecionar cada{" "}
                   {chartUsesYears ? "ano" : "mês"}
                 </CardDescription>
               </div>
-              <div className="flex items-center gap-4 text-xs sm:text-sm font-medium">
+              <div className="flex items-center gap-3 text-xs font-medium">
                 <span className="flex items-center gap-1.5">
                   <span className="size-2.5 rounded-xs bg-blue-500" />
                   Investido
@@ -811,23 +776,23 @@ export function CompoundInterestFeature() {
               </div>
             </div>
           </CardHeader>
-          <CardContent className="space-y-4 p-0">
+          <CardContent className="space-y-3.5 p-0">
             {/* Painel de Inspeção Interativo (Tooltip Fixo Responsivo) */}
-            <div className="grid grid-cols-1 gap-4 sm:gap-5 rounded-xl border bg-muted/40 p-3.5 sm:p-4 text-xs sm:text-sm sm:grid-cols-2 xl:grid-cols-4">
+            <div className="grid grid-cols-2 gap-2.5 sm:gap-4 rounded-xl border bg-muted/40 p-3 sm:p-3.5 text-xs sm:grid-cols-4">
               <div className="space-y-0.5">
-                <span className="text-xs font-medium text-muted-foreground">
-                  Período Selecionado
+                <span className="text-[11px] font-medium text-muted-foreground">
+                  Período
                 </span>
                 <p className="font-semibold text-foreground">
                   {inspectedRow.month === 0
                     ? "Mês 0 (Início)"
                     : chartUsesYears
-                      ? `Ano ${inspectedRow.year} (Mês ${inspectedRow.month})`
+                      ? `Ano ${inspectedRow.year} (${inspectedRow.month}m)`
                       : `Mês ${inspectedRow.month}`}
                 </p>
               </div>
               <div className="space-y-0.5">
-                <span className="text-xs font-medium text-muted-foreground">
+                <span className="text-[11px] font-medium text-muted-foreground">
                   Total Investido
                 </span>
                 <p className="font-mono font-semibold text-blue-600 dark:text-blue-400">
@@ -835,7 +800,7 @@ export function CompoundInterestFeature() {
                 </p>
               </div>
               <div className="space-y-0.5">
-                <span className="text-xs font-medium text-muted-foreground">
+                <span className="text-[11px] font-medium text-muted-foreground">
                   Total em Juros
                 </span>
                 <p className="font-mono font-semibold text-emerald-600 dark:text-emerald-400">
@@ -843,8 +808,8 @@ export function CompoundInterestFeature() {
                 </p>
               </div>
               <div className="space-y-0.5">
-                <span className="text-xs font-medium text-muted-foreground">
-                  Patrimônio Acumulado
+                <span className="text-[11px] font-medium text-muted-foreground">
+                  Acumulado
                 </span>
                 <p className="font-mono font-bold text-foreground">
                   {formatCurrencyBRL(inspectedRow.totalAmount)}
@@ -854,7 +819,7 @@ export function CompoundInterestFeature() {
 
             {/* Área do Gráfico de Barras Empilhadas */}
             <div className="relative pt-1">
-              <div className="flex h-56 items-end gap-1 sm:gap-1.5 border-b border-l border-border/70 px-2.5 pt-3 pb-1">
+              <div className="flex h-48 sm:h-56 items-end gap-1 sm:gap-1.5 border-b border-l border-border/70 px-2 pt-3 pb-1">
                 {chartRows.map((row, idx) => {
                   const maxAmount = Math.max(result.finalAmount, 1);
                   const investedHeightPct = Math.max(
@@ -909,7 +874,7 @@ export function CompoundInterestFeature() {
               </div>
 
               {/* Eixo X e Escala Resumida */}
-              <div className="mt-2.5 flex items-center justify-between font-mono text-xs text-muted-foreground">
+              <div className="mt-2 flex items-center justify-between font-mono text-[11px] sm:text-xs text-muted-foreground">
                 <span>Início (Mês 0)</span>
                 <span>
                   Meio (
@@ -926,31 +891,30 @@ export function CompoundInterestFeature() {
       </div>
 
       {/* Seção 3: Tabela de Evolução Período a Período (#evolutionTable) */}
-      <Card id="evolutionTable" className="p-4 sm:p-5">
+      <Card id="evolutionTable" className="p-3.5 sm:p-5">
         <CardHeader className="p-0 pb-2">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
             <div className="space-y-0.5">
               <CardTitle className="flex items-center gap-2 text-base font-bold sm:text-lg">
                 <TableIcon className="size-4 text-primary sm:size-5" />
                 Tabela de Evolução Detalhada
               </CardTitle>
               <CardDescription className="text-xs sm:text-sm leading-relaxed">
-                Acompanhe o efeito bola de neve dos juros compostos período a
-                período.
+                Acompanhe o efeito dos juros compostos período a período.
               </CardDescription>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2.5">
+            <div className="flex flex-wrap items-center gap-2">
               <Tabs
                 value={tableMode}
                 onValueChange={(v) => setTableMode(v as "monthly" | "yearly")}
               >
-                <TabsList className="h-9 sm:h-10 p-1">
-                  <TabsTrigger value="monthly" className="px-3 text-xs sm:text-sm">
-                    Visão Mensal ({result.monthlyEvolution.length})
+                <TabsList className="h-8 sm:h-9 p-1">
+                  <TabsTrigger value="monthly" className="px-2.5 text-xs">
+                    Mensal ({result.monthlyEvolution.length})
                   </TabsTrigger>
-                  <TabsTrigger value="yearly" className="px-3 text-xs sm:text-sm">
-                    Visão Anual ({result.yearlyEvolution.length})
+                  <TabsTrigger value="yearly" className="px-2.5 text-xs">
+                    Anual ({result.yearlyEvolution.length})
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
@@ -959,32 +923,32 @@ export function CompoundInterestFeature() {
                 type="button"
                 variant="outline"
                 onClick={handleDownloadCsv}
-                className="h-9 sm:h-10 gap-2 px-3.5 text-xs sm:text-sm font-medium"
+                className="h-8 sm:h-9 gap-1.5 px-3 text-xs font-medium"
               >
-                <Download className="size-4" />
+                <Download className="size-3.5" />
                 Exportar CSV
               </Button>
             </div>
           </div>
         </CardHeader>
-        <CardContent className="space-y-4 p-0">
-          <div className="max-h-[480px] overflow-auto rounded-xl border">
+        <CardContent className="space-y-3.5 p-0">
+          <div className="max-h-[440px] overflow-auto rounded-xl border">
             <Table>
               <TableHeader className="sticky top-0 z-10 bg-muted/95 backdrop-blur-xs">
                 <TableRow>
-                  <TableHead className="w-[130px] px-4 py-2.5 text-xs font-semibold uppercase tracking-wider">
+                  <TableHead className="w-[110px] px-3 py-2 text-xs font-semibold uppercase tracking-wider">
                     {tableMode === "monthly" ? "Meses" : "Anos"}
                   </TableHead>
-                  <TableHead className="px-4 py-2.5 text-right text-xs font-semibold uppercase tracking-wider">
+                  <TableHead className="px-3 py-2 text-right text-xs font-semibold uppercase tracking-wider">
                     Juros
                   </TableHead>
-                  <TableHead className="px-4 py-2.5 text-right text-xs font-semibold uppercase tracking-wider">
+                  <TableHead className="px-3 py-2 text-right text-xs font-semibold uppercase tracking-wider">
                     Total Investido
                   </TableHead>
-                  <TableHead className="px-4 py-2.5 text-right text-xs font-semibold uppercase tracking-wider">
+                  <TableHead className="px-3 py-2 text-right text-xs font-semibold uppercase tracking-wider">
                     Total Juros
                   </TableHead>
-                  <TableHead className="px-4 py-2.5 text-right text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+                  <TableHead className="px-3 py-2 text-right text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
                     Acumulado
                   </TableHead>
                 </TableRow>
@@ -992,12 +956,12 @@ export function CompoundInterestFeature() {
               <TableBody>
                 {visibleTableRows.map((row) => (
                   <TableRow key={`${tableMode}-${row.month}`}>
-                    <TableCell className="px-4 py-2.5 text-xs sm:text-sm font-mono font-medium">
+                    <TableCell className="px-3 py-2 text-xs font-mono font-medium">
                       {tableMode === "monthly" ? (
                         row.month === 0 ? (
                           <Badge
                             variant="outline"
-                            className="px-2 py-0.5 font-mono text-xs"
+                            className="px-1.5 py-0 font-mono text-[11px]"
                           >
                             Mês 0
                           </Badge>
@@ -1007,7 +971,7 @@ export function CompoundInterestFeature() {
                       ) : row.month === 0 ? (
                         <Badge
                           variant="outline"
-                          className="px-2 py-0.5 font-mono text-xs"
+                          className="px-1.5 py-0 font-mono text-[11px]"
                         >
                           Início
                         </Badge>
@@ -1015,16 +979,16 @@ export function CompoundInterestFeature() {
                         `Ano ${row.year} (${row.month}m)`
                       )}
                     </TableCell>
-                    <TableCell className="px-4 py-2.5 text-right text-xs sm:text-sm font-mono text-muted-foreground">
+                    <TableCell className="px-3 py-2 text-right text-xs font-mono text-muted-foreground">
                       {formatCurrencyBRL(row.periodInterest)}
                     </TableCell>
-                    <TableCell className="px-4 py-2.5 text-right text-xs sm:text-sm font-mono text-blue-600 dark:text-blue-400">
+                    <TableCell className="px-3 py-2 text-right text-xs font-mono text-blue-600 dark:text-blue-400">
                       {formatCurrencyBRL(row.totalInvested)}
                     </TableCell>
-                    <TableCell className="px-4 py-2.5 text-right text-xs sm:text-sm font-mono text-amber-600 dark:text-amber-400">
+                    <TableCell className="px-3 py-2 text-right text-xs font-mono text-amber-600 dark:text-amber-400">
                       {formatCurrencyBRL(row.totalInterest)}
                     </TableCell>
-                    <TableCell className="px-4 py-2.5 text-right text-xs sm:text-sm font-mono font-bold text-emerald-700 dark:text-emerald-400">
+                    <TableCell className="px-3 py-2 text-right text-xs font-mono font-bold text-emerald-700 dark:text-emerald-400">
                       {formatCurrencyBRL(row.totalAmount)}
                     </TableCell>
                   </TableRow>
@@ -1039,16 +1003,16 @@ export function CompoundInterestFeature() {
                 type="button"
                 variant="outline"
                 onClick={() => setShowAllMonths((prev) => !prev)}
-                className="h-9 sm:h-10 gap-2 px-4 text-xs sm:text-sm font-medium"
+                className="h-8 sm:h-9 gap-1.5 px-3.5 text-xs font-medium"
               >
                 {showAllMonths ? (
                   <>
-                    <ChevronUp className="size-4" />
+                    <ChevronUp className="size-3.5" />
                     Recolher tabela (mostrar primeiros 24 meses)
                   </>
                 ) : (
                   <>
-                    <ChevronDown className="size-4" />
+                    <ChevronDown className="size-3.5" />
                     Mostrar todos os {activeTableRows.length - 1} meses
                   </>
                 )}
@@ -1059,7 +1023,7 @@ export function CompoundInterestFeature() {
       </Card>
 
       {/* Seção 4: Guia Educativo e Fórmula Passo a Passo */}
-      <Card className="p-4 sm:p-5">
+      <Card className="p-3.5 sm:p-5">
         <CardHeader className="p-0 pb-2">
           <CardTitle className="flex items-center gap-2 text-base font-bold sm:text-lg">
             <BookOpen className="size-4 text-primary sm:size-5" />
@@ -1070,39 +1034,39 @@ export function CompoundInterestFeature() {
             passo a passo com os seus números.
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-5 p-0 text-sm leading-relaxed">
-          <div className="grid grid-cols-1 gap-4 sm:gap-5 md:grid-cols-2">
-            <div className="space-y-3 rounded-xl border bg-muted/30 p-4">
-              <h3 className="flex items-center gap-2 text-sm sm:text-base font-semibold text-foreground">
+        <CardContent className="space-y-4 p-0 text-sm leading-relaxed">
+          <div className="grid grid-cols-1 gap-3.5 sm:gap-5 md:grid-cols-2">
+            <div className="space-y-2.5 rounded-xl border bg-muted/30 p-3.5 sm:p-4">
+              <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
                 <Info className="size-4 text-emerald-500" />
                 1. Fórmulas Matemáticas Exatas
               </h3>
-              <p className="text-xs sm:text-sm leading-relaxed text-muted-foreground">
+              <p className="text-xs leading-relaxed text-muted-foreground">
                 Quando há um aporte inicial (<code className="font-mono">P₀</code>)
                 combinado com aportes mensais constantes (
                 <code className="font-mono">PMT</code>), o Valor Futuro (
                 <code className="font-mono">FV</code>) após{" "}
                 <code className="font-mono">N</code> meses é dado por:
               </p>
-              <div className="overflow-x-auto rounded-lg border bg-background p-3 font-mono text-xs sm:text-sm">
+              <div className="overflow-x-auto rounded-lg border bg-background p-2.5 font-mono text-xs">
                 FV = P₀ · (1 + iₘ)ᴺ + PMT · [((1 + iₘ)ᴺ - 1) / iₘ]
               </div>
-              <p className="text-xs sm:text-sm leading-relaxed text-muted-foreground">
+              <p className="text-xs leading-relaxed text-muted-foreground">
                 Onde <code className="font-mono">iₘ</code> é a taxa efetiva
                 mensal. Quando você informa uma taxa anual (
                 <code className="font-mono">iₐ</code>), usamos a equivalência
                 exponencial composta exata:
               </p>
-              <div className="rounded-lg border bg-background p-3 font-mono text-xs sm:text-sm font-medium text-emerald-600 dark:text-emerald-400">
+              <div className="rounded-lg border bg-background p-2.5 font-mono text-xs font-medium text-emerald-600 dark:text-emerald-400">
                 iₘ = (1 + iₐ)^(1/12) - 1
               </div>
             </div>
 
-            <div className="space-y-3 rounded-xl border bg-muted/30 p-4">
-              <h3 className="text-sm sm:text-base font-semibold text-foreground">
+            <div className="space-y-2.5 rounded-xl border bg-muted/30 p-3.5 sm:p-4">
+              <h3 className="text-sm font-semibold text-foreground">
                 2. Passo a Passo da Sua Simulação Atual
               </h3>
-              <ul className="space-y-2 text-xs sm:text-sm text-muted-foreground">
+              <ul className="space-y-1.5 text-xs text-muted-foreground">
                 <li className="flex items-center justify-between border-b pb-1.5">
                   <span>Capital Inicial (P₀):</span>
                   <strong className="font-mono text-foreground">
@@ -1163,7 +1127,7 @@ export function CompoundInterestFeature() {
 
           <Separator />
 
-          <div className="grid grid-cols-1 gap-4 sm:gap-5 text-xs sm:text-sm leading-relaxed text-muted-foreground sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3.5 sm:gap-5 text-xs leading-relaxed text-muted-foreground sm:grid-cols-3">
             <div className="space-y-1">
               <h4 className="font-semibold text-foreground">
                 Juros Simples vs. Compostos

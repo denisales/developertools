@@ -1,0 +1,56 @@
+name: CI - Quality Gates, Coverage & E2E
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  quality-and-e2e:
+    name: Lint, Typecheck, Coverage >= 90%, Build & Playwright E2E
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint (Zero any policy)
+        run: npm run lint
+
+      - name: Run TypeScript Strict Check
+        run: npm run typecheck
+
+      - name: Run Unit & Component Tests with V8 Coverage (>= 90%)
+        run: npm run test:coverage
+
+      - name: Verify E2E Route & Registry Coverage
+        run: npm run test:e2e:coverage
+
+      - name: Build Next.js Production Bundle
+        run: npm run build
+
+      - name: Install Playwright Chromium
+        run: npx playwright install chromium --with-deps
+
+      - name: Run Playwright E2E (with Local BCB Mock Server)
+        run: npm run test:e2e
+
+      - name: Upload Playwright Report & Diff Artifacts on Failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-and-diffs
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7

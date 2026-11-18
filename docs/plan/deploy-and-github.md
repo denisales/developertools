@@ -70,16 +70,16 @@ Para manter a branch `main` sempre pronta para produção (Continuous Deployment
 
 ---
 
-## 4. Pipeline de CI/CD com GitHub Actions (`.github/workflows/ci.yml`)
+## 4. Pipeline de CI/CD com GitHub Actions (`.github/workflows/ci.yml`) e Mock Server BCB para E2E
 
-O pipeline abaixo espelha exatamente os gates locais do `.husky/pre-commit` para garantir que nenhuma branch quebre lint, tipagem estrita (Zero `any`), cobertura unitária (`>= 90%`), cobertura E2E de rotas, build Next.js ou suíte Playwright (Desktop & Mobile):
+O pipeline versionado em `.github/workflows/ci.yml` espelha os gates locais do `.husky/pre-commit` para validar PRs e deploys na `main`, garantindo que nenhuma alteração quebre lint, tipagem estrita (Zero `any`), cobertura unitária (`>= 90%`), cobertura E2E de rotas, build Next.js ou a suíte Playwright (Desktop & Mobile):
 
 ```yaml
 name: CI - Quality Gates, Coverage & E2E
 
 on:
   push:
-    branches: [main, "feat/**"]
+    branches: [main]
   pull_request:
     branches: [main]
 
@@ -117,11 +117,47 @@ jobs:
         run: npm run build
 
       - name: Install Playwright Chromium
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install chromium --with-deps
 
-      - name: Run Playwright E2E (Functional Scenarios & Desktop/Mobile Snapshots)
+      - name: Run Playwright E2E (with Local BCB Mock Server)
         run: npm run test:e2e
+
+      - name: Upload Playwright Report & Diff Artifacts on Failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-and-diffs
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
 ```
+
+### 4.1. Servidor Mock Local da API do Banco Central (`tests/mocks/bcb-mock-server.mjs`)
+
+Para garantir que os testes E2E (`npm run test:e2e`) sejam 100% determinísticos, offline-safe e independentes de instabilidades externas da API `api.bcb.gov.br`, o repositório inclui um servidor HTTP Node.js sem dependências externas em `tests/mocks/bcb-mock-server.mjs`:
+
+- **Endereçamento e Porta:** Escuta em `127.0.0.1:${PORT || 4100}` (padrão `http://127.0.0.1:4100`).
+- **Integração Automática no `playwright.config.ts`:** O bloco `webServer` do Playwright inicia **dois servidores** automaticamente antes dos testes (com `reuseExistingServer: false`):
+  1. `node tests/mocks/bcb-mock-server.mjs` aguardando `http://127.0.0.1:4100/__health`.
+  2. `npx next start -p 3100 -H 127.0.0.1` (executando `npm run build` automaticamente caso `.next/BUILD_ID` não exista) com a variável de ambiente `BCB_API_BASE_URL=http://127.0.0.1:4100`.
+- **Rotas Suportadas:**
+  - `GET /__health` -> `200 OK` (`{"status":"ok","service":"bcb-sgs-mock"}`)
+  - `GET /dados/serie/bcdata.sgs.:seriesId/dados/ultimos/:count` (aceita `?formato=json`)
+  - `GET /dados/serie/bcdata.sgs.:seriesId/dados` (aceita `?formato=json`, `dataInicial`, `dataFinal`)
+  - `?mockError=500` (ou qualquer status 4xx/5xx) -> Simula falha de API para testes de fallback
+  - Séries desconhecidas -> `404` em JSON
+- **Séries Determinísticas (`data: "18/11/2026"`):**
+  - `4389` (Taxa DI / CDI anualizado): `"14.15"`
+  - `432` (Selic Meta anualizada): `"14.25"`
+  - `433` (IPCA Mensal): `"0.42"`
+  - `13522` (IPCA Acumulado 12m): `"4.50"` (`IPCA + 6%` = `10.77%`)
+  - `1` (Dólar PTAX Venda): `"5.7845"`
+  - `10813` (Dólar PTAX Compra): `"5.7839"`
+  - `195` (Poupança Mensal): `"0.50"`
+  - `11` (Selic Diária): `"0.0525"`
+  - `189` (IGP-M Mensal): `"0.61"`
+  - `21619` (Euro PTAX Venda): `"6.1230"`
 
 ---
 

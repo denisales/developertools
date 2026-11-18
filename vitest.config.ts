@@ -21,6 +21,10 @@ export default defineConfig({
         "src/features/**/*.{ts,tsx}",
         "src/config/**/*.ts",
         "src/lib/**/*.ts",
+        "src/services/**/*.ts",
+        "src/app/api/**/*.ts",
+        "src/components/layout/sidebar-nav.tsx",
+        "src/components/layout/site-header.tsx",
       ],
       exclude: ["src/**/*.test.{ts,tsx}", "src/**/*.d.ts"],
       thresholds: {

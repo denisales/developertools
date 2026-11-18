@@ -1,7 +1,22 @@
 import type { Metadata } from "next";
+import { Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
 import { Toaster } from "sonner";
 import { AppShell } from "@/components/layout/app-shell";
 import "./globals.css";
+
+const plusJakartaSans = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  variable: "--font-jakarta",
+  display: "swap",
+  weight: ["400", "500", "600", "700", "800"],
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-jetbrains-mono",
+  display: "swap",
+  weight: ["400", "500", "600", "700"],
+});
 
 export const metadata: Metadata = {
   title: {
@@ -18,8 +33,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR" suppressHydrationWarning>
-      <body className="min-h-dvh font-sans antialiased">
+    <html
+      lang="pt-BR"
+      suppressHydrationWarning
+      className={`${plusJakartaSans.variable} ${jetbrainsMono.variable}`}
+    >
+      <body className="min-h-dvh font-sans text-base leading-relaxed antialiased">
         <AppShell>{children}</AppShell>
         <Toaster richColors position="bottom-right" />
       </body>

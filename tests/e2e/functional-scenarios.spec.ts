@@ -1,9 +1,24 @@
 import { expect, test } from "@playwright/test";
 
+interface MockIndicatorPoint {
+  seriesId: number;
+  name: string;
+  unit: string;
+  value: number;
+  date: string;
+  source: "bcb" | "fallback";
+}
+
 interface IndicatorsApiResponse {
-  selicMeta: { value: number };
-  taxaDi: { value: number };
-  ipcaPlus6Anual: { value: number };
+  selicMeta: MockIndicatorPoint;
+  taxaDi: MockIndicatorPoint;
+  ipcaMensal: MockIndicatorPoint;
+  ipca12Meses: MockIndicatorPoint;
+  dolarPtaxVenda: MockIndicatorPoint;
+  dolarPtaxCompra: MockIndicatorPoint;
+  poupancaAnual: MockIndicatorPoint;
+  ipcaPlus6Anual: MockIndicatorPoint;
+  updatedAt: string;
   usedFallback: boolean;
 }
 
@@ -483,32 +498,30 @@ test.describe("Functional E2E Scenarios — All Screens (Desktop & Mobile)", () 
     });
   });
 
-  test("Dynamic BCB indicators via local mock server (/api/indicators -> 127.0.0.1:4100)", async ({
+  test("Zero-flicker SSR/Suspense BCB indicators without redundant mount /api/indicators request", async ({
     page,
   }) => {
-    const indicatorsResponsePromise = page.waitForResponse(
-      (res) =>
-        res.url().includes("/api/indicators") && res.request().method() === "GET"
-    );
+    const mountIndicatorRequests: string[] = [];
+    page.on("request", (request) => {
+      if (request.url().includes("/api/indicators")) {
+        mountIndicatorRequests.push(request.url());
+      }
+    });
 
     await page.goto("/calculadora-juros-compostos", {
       waitUntil: "networkidle",
     });
 
-    const indicatorsResponse = await indicatorsResponsePromise;
-    expect(indicatorsResponse.status()).toBe(200);
-
-    const payload = (await indicatorsResponse.json()) as IndicatorsApiResponse;
-    expect(payload.usedFallback).toBe(false);
-    expect(payload.taxaDi.value).toBe(14.15);
-    expect(payload.selicMeta.value).toBe(14.25);
-    expect(payload.ipcaPlus6Anual.value).toBe(10.77);
-
+    // Server Component + <Suspense> must stream initial BCB rates directly with zero mount fetch
+    expect(mountIndicatorRequests).toEqual([]);
+    await expect(page.getByTestId("bcb-presets-skeleton")).toHaveCount(0);
     await expect(page.getByTestId("bcb-presets-bar")).toBeVisible();
+    await expect(page.getByTestId("refresh-bcb-indicators")).toBeVisible();
+
     const indicatorsStatus = page.getByTestId("bcb-indicators-status");
-    await expect(indicatorsStatus).toContainText("Taxas BCB • Ref. 18/11/2026");
-    await expect(indicatorsStatus).toContainText("IPCA 12m: 4,50%");
-    await expect(indicatorsStatus).toContainText("Dólar PTAX: R$ 5,78");
+    await expect(indicatorsStatus).toContainText(
+      "Taxas BCB • Ref. 18/11/2026 • IPCA 12m: 4,50% • Dólar PTAX: R$ 5,78"
+    );
 
     const cdiPreset = page.getByTestId("preset-cdi-100");
     const selicPreset = page.getByTestId("preset-selic");
@@ -523,9 +536,119 @@ test.describe("Functional E2E Scenarios — All Screens (Desktop & Mobile)", () 
     await expect(page.locator("#select-rate")).toContainText("Anual");
   });
 
-  test("Compound Interest graceful fallback when /api/indicators fails (HTTP 500)", async ({
+  test("Compound Interest skeleton loader on refresh and graceful HTTP 500 fallback", async ({
     page,
   }) => {
+    await page.goto("/calculadora-juros-compostos", {
+      waitUntil: "networkidle",
+    });
+
+    const refreshButton = page.getByTestId("refresh-bcb-indicators");
+    await expect(refreshButton).toBeVisible();
+    await expect(page.getByTestId("preset-cdi-100")).toContainText(
+      "CDI 14,15%"
+    );
+
+    const refreshedIndicators: IndicatorsApiResponse = {
+      selicMeta: {
+        seriesId: 432,
+        name: "Taxa Selic Meta",
+        unit: "% a.a.",
+        value: 15.0,
+        date: "19/11/2026",
+        source: "bcb",
+      },
+      taxaDi: {
+        seriesId: 4389,
+        name: "Taxa DI",
+        unit: "% a.a.",
+        value: 14.9,
+        date: "19/11/2026",
+        source: "bcb",
+      },
+      ipcaMensal: {
+        seriesId: 433,
+        name: "IPCA Mensal",
+        unit: "% a.m.",
+        value: 0.45,
+        date: "19/11/2026",
+        source: "bcb",
+      },
+      ipca12Meses: {
+        seriesId: 13522,
+        name: "IPCA 12m",
+        unit: "% a.a.",
+        value: 4.8,
+        date: "19/11/2026",
+        source: "bcb",
+      },
+      dolarPtaxVenda: {
+        seriesId: 1,
+        name: "Dólar PTAX Venda",
+        unit: "R$",
+        value: 5.85,
+        date: "19/11/2026",
+        source: "bcb",
+      },
+      dolarPtaxCompra: {
+        seriesId: 10813,
+        name: "Dólar PTAX Compra",
+        unit: "R$",
+        value: 5.84,
+        date: "19/11/2026",
+        source: "bcb",
+      },
+      poupancaAnual: {
+        seriesId: 195,
+        name: "Poupança",
+        unit: "% a.a.",
+        value: 6.17,
+        date: "19/11/2026",
+        source: "bcb",
+      },
+      ipcaPlus6Anual: {
+        seriesId: 13522,
+        name: "IPCA+ 6%",
+        unit: "% a.a.",
+        value: 11.09,
+        date: "19/11/2026",
+        source: "bcb",
+      },
+      updatedAt: "2026-11-19T12:00:00.000Z",
+      usedFallback: false,
+    };
+
+    // 1. Delayed refresh must display BcbPresetsSkeleton (never stale chips) and then resolve to refreshed presets
+    await page.route("**/api/indicators", async (route) => {
+      await new Promise((r) => setTimeout(r, 250));
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(refreshedIndicators),
+      });
+    });
+
+    await refreshButton.click();
+    await expect(page.getByTestId("bcb-presets-skeleton")).toBeVisible();
+    await expect(page.getByTestId("bcb-presets-bar")).toHaveCount(0);
+
+    await expect(page.getByTestId("bcb-presets-skeleton")).toHaveCount(0);
+    await expect(page.getByTestId("bcb-presets-bar")).toBeVisible();
+    await expect(page.getByTestId("preset-cdi-100")).toContainText(
+      "CDI 14,90%"
+    );
+    await expect(page.getByTestId("preset-selic")).toContainText(
+      "Selic 15,00%"
+    );
+    await expect(page.getByTestId("preset-ipca-plus")).toContainText(
+      "IPCA+ 11,09%"
+    );
+    await expect(page.getByTestId("bcb-indicators-status")).toContainText(
+      "Taxas BCB • Ref. 19/11/2026 • IPCA 12m: 4,80% • Dólar PTAX: R$ 5,85"
+    );
+
+    // 2. Refresh failing with HTTP 500 must render graceful fallback defaults without crashing
+    await page.unroute("**/api/indicators");
     await page.route("**/api/indicators", (route) =>
       route.fulfill({
         status: 500,
@@ -534,17 +657,18 @@ test.describe("Functional E2E Scenarios — All Screens (Desktop & Mobile)", () 
       })
     );
 
-    await page.goto("/calculadora-juros-compostos", {
-      waitUntil: "networkidle",
-    });
+    await page.getByTestId("refresh-bcb-indicators").click();
 
-    // Presets and status caption must still render with resilient fallback defaults
     await expect(page.getByTestId("bcb-presets-bar")).toBeVisible();
     await expect(page.getByTestId("bcb-indicators-status")).toContainText(
-      "Taxas de referência padrão"
+      "Taxas de referência padrão • Selic 14,25% • CDI 14,15% • IPCA+ 10,77%"
     );
-    await expect(page.getByTestId("preset-selic")).toBeVisible();
-    await expect(page.getByTestId("preset-cdi-100")).toBeVisible();
+    await expect(page.getByTestId("preset-selic")).toContainText(
+      "Selic 14,25%"
+    );
+    await expect(page.getByTestId("preset-cdi-100")).toContainText(
+      "CDI 14,15%"
+    );
 
     const monthlyPreset = page.getByTestId("preset-carteira-1");
     await expect(monthlyPreset).toBeVisible();

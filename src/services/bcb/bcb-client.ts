@@ -51,12 +51,68 @@ export interface FetchBcbLatestMeta {
   timeoutMs?: number;
 }
 
+class BcbHttpError extends Error {
+  readonly status: number;
+
+  constructor(status: number, seriesId: number) {
+    super(`BCB SGS HTTP ${status} for series ${seriesId}`);
+    this.name = "BcbHttpError";
+    this.status = status;
+  }
+}
+
+class BcbEmptyBodyError extends Error {
+  constructor(seriesId: number) {
+    super(`BCB SGS returned empty response body for series ${seriesId}`);
+    this.name = "BcbEmptyBodyError";
+  }
+}
+
 function roundTo2(value: number): number {
   return Math.round(value * 100) / 100;
 }
 
 function annualizeMonthlyRate(monthlyPct: number): number {
   return roundTo2((Math.pow(1 + monthlyPct / 100, 12) - 1) * 100);
+}
+
+function parseBcbDateKey(dateStr: string): number {
+  const match = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(dateStr.trim());
+  if (!match) {
+    return -1;
+  }
+
+  const day = Number(match[1]);
+  const month = Number(match[2]);
+  const year = Number(match[3]);
+  return year * 10000 + month * 100 + day;
+}
+
+function selectLatestBcbPoint(points: BcbRawPoint[]): BcbRawPoint | undefined {
+  if (points.length === 0) {
+    return undefined;
+  }
+
+  let latest = points[0];
+  let latestDateKey = parseBcbDateKey(latest.data);
+
+  for (let i = 1; i < points.length; i += 1) {
+    const candidate = points[i];
+    const candidateDateKey = parseBcbDateKey(candidate.data);
+    if (candidateDateKey >= latestDateKey) {
+      latest = candidate;
+      latestDateKey = candidateDateKey;
+    }
+  }
+
+  return latest;
+}
+
+function isRetryableLatestError(error: unknown): boolean {
+  if (error instanceof BcbHttpError) {
+    return error.status === 304;
+  }
+  return error instanceof BcbEmptyBodyError;
 }
 
 function isBcbRawPoint(value: unknown): value is BcbRawPoint {
@@ -174,12 +230,15 @@ export async function fetchBcbSeries(
     });
 
     if (!response.ok) {
-      throw new Error(
-        `BCB SGS HTTP ${response.status} for series ${seriesId}`,
-      );
+      throw new BcbHttpError(response.status, seriesId);
     }
 
-    const payload: unknown = await response.json();
+    const rawBody = await response.text();
+    if (rawBody.trim().length === 0) {
+      throw new BcbEmptyBodyError(seriesId);
+    }
+
+    const payload: unknown = JSON.parse(rawBody);
     if (!Array.isArray(payload)) {
       throw new Error(
         `BCB SGS returned non-array payload for series ${seriesId}`,
@@ -202,6 +261,29 @@ export async function fetchBcbSeries(
   }
 }
 
+async function fetchLatestPointsWithRetry(
+  seriesId: number,
+  timeoutMs?: number,
+): Promise<BcbRawPoint[]> {
+  try {
+    return await fetchBcbSeries(seriesId, {
+      last: 1,
+      timeoutMs,
+    });
+  } catch (error) {
+    if (!isRetryableLatestError(error)) {
+      throw error;
+    }
+
+    // BCB's Azure Front Door CDN can return HTTP 304 / empty body on ultimos/1;
+    // retrying once with ultimos/2 bypasses the poisoned cache key.
+    return fetchBcbSeries(seriesId, {
+      last: 2,
+      timeoutMs,
+    });
+  }
+}
+
 /**
  * Fetches the latest point of a BCB SGS series, returning a structured fallback on error.
  */
@@ -210,12 +292,9 @@ export async function fetchBcbSeriesLatest(
   meta: FetchBcbLatestMeta,
 ): Promise<BcbIndicatorPoint> {
   try {
-    const points = await fetchBcbSeries(seriesId, {
-      last: 1,
-      timeoutMs: meta.timeoutMs,
-    });
+    const points = await fetchLatestPointsWithRetry(seriesId, meta.timeoutMs);
 
-    const latest = points[points.length - 1];
+    const latest = selectLatestBcbPoint(points);
     if (!latest) {
       throw new Error(`BCB SGS returned empty array for series ${seriesId}`);
     }

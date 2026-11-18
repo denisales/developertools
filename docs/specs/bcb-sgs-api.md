@@ -36,6 +36,7 @@ Em chamadas reais `HTTP/2 200` para `https://api.bcb.gov.br`:
 - `etag` presente nas respostas `200`, `400` e `404`
 - `correlation-id` (UUID) e `x-azure-ref` para rastreabilidade
 - **Observação sobre `formato=json`**: mesmo sem `?formato=json`, o endpoint atualmente retorna `application/json; charset=utf-8` por padrão, porém manter `?formato=json` explícito garante compatibilidade caso o gateway altere o default para CSV.
+- **Comportamento anômalo do CDN (Azure Front Door) em `ultimos/1`**: em testes reais via `curl` na série `4389` (`/dados/serie/bcdata.sgs.4389/dados/ultimos/1?formato=json`), a borda Azure Front Door do BCB retornou **`HTTP/2 304`** com **corpo vazio**, mesmo quando a requisição foi enviada sem `If-None-Match`. Em paralelo, a chamada para `ultimos/2?formato=json` retornou **`HTTP 200`** com `[{"data":"16/11/2026","valor":"13.65"},{"data":"13/11/2026","valor":"13.65"}]`.
 
 ---
 
@@ -68,8 +69,9 @@ Em chamadas reais `HTTP/2 200` para `https://api.bcb.gov.br`:
 3. **Valores negativos**: índices de inflação (como IPCA `433`) podem ter deflação (ex.: `01/08/2026` retornou `"-0.32"` em `ultimos/12`).
 4. **Campo extra na Poupança (`195`)**: além de `data` e `valor`, retorna `"dataFim"` indicando a data de aniversário no mês seguinte (`16/11/2026` -> `16/12/2026`). A taxa retornada é **mensal** (`% a.m.`), convertida para anual pelo serviço via equivalência composta: $((1 + i_m / 100)^{12} - 1) \times 100$.
 5. **Selic Meta (`432`) com data futura no ciclo COPOM**: a série preenche datas diárias até o fim do período vigente definido na última reunião do COPOM (observado `"09/12/2026"` em `ultimos/1`).
-6. **Consulta `ultimos/12` e intervalo de datas**:
+6. **Consulta `ultimos/{N}` e intervalo de datas**:
    - `ultimos/12` retorna um array ordenado do registro mais antigo para o mais recente (ex.: `01/11/2025` até `01/10/2026` na série `433`).
+   - `ultimos/2` pode retornar registros em ordem **decrescente** (mais recente primeiro, ex.: `16/11/2026` antes de `13/11/2026` na série `4389`). Por isso, `fetchBcbSeriesLatest()` converte `dd/mm/aaaa` em inteiro comparável `YYYYMMDD` e seleciona explicitamente o ponto com a data mais recente, independente da ordenação.
    - Consulta com `?formato=json&dataInicial=01/10/2026&dataFinal=18/11/2026` na série `433` retornou `[{"data":"01/10/2026","valor":"0.14"}]`.
 
 ---
@@ -78,12 +80,15 @@ Em chamadas reais `HTTP/2 200` para `https://api.bcb.gov.br`:
 
 | Cenário Testado | Status HTTP | Content-Type | Corpo Real da Resposta |
 | :--- | :---: | :--- | :--- |
+| Cache CDN anômalo em `ultimos/1` (`4389`, sem `If-None-Match`) | `304` | `(vazio)` | `(corpo vazio)` |
 | Série inexistente (`99999999`) | `404` | `text/plain; charset=utf-8` | `A serie nao existe!` |
 | Data inicial inválida (`dataInicial=invalid`) | `400` | `application/json; charset=utf-8` | `{"erro":"dataInicial invalida. Informe uma data existente no formato dd/mm/aaaa."}` |
 | Intervalo sem dados (`01/01/2030` a `02/01/2030`) | `404` | `application/json; charset=utf-8` | `{"erro":{"statusCode":404,"detail":"br.gov.bcb.pec.sgs.comum.excecoes.SGSNegocioException: Value(s) not found"}}` |
 | Série diária (`1`) sem `dataInicial` | `406` | `application/json; charset=utf-8` | `{"error":"O sistema aceita uma janela de consulta de, no máximo, 10 anos em séries de periodicidade diária", ...}` |
 
-> **Nota de Resiliência**: Como a API do BCB pode retornar `text/plain` em `404` de série inexistente ou sofrer instabilidades temporárias/latência, o cliente `bcb-client.ts` utiliza timeout (`4500ms` por padrão via `AbortController`), valida o status HTTP e a estrutura JSON recebida (`Array` de objetos com `data` e `valor` numéricos) e aplica fallback individual por série via `Promise.allSettled` em `getMarketIndicators()`.
+> **Nota de Resiliência**:
+> - Como a API do BCB pode retornar `text/plain` em `404` de série inexistente ou sofrer instabilidades temporárias/latência, o cliente `bcb-client.ts` utiliza timeout (`4500ms` por padrão via `AbortController`), valida o status HTTP e o corpo JSON recebido (`Array` de objetos com `data` e `valor` numéricos) e aplica fallback individual por série via `Promise.allSettled` em `getMarketIndicators()`.
+> - **Mitigação para `HTTP 304` / corpo vazio em `ultimos/1`**: quando `fetchBcbSeries(seriesId, { last: 1 })` falha por `HTTP 304` ou corpo de resposta vazio em `fetchBcbSeriesLatest()`, o cliente executa automaticamente **1 retry** em `ultimos/2` (`fetchBcbSeries(seriesId, { last: 2 })`) para contornar a chave em cache no Azure Front Door e escolhe o ponto de data `dd/mm/aaaa` mais recente (`YYYYMMDD`).
 
 ---
 

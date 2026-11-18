@@ -1,5 +1,12 @@
 import { expect, test } from "@playwright/test";
 
+interface IndicatorsApiResponse {
+  selicMeta: { value: number };
+  taxaDi: { value: number };
+  ipcaPlus6Anual: { value: number };
+  usedFallback: boolean;
+}
+
 function normalizeCurrencyText(text: string | null): string {
   return (text ?? "").replace(/\u00a0/g, " ").trim();
 }
@@ -376,5 +383,188 @@ test.describe("Functional E2E Scenarios — All Screens (Desktop & Mobile)", () 
     await expect(
       evolutionSection.getByRole("tab", { name: /Mensal \(121\)/i })
     ).toBeVisible();
+  });
+
+  test("Sidebar accordion state: all 4 categories expanded on desktop (<aside>), collapsed on mobile drawer", async ({
+    page,
+  }, testInfo) => {
+    await page.goto("/", { waitUntil: "networkidle" });
+
+    if (testInfo.project.name === "desktop") {
+      const desktopAccordions = page.locator("aside button[aria-expanded]");
+      await expect(desktopAccordions).toHaveCount(4);
+      for (let i = 0; i < 4; i += 1) {
+        await expect(desktopAccordions.nth(i)).toHaveAttribute(
+          "aria-expanded",
+          "true"
+        );
+      }
+    } else {
+      const mobileMenuBtn = page.getByRole("button", {
+        name: /abrir menu de ferramentas/i,
+      });
+      await mobileMenuBtn.click();
+
+      const mobileDrawer = page.getByRole("dialog");
+      await expect(mobileDrawer).toBeVisible();
+
+      const mobileAccordions = mobileDrawer.locator("button[aria-expanded]");
+      await expect(mobileAccordions).toHaveCount(4);
+      for (let i = 0; i < 4; i += 1) {
+        await expect(mobileAccordions.nth(i)).toHaveAttribute(
+          "aria-expanded",
+          "false"
+        );
+      }
+
+      // Clicking a collapsed category expands it interactively
+      await mobileAccordions.first().click();
+      await expect(mobileAccordions.first()).toHaveAttribute(
+        "aria-expanded",
+        "true"
+      );
+    }
+  });
+
+  test("Theme persistence in localStorage across page reloads (dark and light)", async ({
+    page,
+  }) => {
+    await page.goto("/", { waitUntil: "networkidle" });
+
+    const themeToggle = page.getByRole("button", {
+      name: "Alternar tema claro/escuro",
+    });
+    await expect(themeToggle).toBeVisible();
+
+    // Ensure starting state is light (or toggle to dark explicitly)
+    await expect(page.locator("html")).not.toHaveClass(/\bdark\b/);
+
+    // Toggle to dark mode
+    await themeToggle.click();
+    await expect
+      .poll(() =>
+        page.evaluate(() => ({
+          hasDarkClass: document.documentElement.classList.contains("dark"),
+          storedTheme: localStorage.getItem("theme"),
+        }))
+      )
+      .toEqual({ hasDarkClass: true, storedTheme: "dark" });
+
+    // Reload and verify dark mode persists via localStorage + inline head script
+    await page.reload({ waitUntil: "networkidle" });
+    const afterDarkReload = await page.evaluate(() => ({
+      hasDarkClass: document.documentElement.classList.contains("dark"),
+      storedTheme: localStorage.getItem("theme"),
+    }));
+    expect(afterDarkReload).toEqual({ hasDarkClass: true, storedTheme: "dark" });
+
+    // Toggle back to light mode
+    await page
+      .getByRole("button", { name: "Alternar tema claro/escuro" })
+      .click();
+    await expect
+      .poll(() =>
+        page.evaluate(() => ({
+          hasDarkClass: document.documentElement.classList.contains("dark"),
+          storedTheme: localStorage.getItem("theme"),
+        }))
+      )
+      .toEqual({ hasDarkClass: false, storedTheme: "light" });
+
+    // Reload and verify light mode persists
+    await page.reload({ waitUntil: "networkidle" });
+    const afterLightReload = await page.evaluate(() => ({
+      hasDarkClass: document.documentElement.classList.contains("dark"),
+      storedTheme: localStorage.getItem("theme"),
+    }));
+    expect(afterLightReload).toEqual({
+      hasDarkClass: false,
+      storedTheme: "light",
+    });
+  });
+
+  test("Dynamic BCB indicators via local mock server (/api/indicators -> 127.0.0.1:4100)", async ({
+    page,
+  }) => {
+    const indicatorsResponsePromise = page.waitForResponse(
+      (res) =>
+        res.url().includes("/api/indicators") && res.request().method() === "GET"
+    );
+
+    await page.goto("/calculadora-juros-compostos", {
+      waitUntil: "networkidle",
+    });
+
+    const indicatorsResponse = await indicatorsResponsePromise;
+    expect(indicatorsResponse.status()).toBe(200);
+
+    const payload = (await indicatorsResponse.json()) as IndicatorsApiResponse;
+    expect(payload.usedFallback).toBe(false);
+    expect(payload.taxaDi.value).toBe(14.15);
+    expect(payload.selicMeta.value).toBe(14.25);
+    expect(payload.ipcaPlus6Anual.value).toBe(10.77);
+
+    await expect(page.getByTestId("bcb-presets-bar")).toBeVisible();
+    const indicatorsStatus = page.getByTestId("bcb-indicators-status");
+    await expect(indicatorsStatus).toContainText("Taxas BCB • Ref. 18/11/2026");
+    await expect(indicatorsStatus).toContainText("IPCA 12m: 4,50%");
+    await expect(indicatorsStatus).toContainText("Dólar PTAX: R$ 5,78");
+
+    const cdiPreset = page.getByTestId("preset-cdi-100");
+    const selicPreset = page.getByTestId("preset-selic");
+    const ipcaPreset = page.getByTestId("preset-ipca-plus");
+
+    await expect(cdiPreset).toContainText("CDI 14,15%");
+    await expect(selicPreset).toContainText("Selic 14,25%");
+    await expect(ipcaPreset).toContainText("IPCA+ 10,77%");
+
+    await cdiPreset.click();
+    await expect(page.locator("#rate")).toHaveValue(/^14[,.]15$/);
+    await expect(page.locator("#select-rate")).toContainText("Anual");
+  });
+
+  test("Compound Interest graceful fallback when /api/indicators fails (HTTP 500)", async ({
+    page,
+  }) => {
+    await page.route("**/api/indicators", (route) =>
+      route.fulfill({
+        status: 500,
+        contentType: "application/json",
+        body: JSON.stringify({ error: "mock failure" }),
+      })
+    );
+
+    await page.goto("/calculadora-juros-compostos", {
+      waitUntil: "networkidle",
+    });
+
+    // Presets and status caption must still render with resilient fallback defaults
+    await expect(page.getByTestId("bcb-presets-bar")).toBeVisible();
+    await expect(page.getByTestId("bcb-indicators-status")).toContainText(
+      "Taxas de referência padrão"
+    );
+    await expect(page.getByTestId("preset-selic")).toBeVisible();
+    await expect(page.getByTestId("preset-cdi-100")).toBeVisible();
+
+    const monthlyPreset = page.getByTestId("preset-carteira-1");
+    await expect(monthlyPreset).toBeVisible();
+    await monthlyPreset.click();
+
+    await expect(page.locator("#rate")).toHaveValue(/^1[,.]00$/);
+    await expect(page.locator("#select-rate")).toContainText("Mensal");
+
+    await page.locator("#mainValue").fill("1000000");
+    await page.locator("#investment").fill("100000");
+    await page.locator("#period").fill("1");
+
+    expect(
+      normalizeCurrencyText(await page.locator("#invested").textContent())
+    ).toBe("R$ 22.000,00");
+    expect(
+      normalizeCurrencyText(await page.locator("#amount").textContent())
+    ).toBe("R$ 23.950,75");
+    expect(
+      normalizeCurrencyText(await page.locator("#interest").textContent())
+    ).toBe("R$ 1.950,75");
   });
 });

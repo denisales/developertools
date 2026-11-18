@@ -29,6 +29,40 @@ import { SidebarNav } from "@/components/layout/sidebar-nav";
 import { ToolIcon } from "@/components/layout/tool-icon";
 import { Badge } from "@/components/ui/badge";
 
+const THEME_CHANGE_EVENT = "devtools-theme-change";
+
+function getThemeSnapshot(): boolean {
+  try {
+    const storedTheme = localStorage.getItem("theme");
+    if (storedTheme === "dark") return true;
+    if (storedTheme === "light") return false;
+  } catch {
+    // Ignore storage errors
+  }
+
+  if (document.documentElement.classList.contains("dark")) {
+    return true;
+  }
+
+  return (
+    typeof window.matchMedia === "function" &&
+    window.matchMedia("(prefers-color-scheme: dark)").matches
+  );
+}
+
+function getThemeServerSnapshot(): boolean {
+  return false;
+}
+
+function subscribeToTheme(callback: () => void): () => void {
+  window.addEventListener("storage", callback);
+  window.addEventListener(THEME_CHANGE_EVENT, callback);
+  return () => {
+    window.removeEventListener("storage", callback);
+    window.removeEventListener(THEME_CHANGE_EVENT, callback);
+  };
+}
+
 export function SiteHeader() {
   const pathname = usePathname();
   const router = useRouter();
@@ -38,7 +72,15 @@ export function SiteHeader() {
   const [mobileSearchOpen, setMobileSearchOpen] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState("");
   const [searchFocused, setSearchFocused] = React.useState(false);
-  const [isDark, setIsDark] = React.useState(false);
+  const isDark = React.useSyncExternalStore(
+    subscribeToTheme,
+    getThemeSnapshot,
+    getThemeServerSnapshot
+  );
+
+  React.useEffect(() => {
+    document.documentElement.classList.toggle("dark", isDark);
+  }, [isDark]);
 
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -70,12 +112,12 @@ export function SiteHeader() {
     const root = document.documentElement;
     const nextDark = !root.classList.contains("dark");
     root.classList.toggle("dark", nextDark);
-    setIsDark(nextDark);
     try {
       localStorage.setItem("theme", nextDark ? "dark" : "light");
     } catch {
       // Ignore storage errors
     }
+    window.dispatchEvent(new Event(THEME_CHANGE_EVENT));
   };
 
   const q = searchQuery.trim().toLowerCase();
@@ -133,7 +175,10 @@ export function SiteHeader() {
                   Geradores, validadores e calculadoras financeiras.
                 </SheetDescription>
               </SheetHeader>
-              <SidebarNav onNavigate={() => setMobileOpen(false)} />
+              <SidebarNav
+                defaultExpanded={false}
+                onNavigate={() => setMobileOpen(false)}
+              />
             </SheetContent>
           </Sheet>
 

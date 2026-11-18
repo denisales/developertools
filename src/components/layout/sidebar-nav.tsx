@@ -15,21 +15,26 @@ import { Badge } from "@/components/ui/badge";
 import { ToolIcon } from "@/components/layout/tool-icon";
 
 interface SidebarNavProps {
+  defaultExpanded?: boolean;
   onNavigate?: () => void;
   className?: string;
 }
 
-export function SidebarNav({ onNavigate, className }: SidebarNavProps) {
+export function SidebarNav({
+  defaultExpanded = false,
+  onNavigate,
+  className,
+}: SidebarNavProps) {
   const pathname = usePathname();
   const priorityTools = React.useMemo(() => getPriorityTools(), []);
   const [openCategories, setOpenCategories] = React.useState<
     Record<ToolCategory, boolean>
-  >({
-    geradores: false,
-    calculadoras: false,
-    validadores: false,
-    utilitarios: false,
-  });
+  >(() => ({
+    geradores: defaultExpanded,
+    calculadoras: defaultExpanded,
+    validadores: defaultExpanded,
+    utilitarios: defaultExpanded,
+  }));
 
   const toggleCategory = (catId: ToolCategory) => {
     setOpenCategories((prev) => ({
@@ -109,7 +114,7 @@ export function SidebarNav({ onNavigate, className }: SidebarNavProps) {
         </div>
       </div>
 
-      {/* Categorias do Catálogo (Colapsadas por padrão para abertura leve a 60fps) */}
+      {/* Categorias do Catálogo */}
       <div className="border-t border-border/70 pt-3">
         <div className="mb-1.5 px-3 text-xs font-bold tracking-wider text-muted-foreground uppercase">
           Catálogo por Categoria

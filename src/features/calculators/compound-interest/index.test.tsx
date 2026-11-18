@@ -1,0 +1,285 @@
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { toast } from "sonner";
+import CompoundInterestFeature from "./index";
+
+vi.mock("sonner", () => ({
+  toast: {
+    success: vi.fn(),
+    info: vi.fn(),
+    error: vi.fn(),
+  },
+}));
+
+describe("CompoundInterestFeature", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: {
+        writeText: vi.fn().mockResolvedValue(undefined),
+      },
+    });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+  });
+
+  it("renders default simulation summary, charts, and educational section", () => {
+    const { container } = render(<CompoundInterestFeature />);
+
+    expect(
+      screen.getByRole("heading", { name: /Calculadora de Juros Compostos/i })
+    ).toBeInTheDocument();
+
+    const resultSection = document.getElementById("result");
+    expect(resultSection).not.toBeNull();
+    const resultScope = within(resultSection as HTMLElement);
+
+    expect(resultScope.getByText("Valor Total Final")).toBeInTheDocument();
+    expect(resultScope.getByText("Total Investido")).toBeInTheDocument();
+    expect(resultScope.getByText("Total em Juros")).toBeInTheDocument();
+
+    expect(container.querySelector("#amount")).toHaveTextContent("102.525,67");
+    expect(container.querySelector("#invested")).toHaveTextContent("61.000,00");
+    expect(container.querySelector("#interest")).toHaveTextContent("41.525,67");
+    expect(screen.getByText(/após 120 meses/i)).toBeInTheDocument();
+
+    expect(
+      screen.getByRole("img", {
+        name: /Gráfico de rosca de proporção entre valor investido e total em juros/i,
+      })
+    ).toBeInTheDocument();
+    expect(screen.getByText("Composição do Montante")).toBeInTheDocument();
+    expect(screen.getByText("Evolução Patrimonial no Tempo")).toBeInTheDocument();
+    expect(screen.getByText("Tabela de Evolução Detalhada")).toBeInTheDocument();
+    expect(
+      screen.getByText("Como Funciona o Cálculo de Juros Compostos?")
+    ).toBeInTheDocument();
+  });
+
+  it("applies all preset chips and updates rate and equivalence display", () => {
+    render(<CompoundInterestFeature />);
+
+    const presetExpectations = [
+      { chip: "Selic 14,25%", rateValue: "14,25", equivSuffix: "% a.m." },
+      { chip: "CDI 14,15%", rateValue: "14,15", equivSuffix: "% a.m." },
+      { chip: "IPCA+ 10,77%", rateValue: "10,77", equivSuffix: "% a.m." },
+      { chip: "1% a.m.", rateValue: "1,00", equivSuffix: "% a.a." },
+      { chip: "Poupança 6,17%", rateValue: "6,17", equivSuffix: "% a.m." },
+    ];
+
+    const rateInput = screen.getByLabelText("Taxa de Juros") as HTMLInputElement;
+
+    for (const item of presetExpectations) {
+      fireEvent.click(screen.getByRole("button", { name: item.chip }));
+      expect(rateInput.value).toBe(item.rateValue);
+      expect(
+        screen.getByText((content) => content.includes(item.equivSuffix) && content.startsWith("≈"))
+      ).toBeInTheDocument();
+    }
+
+    expect(toast.success).toHaveBeenCalledTimes(presetExpectations.length);
+  });
+
+  it("updates inputs, quick increments, selects (Anual/Mensal, Anos/Meses), and submits form", () => {
+    const { container } = render(<CompoundInterestFeature />);
+
+    const initialInput = screen.getByLabelText("Valor Inicial em Reais");
+    const monthlyInput = screen.getByLabelText("Aporte Mensal em Reais");
+    const rateInput = screen.getByLabelText("Taxa de Juros");
+    const periodInput = screen.getByLabelText("Período da Simulação");
+
+    fireEvent.change(initialInput, { target: { value: "1000000" } }); // R$ 10.000,00
+    expect((initialInput as HTMLInputElement).value).toBe("10.000,00");
+
+    fireEvent.change(monthlyInput, { target: { value: "100000" } }); // R$ 1.000,00
+    expect((monthlyInput as HTMLInputElement).value).toBe("1.000,00");
+
+    // Quick increment buttons (+1k on initialValue, +200 on monthlyContribution)
+    const plusOneKButtons = screen.getAllByRole("button", { name: "+1k" });
+    fireEvent.click(plusOneKButtons[0]); // initialValue -> 11.000,00
+    expect((initialInput as HTMLInputElement).value).toBe("11.000,00");
+
+    fireEvent.click(screen.getByRole("button", { name: "+200" })); // monthly -> 1.200,00
+    expect((monthlyInput as HTMLInputElement).value).toBe("1.200,00");
+
+    // Change rate and toggle rateUnit via Select (Anual -> Mensal)
+    fireEvent.change(rateInput, { target: { value: "1" } });
+    const rateSelectTrigger = screen.getByLabelText("Unidade da Taxa de Juros");
+    fireEvent.keyDown(rateSelectTrigger, { key: "Enter" });
+    fireEvent.click(screen.getByRole("option", { name: "Mensal" }));
+    expect(screen.getByText(/≈ 12,68% a\.a\./)).toBeInTheDocument();
+
+    // Change period and toggle periodUnit via Select (Anos -> Meses)
+    fireEvent.change(periodInput, { target: { value: "12" } });
+    const periodSelectTrigger = screen.getByLabelText("Unidade do Período");
+    fireEvent.keyDown(periodSelectTrigger, { key: "Enter" });
+    fireEvent.click(screen.getByRole("option", { name: "Meses" }));
+    expect(screen.getByText(/após 12 meses/i)).toBeInTheDocument();
+
+    // Verify chart switches to monthly mode (<= 36 months)
+    expect(
+      screen.getByText(/Toque ou passe o mouse nas colunas para inspecionar cada mês/i)
+    ).toBeInTheDocument();
+
+    // Submit form
+    fireEvent.click(
+      screen.getByRole("button", { name: /Calcular Juros Compostos/i })
+    );
+    expect(toast.success).toHaveBeenCalledWith(
+      "Simulação de juros compostos atualizada!"
+    );
+
+    // Quick period button (e.g., 30a) triggers > 25 points sampling in chart
+    fireEvent.click(screen.getByRole("button", { name: "30a" }));
+    expect(screen.getByText(/após 360 meses/i)).toBeInTheDocument();
+
+    // 29 months triggers sampling fallback pushing last element when step does not land on final index
+    fireEvent.change(periodInput, { target: { value: "29" } });
+    fireEvent.keyDown(periodSelectTrigger, { key: "Enter" });
+    fireEvent.click(screen.getByRole("option", { name: "Meses" }));
+    expect(screen.getByText(/após 29 meses/i)).toBeInTheDocument();
+
+    // Non-numeric rate & period inputs fall back safely to 0
+    fireEvent.change(rateInput, { target: { value: "abc" } });
+    fireEvent.change(periodInput, { target: { value: "" } });
+    expect(container.querySelector("#amount")).toHaveTextContent("11.000,00");
+  });
+
+  it("interacts with chart bars via hover, focus, and click and updates inspection panel", () => {
+    render(<CompoundInterestFeature />);
+
+    const chartSection = document.getElementById("resultGraphic");
+    expect(chartSection).not.toBeNull();
+
+    const firstBar = screen.getByRole("button", { name: /^Período 0:/i });
+    const midBar = screen.getByRole("button", { name: /^Período 12:/i });
+    const endBar = screen.getByRole("button", { name: /^Período 120:/i });
+
+    fireEvent.mouseEnter(firstBar);
+    expect(within(chartSection as HTMLElement).getByText("Mês 0 (Início)")).toBeInTheDocument();
+
+    fireEvent.focus(midBar);
+    expect(within(chartSection as HTMLElement).getByText("Ano 1 (12m)")).toBeInTheDocument();
+
+    fireEvent.click(endBar);
+    expect(within(chartSection as HTMLElement).getByText("Ano 10 (120m)")).toBeInTheDocument();
+
+    // Switch to 12 months to verify monthly inspection label
+    fireEvent.click(screen.getByRole("button", { name: "1a" }));
+    const monthThreeBar = screen.getByRole("button", { name: /^Período 3:/i });
+    fireEvent.click(monthThreeBar);
+    expect(within(chartSection as HTMLElement).getByText("Mês 3")).toBeInTheDocument();
+  });
+
+  it("toggles table modes (Mensal vs Anual), expands/collapses rows, and exports CSV", () => {
+    const createObjectURLSpy = vi
+      .spyOn(URL, "createObjectURL")
+      .mockReturnValue("blob:mock-url");
+    const revokeObjectURLSpy = vi
+      .spyOn(URL, "revokeObjectURL")
+      .mockImplementation(() => {});
+    const anchorClickSpy = vi
+      .spyOn(HTMLAnchorElement.prototype, "click")
+      .mockImplementation(() => {});
+
+    render(<CompoundInterestFeature />);
+
+    const tableSection = document.getElementById("evolutionTable");
+    expect(tableSection).not.toBeNull();
+
+    // Initially monthly mode truncated at 25 rows (Mês 0..24)
+    expect(screen.getByText("Mês 0")).toBeInTheDocument();
+    expect(screen.queryByText("Mês 25")).not.toBeInTheDocument();
+
+    // Expand all 120 months
+    fireEvent.click(
+      screen.getByRole("button", { name: /Mostrar todos os 120 meses/i })
+    );
+    expect(screen.getByText("Mês 120")).toBeInTheDocument();
+
+    // Collapse back
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: /Recolher tabela \(mostrar primeiros 24 meses\)/i,
+      })
+    );
+    expect(screen.queryByText("Mês 120")).not.toBeInTheDocument();
+
+    // Export CSV in monthly mode
+    fireEvent.click(screen.getByRole("button", { name: /Exportar CSV/i }));
+    expect(createObjectURLSpy).toHaveBeenCalledTimes(1);
+    expect(anchorClickSpy).toHaveBeenCalledTimes(1);
+    expect(revokeObjectURLSpy).toHaveBeenCalledWith("blob:mock-url");
+    expect(toast.success).toHaveBeenCalledWith(
+      "Planilha CSV exportada com sucesso!"
+    );
+
+    // Switch Tabs to Anual
+    const tableScope = within(tableSection as HTMLElement);
+    const yearlyTab = tableScope.getByRole("tab", { name: /Anual \(11\)/i });
+    fireEvent.mouseDown(yearlyTab, { button: 0, ctrlKey: false });
+    expect(tableScope.getByText("Início")).toBeInTheDocument();
+    expect(tableScope.getByText("Ano 10 (120m)")).toBeInTheDocument();
+
+    // Export CSV in yearly mode
+    fireEvent.click(screen.getByRole("button", { name: /Exportar CSV/i }));
+    expect(createObjectURLSpy).toHaveBeenCalledTimes(2);
+    expect(anchorClickSpy).toHaveBeenCalledTimes(2);
+  });
+
+  it("clears and restores defaults, and handles summary copy success and failure", async () => {
+    vi.useFakeTimers();
+    const writeTextMock = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText: writeTextMock },
+    });
+
+    const { container } = render(<CompoundInterestFeature />);
+
+    // Clear all fields
+    fireEvent.click(screen.getByRole("button", { name: /Limpar/i }));
+    expect(container.querySelector("#amount")).toHaveTextContent("0,00");
+    expect(container.querySelector("#interest")).toHaveTextContent("0,00");
+    expect(toast.info).toHaveBeenCalledWith(
+      "Campos limpos. Insira novos valores para simular."
+    );
+
+    // Restore defaults
+    fireEvent.click(screen.getByRole("button", { name: /Restaurar/i }));
+    expect(container.querySelector("#amount")).toHaveTextContent("102.525,67");
+    expect(toast.success).toHaveBeenCalledWith("Valores padrão restaurados.");
+
+    // Copy summary success
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: /Copiar/i }));
+    });
+    expect(writeTextMock).toHaveBeenCalledTimes(1);
+    expect(writeTextMock.mock.calls[0]?.[0]).toContain(
+      "Simulação de Juros Compostos"
+    );
+    expect(screen.getByText("Copiado")).toBeInTheDocument();
+    expect(toast.success).toHaveBeenCalledWith(
+      "Resumo da simulação copiado para a área de transferência!"
+    );
+
+    // Timer resets copied label after 2000ms
+    act(() => {
+      vi.advanceTimersByTime(2000);
+    });
+    expect(screen.queryByText("Copiado")).not.toBeInTheDocument();
+
+    // Copy summary failure
+    writeTextMock.mockRejectedValueOnce(new Error("Clipboard denied"));
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: /Copiar/i }));
+    });
+    expect(toast.error).toHaveBeenCalledWith(
+      "Não foi possível copiar o resumo automaticamente."
+    );
+  });
+});

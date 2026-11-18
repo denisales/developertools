@@ -61,16 +61,16 @@ export function CompoundInterestSkeleton() {
       aria-live="polite"
       aria-label="Carregando calculadora de juros compostos"
     >
-      {/* Cabeçalho Compacto */}
-      <div className="space-y-1.5">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex min-w-0 flex-1 items-center gap-2">
-            <Skeleton className="size-7 sm:size-8 shrink-0 rounded-lg" />
+      {/* Cabeçalho Canônico */}
+      <div className="space-y-1">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex min-w-0 flex-1 items-center gap-2.5 sm:gap-3">
+            <Skeleton className="size-9 sm:size-10 shrink-0 rounded-xl" />
             <Skeleton className="h-6 sm:h-8 w-40 sm:w-80 rounded-md" />
           </div>
-          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
-            <Skeleton className="h-8 w-16 sm:w-20 rounded-md" />
-            <Skeleton className="h-8 w-18 sm:w-28 rounded-md" />
+          <div className="flex shrink-0 items-center gap-2">
+            <Skeleton className="h-8 sm:h-9 w-16 sm:w-20 rounded-md" />
+            <Skeleton className="h-8 sm:h-9 w-18 sm:w-28 rounded-md" />
           </div>
         </div>
         <Skeleton className="h-4 sm:h-5 w-72 sm:w-[460px] max-w-full rounded" />
@@ -82,7 +82,7 @@ export function CompoundInterestSkeleton() {
           <BcbPresetsSkeleton />
 
           <div className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {INPUT_FIELD_KEYS.map((key) => (
                 <div key={key} className="space-y-2">
                   <div className="flex items-center justify-between gap-2">
@@ -119,7 +119,7 @@ export function CompoundInterestSkeleton() {
       </div>
 
       {/* 3 Cards de Resumo */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {SUMMARY_CARD_KEYS.map((key) => (
           <Card key={key} className="gap-2 p-4 sm:p-5 shadow-xs">
             <CardHeader className="p-0 pb-1">

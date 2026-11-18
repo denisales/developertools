@@ -31,11 +31,12 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "npx next start -p 3100 -H 127.0.0.1",
+    command:
+      "node -e \"const fs=require('fs'),{execSync}=require('child_process');if(!fs.existsSync('.next/BUILD_ID'))execSync('npm run build',{stdio:'inherit'})\" && npx next start -p 3100 -H 127.0.0.1",
     wait: {
       stdout: /Ready in/,
     },
     reuseExistingServer: false,
-    timeout: 60000,
+    timeout: 120000,
   },
 });

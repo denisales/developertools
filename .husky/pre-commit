@@ -1,0 +1,6 @@
+export PATH="$HOME/.asdf/shims:$PATH"
+
+npm run lint
+npm run typecheck
+npm run test:coverage
+npm run build && npm run test:e2e

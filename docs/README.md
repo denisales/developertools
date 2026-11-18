@@ -31,10 +31,14 @@ Bem-vindo à documentação oficial do projeto **DeveloperTools**, uma plataform
   Regras tributárias da Lei nº 11.033/2004 (`22,5%` a `15,0%` regressivo) + opção Isento (`0%` para LCI/LCA/CRI/CRA/Poupança), fórmulas de valor líquido, Golden Tests, UX Mobile Above-the-Fold (`TASK-003B`) e gates de qualidade.
 
 ### Arquitetura e Design System (`docs/architecture/`)
+- [**Styleguide Oficial e Design System (`architecture/styleguide.md`)**](./architecture/styleguide.md)
+  Tokens canônicos de paleta Light/Dark (`src/app/globals.css`), escala tipográfica única (proibindo `< 12px` / `text-[10px]` / `text-[11px]`), espaçamentos e grids (`w-[268px]`, `px-4 py-4 sm:px-6 sm:py-6 lg:px-8`, `space-y-4 sm:space-y-5`, `gap-4`, `p-4 sm:p-5`), alturas de controles (`h-10`, `h-8`), anatomia obrigatória de tela com `<ToolPageHeader />` e checklist anti-desvio.
+- [**Registro de Aprendizados e Prevenção de Erros (`architecture/lessons-learned.md`)**](./architecture/lessons-learned.md)
+  Post-mortems estruturados dos incidentes reais do projeto (overflow de badges em `CardHeader`, busca mobile `type="text"`, sidebar e drawer 60fps, prioridade vs. compressão mobile, padronização tipográfica, flicker BCB, HTTP `304` na série `4389`, tema sem FOUC via `useSyncExternalStore`, mock server E2E e worktrees + Husky) com regras de prevenção e gates automatizados.
 - [**Diretrizes Obrigatórias de UX Mobile-First (`architecture/mobile-ux-guidelines.md`)**](./architecture/mobile-ux-guidelines.md)
   Regras inegociáveis para viewport móvel (`375x667`): regra Above-the-Fold (`< 600px`), ordem do DOM = prioridade mobile, abas compactas `grid-cols-3` em linha única, botões lado a lado (`grid-cols-2 gap-2.5`), overlay de busca mobile, gaveta animada a 60fps, linguagem limpa sem jargões e gate E2E (cobertura de rotas, cenários funcionais, contenção geométrica e snapshots).
 - [**Estrutura do Projeto e Arquitetura Modular (`architecture/project-structure.md`)**](./architecture/project-structure.md)
-  Organização de pastas `src/features/<category>/<tool-slug>/`, funcionamento do registro central `src/config/tools-registry.ts` livre de conflitos, política Zero `any`, cobertura Vitest V8 >= 90% e diretrizes de UI/UX Mobile-First com `shadcn/ui`.
+  Organização de pastas `src/features/<category>/<tool-slug>/`, funcionamento do registro central `src/config/tools-registry.ts` livre de conflitos, componente unificado `<ToolPageHeader />`, política Zero `any`, cobertura Vitest V8 >= 90% e diretrizes de UI/UX Mobile-First com `shadcn/ui`.
 
 ### Plano de Implementação, Épicos, Worktrees e Deploy (`docs/plan/`)
 - [**Épicos e Tarefas — Backlog Completo (`plan/epics-and-tasks.md`)**](./plan/epics-and-tasks.md)

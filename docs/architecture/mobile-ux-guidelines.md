@@ -1,6 +1,6 @@
 # Diretrizes Obrigatórias de UX Mobile-First (`mobile-ux-guidelines.md`)
 
-Este documento define as **regras inegociáveis de arquitetura Mobile-First, ergonomia em telas pequenas (`375x667`) e linguagem de interface** para todas as ferramentas do **DevToolsBR**.
+Este documento define as **regras inegociáveis de arquitetura Mobile-First, ergonomia em telas pequenas (`375x667`) e linguagem de interface** para todas as ferramentas do **DevToolsBR**, alinhadas 1:1 com os tokens do [**Styleguide Oficial (`styleguide.md`)**](./styleguide.md) e com os aprendizados de [**`lessons-learned.md`**](./lessons-learned.md).
 
 Nenhuma ferramenta pode ser publicada ou aprovada na revisão de QA (`@mob-verifier`) sem cumprir 100% dos itens abaixo.
 
@@ -8,33 +8,35 @@ Nenhuma ferramenta pode ser publicada ou aprovada na revisão de QA (`@mob-verif
 
 ## 1. Regra "Above-the-Fold" (`< 600px` em Viewport `375x667`)
 
-Em dispositivos móveis (`375px` de largura por `667px` de altura útil), **o usuário jamais deve precisar rolar a página para executar a ação principal da ferramenta**.
+Em dispositivos móveis (`375px` de largura por `667px` de altura útil), **o usuário jamais deve precisar rolar a página para executar a ação principal da ferramenta**, sem sacrificar legibilidade nem comprimir alvos de toque.
 
-1. **Orçamento Vertical do Topo (`< 110px` totais antes da ferramenta)**:
+1. **Orçamento Vertical do Topo e Shell (`AppShell` + `<ToolPageHeader />`)**:
    - `SiteHeader`: altura fixa `h-14` (`56px`).
-   - `<main>`: padding reduzido no mobile (`px-3 py-3 sm:px-6 sm:py-6`).
-   - Cabeçalho da Ferramenta: compacto em 1 linha (`text-lg sm:text-2xl font-bold`) + subtítulo curto de 1 linha (`text-xs sm:text-sm text-muted-foreground`), sem badges redundantes ou parágrafos longos no topo.
+   - `<main>`: padding canônico `px-4 py-4 sm:px-6 sm:py-6 lg:px-8` com container `max-w-[1440px]`.
+   - Cabeçalho unificado `<ToolPageHeader />` (`src/components/layout/tool-page-header.tsx`): `H1` em `text-lg sm:text-2xl font-bold tracking-tight` + subtítulo `text-xs sm:text-sm text-muted-foreground leading-relaxed` (`line-clamp-1 sm:line-clamp-none`), sem badges redundantes ou parágrafos longos no topo.
+   - Ritmo vertical da página: `space-y-4 sm:space-y-5` (`16px` mobile / `20px` desktop), grids entre cards irmãos com `gap-4` e padding interno de `Card` padrão `p-4 sm:p-5` (sub-cards `p-3.5 sm:p-4`).
 2. **Geradores (CPF, CNPJ e futuros geradores)**:
-   - O **Valor Gerado + Botões `Copiar` / `Gerar Novo` + Opções Principais (Pontuação / Estado / Formato)** devem caber integralmente nos primeiros `520px` verticais da tela (`375x667`).
+   - O **Valor Gerado (`font-mono text-2xl sm:text-3xl font-bold tracking-wider`) + Botões `Copiar` / `Gerar Novo` + Opções Principais (Pontuação / Estado / Formato)** devem caber integralmente nos primeiros `520px` verticais da tela (`375x667`).
 3. **Calculadoras (Juros Compostos e futuras calculadoras)**:
    - Os **Presets rápidos** devem ficar em **uma única faixa horizontal rolável** (`flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar`) integrada ao topo do card de simulação — nunca em um card vertical separado que empurre os inputs para fora da tela.
-   - Os campos de entrada principais (`#mainValue`, `#investment`, `#rate`) devem permanecer visíveis logo na dobra inicial (`375x667`), com espaçamento respirável (`p-4`, `space-y-4`, `gap-4`) que evite elementos espremidos ou colados no celular.
-   - **Ergonomia Mínima de Toque e Espaçamento no Mobile**:
-     - Todos os **inputs e botões de ação primária/secundária** (`#mainValue`, `#investment`, `#rate`, `#period`, `SelectTrigger`, `Limpar`, `Calcular`) devem ter altura mínima de **`>= 40px` (`h-10`)** no mobile e no desktop.
-     - Todos os **chips de atalho de período/taxa/sincronização** (`1a`..`30a`, presets BCB, botão `Sincronizar`, toggles segmentados) devem ter altura mínima de **`>= 32px` (`h-8`)**, e chips de incremento rápido inline (`+1k`, `+5k`, etc.) altura confortável (`>= 28px`, `h-7`), com espaçamento mínimo de **`gap-2` (`8px`)** entre botões interativos adjacentes para toque seguro sem erros.
-     - Textos de status com dados dinâmicos (ex.: indicadores BCB) devem quebrar linha naturalmente (`leading-relaxed`, sem `whitespace-nowrap` truncando palavras ao meio) em sua própria barra sutil ao lado do botão `Sincronizar`.
+   - Os campos de entrada principais (`#mainValue`, `#investment`, `#rate`) devem permanecer visíveis logo na dobra inicial (`375x667`), com espaçamento respirável (`p-4 sm:p-5`, `space-y-4`, `gap-4`) que evite elementos espremidos ou colados no celular.
+   - **Ergonomia Mínima de Toque, Tipografia e Espaçamento no Mobile**:
+     - Todos os **inputs e botões de ação primária/secundária** (`Input`, `Button`, `SelectTrigger`, `TabsList`) devem ter altura padrão de **`h-10` (`40px`)** no mobile e no desktop.
+     - Todos os **chips de atalho de período/taxa/sincronização** (`1a`..`30a`, presets BCB, botão `Sincronizar`, toggles segmentados) devem ter altura padrão de **`h-8` (`32px`)**, e chips de incremento rápido inline (`+1k`, `+5k`, `+200`) altura mínima confortável (`h-7` / `28px`), com espaçamento mínimo de **`gap-2` (`8px`)** entre botões interativos adjacentes.
+     - **Mínimo tipográfico estrito:** proibido `text-[10px]` / `text-[11px]`; menor fonte permitida é `text-xs` (`12px`).
+     - Textos de status com dados dinâmicos (ex.: indicadores BCB) devem quebrar linha naturalmente (`text-xs leading-relaxed text-muted-foreground`, sem `whitespace-nowrap` truncando palavras ao meio) em sua própria barra sutil ao lado do botão `Sincronizar`.
 
 ---
 
 ## 2. Ordem do DOM = Ordem de Prioridade Mobile
 
-Em layouts responsivos com CSS Grid (`grid-cols-1 lg:grid-cols-12`), **a ordem dos elementos no JSX/DOM determina o que aparece primeiro no celular**:
+Em layouts responsivos com CSS Grid (`grid-cols-1 lg:grid-cols-12 gap-4`), **a ordem dos elementos no JSX/DOM determina o que aparece primeiro no celular**:
 
 - **ERRADO**: Colocar o card de *Opções de Configuração* antes do *Visor do Documento Gerado* no JSX achando que no desktop ficarão lado a lado. No mobile, isso joga o resultado gerado para o fim da página!
 - **CORRETO**:
-  1. **1º elemento no JSX**: Card Principal com o Documento Gerado (`text-2xl sm:text-4xl font-mono`) + Botões de Ação lado a lado (`Copiar` + `Gerar Novo`).
-  2. **2º elemento no JSX**: Controles compactos de configuração (ex.: `Pontuação`, `Estado UF`, `Padrão Numérico/Alfanumérico`).
-  3. **3º elemento no JSX**: Informações complementares (Anatomia/Região Fiscal, Histórico Recente, Conteúdo Educativo).
+  1. **1º elemento no JSX (`lg:col-span-8`)**: Card Principal com o Documento Gerado (`font-mono text-2xl sm:text-3xl font-bold tracking-wider`) ou KPI Financeiro (`font-mono text-2xl sm:text-3xl font-bold tracking-tight`) + Botões de Ação lado a lado (`Copiar` + `Gerar Novo`).
+  2. **2º elemento no JSX (`lg:col-span-4`)**: Controles compactos de configuração (ex.: `Pontuação`, `Estado UF`, `Padrão Numérico/Alfanumérico`).
+  3. **3º elemento no JSX**: Cards educativos inferiores (`gap-4`, sem `<Separator />` solto entre seções), Anatomia/Região Fiscal e Histórico Recente.
 
 ---
 
@@ -67,9 +69,9 @@ Quando uma ferramenta possuir 3 modos principais (ex.: Gerar, Validar, Em Lote):
    - Proibido espremer um campo `<Input>` inline na barra superior de `375px` ao lado da logo e do botão de tema.
    - No mobile (`< sm`), renderizar um **Botão `Buscar...`** (`h-9 px-3 gap-2`) que abre um **Overlay/Modal de Largura Total** (`fixed inset-x-3 top-16 z-50 rounded-xl border bg-popover p-3 shadow-2xl` com backdrop `fixed inset-0 top-14 z-40 bg-black/40 backdrop-blur-xs`).
    - No desktop (`>= sm`), o dropdown de resultados deve ter largura explícita confortável (`w-[420px] right-0`), jamais ficando preso à largura estreita do input.
-3. **Gaveta Mobile (`Sheet` + `SidebarNav`) Leve e Animada**:
+3. **Gaveta Mobile (`Sheet` `w-72` + `SidebarNav`) Leve e Animada**:
    - `SheetOverlay` e `SheetContent` devem utilizar animações `@keyframes` aceleradas por GPU (`translate3d` + `cubic-bezier(0.32, 0.72, 0, 1)` em `240ms`).
-   - Na `SidebarNav`, exibir no topo apenas **Visão Geral** e **Ferramentas Ativas**, mantendo as categorias de catálogo futuro **colapsadas por padrão (accordion)** para montar apenas ~10 nós DOM na abertura instantânea.
+   - Na `SidebarNav` mobile (`w-72`, `defaultExpanded={false}`), exibir no topo apenas **Visão Geral** (`px-3 py-2`) e **Ferramentas Ativas** (`gap-1.5`, `px-3 py-2.5`), mantendo as categorias de catálogo futuro **colapsadas por padrão (accordion)** para abertura instantânea (no desktop `<aside>` usa `w-[268px]` com `defaultExpanded`).
 
 ---
 

@@ -38,6 +38,8 @@ Para permitir que dezenas de agentes trabalhem simultaneamente em diferentes fer
 │   │   ├── cnpj-generator.md              # Especificação funcional e algorítmica: CNPJ
 │   │   └── compound-interest.md           # Especificação funcional e matemática: Juros Compostos
 │   ├── architecture/
+│   │   ├── styleguide.md                  # Design System oficial, tokens, tipografia e anatomia de telas
+│   │   ├── lessons-learned.md             # Registro de aprendizados (post-mortems) e regras de prevenção
 │   │   ├── mobile-ux-guidelines.md        # Diretrizes obrigatórias Mobile-First e gate visual Playwright
 │   │   └── project-structure.md           # Este documento (Arquitetura, UI/UX e Governança de Qualidade)
 │   └── plan/
@@ -66,10 +68,11 @@ Para permitir que dezenas de agentes trabalhem simultaneamente em diferentes fer
 │   ├── components/
 │   │   ├── ui/                            # Primitivos shadcn/ui (button, card, input, sheet, tabs, table, etc.)
 │   │   ├── layout/                        # Shell da aplicação
-│   │   │   ├── app-header.tsx             # Header fixo com busca global (Cmd+K) e menu mobile
-│   │   │   ├── app-sidebar.tsx            # Sidebar categorizada para desktop
-│   │   │   ├── mobile-nav-sheet.tsx       # Drawer/Bottom Sheet responsivo para navegação no celular
-│   │   │   └── tool-page-shell.tsx        # Wrapper padrão de ferramenta (Título, Breadcrumb, Descrição, FAQ/SEO)
+│   │   │   ├── app-shell.tsx              # Shell principal (aside w-[268px], main px-4 py-4 sm:px-6 sm:py-6 lg:px-8, footer)
+│   │   │   ├── site-header.tsx            # Header fixo h-14 com busca global (Cmd+K / modal mobile), tema e menu mobile
+│   │   │   ├── sidebar-nav.tsx            # Navegação lateral (desktop expandido, mobile drawer colapsado)
+│   │   │   ├── tool-icon.tsx              # Renderizador de ícones lucide-react por nome do catálogo
+│   │   │   └── tool-page-header.tsx       # Cabeçalho unificado <ToolPageHeader /> obrigatório em toda ferramenta
 │   │   └── shared/                        # Componentes reutilizáveis entre ferramentas
 │   │       ├── copy-button.tsx            # Botão de cópia rápida com feedback visual + toast
 │   │       ├── result-box.tsx             # Caixa de exibição de resultado com fonte mono e ações rápidas
@@ -170,22 +173,24 @@ Para eliminar esse gargalo, adotamos o padrão **Pre-Seeded Declarative Tool Reg
 
 ---
 
-## 5. Design System Mobile-First e UI/UX (`shadcn/ui`)
+## 5. Design System Oficial, Mobile-First e UI/UX (`shadcn/ui`)
 
-O site original do 4Devs possui layout legado focado em desktop. Nossa releitura utiliza uma estética moderna inspirada em **Vercel / Linear / Raycast / Investidor10**, priorizando usabilidade no celular (uma mão / polegar) e produtividade para desenvolvedores.
+O site original do 4Devs possui layout legado focado em desktop. Nossa releitura utiliza uma estética moderna inspirada em **Vercel / Linear / Raycast / Investidor10**, padronizada de ponta a ponta no [**Styleguide Oficial (`styleguide.md`)**](./styleguide.md) e protegida pelas regras de prevenção em [**`lessons-learned.md`**](./lessons-learned.md).
 
-### 5.1. Diretrizes Mobile-First (Responsividade no Celular — ver [`mobile-ux-guidelines.md`](./mobile-ux-guidelines.md))
-- **Regra Above-the-Fold (`375x667`)**: O resultado principal da ferramenta, os botões de ação (`Copiar` / `Gerar Novo`) e os controles essenciais devem caber integralmente na primeira tela do celular (`< 600px` de altura) sem necessidade de scroll.
-- **Ordem do DOM = Prioridade Mobile**: O card do valor gerado e seus botões de ação vêm **sempre antes** dos controles secundários e seções explicativas no JSX.
+### 5.1. Tokens Canônicos e Diretrizes Mobile-First (ver [`styleguide.md`](./styleguide.md) e [`mobile-ux-guidelines.md`](./mobile-ux-guidelines.md))
+- **Cabeçalho Unificado (`<ToolPageHeader />`)**: Toda ferramenta em `src/features/<category>/<slug>/index.tsx` utiliza obrigatoriamente `<ToolPageHeader />` (`src/components/layout/tool-page-header.tsx`) para garantir `H1` (`text-lg sm:text-2xl font-bold tracking-tight`) e subtítulo (`text-xs sm:text-sm text-muted-foreground leading-relaxed`) 100% uniformes.
+- **Escala Única de Espaçamento & Tipografia**: Container principal `space-y-4 sm:space-y-5`, cards com padding `p-4 sm:p-5`, grids irmãos com `gap-4`, controles principais `h-10` (`40px`) e chips/botões secundários `h-8` (`32px`) com `gap-2`. Proibido `text-[10px]` / `text-[11px]` (mínimo `text-xs`).
+- **Regra Above-the-Fold (`375x667`)**: O resultado principal da ferramenta, os botões de ação (`Copiar` / `Gerar Novo`) e os controles essenciais devem caber na primeira tela do celular sem comprimir alvos de toque.
+- **Ordem do DOM = Prioridade Mobile**: A área principal (`lg:col-span-8`) com o valor gerado ou simulação e seus botões de ação vêm **sempre antes** da área lateral (`lg:col-span-4`) e dos cards educativos inferiores (`gap-4`, sem `<Separator />` solto entre seções).
 - **Abas em Linha Única (`grid-cols-3`)**: Usar rótulos curtos (`Gerar CPF`, `Validar`, `Em Lote`) em `grid w-full grid-cols-3 h-10 p-1` para nunca quebrar linha nem sobrepor textos em `375px`.
-- **Botões Lado a Lado (`grid-cols-2 gap-2.5`)**: Botões `Copiar` e `Gerar Novo` dispostos lado a lado no mobile (`h-10 sm:h-11`), evitando empilhamento vertical excessivo.
+- **Botões Lado a Lado (`grid-cols-2 gap-2.5`)**: Botões `Copiar` e `Gerar Novo` dispostos lado a lado no mobile (`h-10`), evitando empilhamento vertical excessivo.
 - **Busca Mobile em Overlay de Largura Total & Gaveta 60fps**:
-  - Usar sempre `type="text"` (nunca `type="search"`, evitando duplo ícone `x`).
-  - No mobile (`< sm`), a busca abre um modal/popover de largura total (`fixed inset-x-3 top-16`), e a gaveta lateral (`Sheet`) usa animações aceleradas por hardware com categorias futuras colapsadas por padrão.
+  - Usar sempre `type="text"` (nunca `type="search"`, evitando duplo ícone `×`).
+  - No mobile (`< sm`), a busca abre um modal/popover de largura total (`fixed inset-x-3 top-16`), e a gaveta lateral (`Sheet` `w-72`) usa animações `@keyframes` aceleradas por GPU com categorias colapsadas por padrão (`defaultExpanded={false}`), enquanto no desktop a `<aside>` `w-[268px]` exibe as categorias expandidas (`defaultExpanded`).
 - **Linguagem Limpa**: Proibido citar sites externos ou jargões como *"Módulo 11"*, *"Motor"* ou *"Client-Side"* na interface do usuário.
 
 ### 5.2. Temas (Dark / Light Mode) e Acessibilidade
-- Suporte nativo a **Dark Mode** e **Light Mode** via variáveis CSS em HSL no `globals.css`.
+- Suporte nativo a **Dark Mode** e **Light Mode** via variáveis CSS em **OKLCH** em `src/app/globals.css`, com script inline pré-hidratação em `src/app/layout.tsx` e leitura reativa via `React.useSyncExternalStore` em `src/components/layout/site-header.tsx` (zero FOUC e zero mismatch de hidratação).
 - Contraste WCAG AA em todos os badges, textos secundários (`muted-foreground`) e gráficos financeiros (cores distintas para *Valor Investido* vs *Total em Juros*).
 - Navegação completa por teclado (`Tab`, `Enter` para gerar/calcular, `Cmd/Ctrl + K` para buscar qualquer ferramenta instantaneamente).
 

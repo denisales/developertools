@@ -41,6 +41,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ToolPageHeader } from "@/components/layout/tool-page-header";
 
 import {
   BRAZILIAN_STATES,
@@ -260,25 +261,16 @@ export function CpfGeneratorFeature() {
   };
 
   return (
-    <div className="w-full space-y-3 sm:space-y-4">
-      {/* Compact Header (Above the Fold) */}
-      <div className="mb-2 flex items-center gap-2.5 sm:gap-3">
-        <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary ring-1 ring-primary/20 sm:size-10 sm:rounded-xl">
-          <Fingerprint className="size-4 sm:size-5" />
-        </div>
-        <div className="min-w-0 flex-1">
-          <h1 className="truncate text-lg font-bold tracking-tight text-foreground sm:text-2xl">
-            Gerador e Validador de CPF
-          </h1>
-          <p className="truncate text-xs text-muted-foreground sm:text-sm">
-            Gere CPFs válidos para testes, filtre por UF, valide ou exporte em lote.
-          </p>
-        </div>
-      </div>
+    <div className="w-full space-y-4 sm:space-y-5 pb-8">
+      <ToolPageHeader
+        icon={<Fingerprint className="size-4 sm:size-5" />}
+        title="Gerador e Validador de CPF"
+        description="Gere CPFs válidos para testes, filtre por UF, valide dígitos verificadores ou exporte em lote."
+      />
 
       {/* Main Interactive Tabs - Single Horizontal Row on Mobile & Desktop */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-3 sm:space-y-4">
-        <TabsList className="grid h-9 w-full grid-cols-3 rounded-lg bg-muted/80 p-1 sm:h-10 sm:max-w-md">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full gap-0">
+        <TabsList className="grid w-full grid-cols-3 h-10 p-1 rounded-lg">
           <TabsTrigger
             value="generator"
             className="h-full gap-1.5 rounded-md px-2 text-xs font-semibold sm:px-3 sm:text-sm"
@@ -303,20 +295,20 @@ export function CpfGeneratorFeature() {
         </TabsList>
 
         {/* TAB 1: GERADOR DE CPF */}
-        <TabsContent value="generator" className="mt-2 space-y-4 sm:mt-3">
+        <TabsContent value="generator" className="mt-4 space-y-4 sm:space-y-5">
           <div className="grid gap-4 lg:grid-cols-12">
             {/* Unified, Compact Above-the-Fold Generator Card */}
-            <Card className="gap-0 p-3.5 sm:p-5 lg:col-span-8">
+            <Card className="gap-0 p-4 sm:p-5 lg:col-span-8">
               {/* Generated CPF Display right at the top of the card */}
-              <div className="rounded-xl border border-primary/20 bg-muted/40 p-3 sm:p-4">
+              <div className="rounded-xl border border-primary/20 bg-muted/40 p-3.5 sm:p-4">
                 <div className="mb-1 flex items-center justify-between gap-2">
-                  <span className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
+                  <span className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                     CPF Válido para Testes
                   </span>
                   {singleRegionInfo && (
                     <Badge
                       variant="secondary"
-                      className="gap-1 px-2 py-0.5 text-[11px] font-medium"
+                      className="gap-1 px-2 py-0.5 text-xs font-medium"
                     >
                       <MapPin className="size-3 text-primary" />
                       <span>
@@ -367,20 +359,20 @@ export function CpfGeneratorFeature() {
               </div>
 
               {/* Inline Options Grid inside the same card */}
-              <div className="mt-3.5 border-t pt-3.5">
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className="mt-4 border-t pt-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   {/* Control 1: Estado (UF) compact Select with inline label */}
-                  <div className="flex items-center justify-between gap-2.5 rounded-lg border bg-background px-3 py-1.5">
+                  <div className="flex items-center justify-between gap-2.5 rounded-lg border bg-background p-3.5 sm:p-4">
                     <Label
                       htmlFor="cpf-state-select"
-                      className="shrink-0 text-xs font-semibold text-foreground sm:text-sm"
+                      className="shrink-0 text-xs sm:text-sm font-medium text-foreground"
                     >
                       Estado (UF)
                     </Label>
                     <Select value={selectedState} onValueChange={handleStateChange}>
                       <SelectTrigger
                         id="cpf-state-select"
-                        className="h-9 w-[190px] text-xs sm:w-[210px] sm:text-sm"
+                        className="h-9 w-[180px] text-xs sm:w-[200px] sm:text-sm"
                       >
                         <SelectValue placeholder="Aleatório" />
                       </SelectTrigger>
@@ -396,15 +388,15 @@ export function CpfGeneratorFeature() {
                   </div>
 
                   {/* Control 2: Pontuação (000.000.000-00) compact horizontal row */}
-                  <div className="flex items-center justify-between rounded-lg border bg-background px-3 py-2">
+                  <div className="flex items-center justify-between gap-2.5 rounded-lg border bg-background p-3.5 sm:p-4">
                     <div className="space-y-0.5">
                       <Label
                         htmlFor="cpf-format-switch"
-                        className="cursor-pointer text-xs font-semibold text-foreground sm:text-sm"
+                        className="cursor-pointer text-xs sm:text-sm font-medium text-foreground"
                       >
                         Pontuação
                       </Label>
-                      <p className="font-mono text-[11px] text-muted-foreground">
+                      <p className="font-mono text-xs text-muted-foreground">
                         {formatted ? "000.000.000-00" : "00000000000"}
                       </p>
                     </div>
@@ -417,7 +409,7 @@ export function CpfGeneratorFeature() {
                 </div>
 
                 {/* Compact footer link to inspect calculation */}
-                <div className="mt-3 flex items-center justify-between gap-2 border-t pt-2.5 text-xs text-muted-foreground">
+                <div className="mt-3 flex items-center justify-between gap-2 border-t pt-3 text-xs text-muted-foreground">
                   <span className="truncate">
                     {singleRegionInfo
                       ? `${singleRegionInfo.name}: ${singleRegionInfo.states.join(", ")}`
@@ -437,73 +429,75 @@ export function CpfGeneratorFeature() {
             </Card>
 
             {/* Recent Generated CPFs + Quick Stats Card */}
-            <Card className="gap-3 p-3.5 sm:p-5 lg:col-span-4">
-              <CardHeader className="gap-1 p-0">
+            <Card className="gap-4 p-4 sm:p-5 lg:col-span-4">
+              <CardHeader className="gap-1.5 p-0">
                 <div className="flex items-center justify-between gap-2">
-                  <CardTitle className="text-sm font-bold sm:text-base">
+                  <CardTitle className="text-base sm:text-lg font-bold tracking-tight">
                     Histórico Recente
                   </CardTitle>
                   <Badge variant="outline" className="px-2 py-0.5 font-mono text-xs">
                     {history.length} {history.length === 1 ? "item" : "itens"}
                   </Badge>
                 </div>
-                <CardDescription className="text-xs">
+                <CardDescription className="text-xs sm:text-sm leading-relaxed text-muted-foreground">
                   Últimos CPFs gerados nesta sessão. Clique para copiar.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-2 p-0">
-                {history.map((itemRaw, idx) => {
-                  const displayItem = formatted ? formatCpf(itemRaw) : stripCpfDigits(itemRaw);
-                  const d9 = Number(stripCpfDigits(itemRaw)[8]);
-                  const reg = getCpfRegion(d9);
-                  return (
-                    <div
-                      key={`${itemRaw}-${idx}`}
-                      onClick={() => handleCopyText(displayItem, "CPF")}
-                      className="group flex cursor-pointer items-center justify-between gap-2 rounded-lg border bg-background px-3 py-2 transition-colors hover:border-primary/40 hover:bg-muted/40"
-                    >
-                      <div className="min-w-0">
-                        <p className="font-mono text-sm font-semibold tracking-wider text-foreground">
-                          {displayItem}
-                        </p>
-                        <p className="truncate text-[11px] text-muted-foreground">
-                          9º dígito: <span className="font-medium text-foreground">{d9}</span> (
-                          {reg?.states.slice(0, 3).join(", ")}
-                          {(reg?.states.length ?? 0) > 3 ? "…" : ""})
-                        </p>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="size-7 shrink-0"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleCopyText(displayItem, "CPF");
-                        }}
-                        aria-label={`Copiar ${displayItem}`}
+              <CardContent className="space-y-4 p-0">
+                <div className="space-y-2">
+                  {history.map((itemRaw, idx) => {
+                    const displayItem = formatted ? formatCpf(itemRaw) : stripCpfDigits(itemRaw);
+                    const d9 = Number(stripCpfDigits(itemRaw)[8]);
+                    const reg = getCpfRegion(d9);
+                    return (
+                      <div
+                        key={`${itemRaw}-${idx}`}
+                        onClick={() => handleCopyText(displayItem, "CPF")}
+                        className="group flex cursor-pointer items-center justify-between gap-2 rounded-lg border bg-background px-3 py-2 transition-colors hover:border-primary/40 hover:bg-muted/40"
                       >
-                        <Copy className="size-3.5" />
-                      </Button>
-                    </div>
-                  );
-                })}
+                        <div className="min-w-0">
+                          <p className="font-mono text-sm font-semibold tracking-wider text-foreground">
+                            {displayItem}
+                          </p>
+                          <p className="truncate text-xs text-muted-foreground">
+                            9º dígito: <span className="font-medium text-foreground">{d9}</span> (
+                            {reg?.states.slice(0, 3).join(", ")}
+                            {(reg?.states.length ?? 0) > 3 ? "…" : ""})
+                          </p>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="size-7 shrink-0"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleCopyText(displayItem, "CPF");
+                          }}
+                          aria-label={`Copiar ${displayItem}`}
+                        >
+                          <Copy className="size-3.5" />
+                        </Button>
+                      </div>
+                    );
+                  })}
+                </div>
               </CardContent>
             </Card>
           </div>
         </TabsContent>
 
         {/* TAB 2: VALIDADOR DE CPF */}
-        <TabsContent value="validator" className="mt-2 space-y-4 sm:mt-3">
-          <Card className="gap-3.5 p-3.5 sm:gap-4 sm:p-5">
-            <CardHeader className="gap-1 p-0">
-              <CardTitle className="text-base font-bold tracking-tight sm:text-lg">
+        <TabsContent value="validator" className="mt-4 space-y-4 sm:space-y-5">
+          <Card className="gap-4 p-4 sm:p-5">
+            <CardHeader className="gap-1.5 p-0">
+              <CardTitle className="text-base sm:text-lg font-bold tracking-tight">
                 Validador de CPF
               </CardTitle>
-              <CardDescription className="text-xs sm:text-sm">
+              <CardDescription className="text-xs sm:text-sm leading-relaxed text-muted-foreground">
                 Digite ou cole um CPF para verificar os dígitos e a Região Fiscal de emissão.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-3.5 p-0 sm:space-y-4">
+            <CardContent className="space-y-4 p-0">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                 <div className="relative flex-1">
                   <Input
@@ -544,12 +538,12 @@ export function CpfGeneratorFeature() {
 
               {/* Validation Feedback Banner */}
               {!validationResult ? (
-                <div className="rounded-xl border border-dashed bg-muted/20 p-3.5 text-center text-xs leading-relaxed text-muted-foreground sm:p-4 sm:text-sm">
+                <div className="rounded-xl border border-dashed bg-muted/20 p-3.5 sm:p-4 text-center text-xs sm:text-sm leading-relaxed text-muted-foreground">
                   Digite os 11 dígitos do CPF acima para conferir o resultado da validação e a
                   memória de cálculo dos dígitos verificadores.
                 </div>
               ) : (
-                <div className="space-y-3.5 sm:space-y-4">
+                <div className="space-y-4">
                   <div
                     className={`flex flex-col gap-3 rounded-xl border p-3.5 sm:flex-row sm:items-center sm:justify-between sm:p-4 ${
                       validationResult.isValid
@@ -575,7 +569,7 @@ export function CpfGeneratorFeature() {
                             {validationResult.formattedCpf || validatorInput}
                           </Badge>
                         </div>
-                        <p className="text-xs leading-relaxed opacity-90 sm:text-sm">
+                        <p className="text-xs sm:text-sm leading-relaxed opacity-90">
                           {validationResult.isValid
                             ? "Os dois dígitos verificadores conferem com a regra oficial da Receita Federal."
                             : validationResult.reasonMessage}
@@ -584,14 +578,14 @@ export function CpfGeneratorFeature() {
                     </div>
 
                     {validationResult.regionDigit !== null && (
-                      <div className="space-y-0.5 rounded-lg border bg-background/90 px-3 py-2 text-xs text-foreground shadow-2xs sm:text-right">
-                        <span className="text-[11px] font-medium text-muted-foreground">
+                      <div className="space-y-0.5 rounded-lg border bg-background/90 p-3.5 sm:p-4 text-xs text-foreground shadow-2xs sm:text-right">
+                        <span className="text-xs font-medium text-muted-foreground">
                           Região Fiscal (9º Dígito: {validationResult.regionDigit})
                         </span>
                         <p className="text-xs font-bold sm:text-sm">
                           {validationResult.fiscalRegionName}
                         </p>
-                        <p className="text-[11px] text-muted-foreground">
+                        <p className="text-xs text-muted-foreground">
                           UFs: {validationResult.states.join(", ")}
                         </p>
                       </div>
@@ -600,9 +594,9 @@ export function CpfGeneratorFeature() {
 
                   {/* Step-by-step Check Digit Breakdown */}
                   {validationResult.firstDigitStep && validationResult.secondDigitStep && (
-                    <div className="grid gap-3 sm:gap-4 md:grid-cols-2">
+                    <div className="grid gap-4 md:grid-cols-2">
                       {/* 1st Check Digit Card */}
-                      <div className="space-y-2.5 rounded-xl border bg-card p-3.5 shadow-2xs">
+                      <div className="space-y-2.5 rounded-xl border bg-card p-3.5 sm:p-4 shadow-2xs">
                         <div className="flex flex-wrap items-center justify-between gap-2">
                           <span className="text-xs font-semibold sm:text-sm">
                             1º Dígito Verificador (10º dígito)
@@ -613,13 +607,13 @@ export function CpfGeneratorFeature() {
                                 ? "default"
                                 : "destructive"
                             }
-                            className="px-2 py-0.5 text-[11px] font-medium"
+                            className="px-2 py-0.5 text-xs font-medium"
                           >
                             Esperado: {validationResult.firstDigitStep.expectedDigit} | Informado:{" "}
                             {validationResult.firstDigitStep.providedDigit}
                           </Badge>
                         </div>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-xs sm:text-sm leading-relaxed text-muted-foreground">
                           Soma dos 9 primeiros dígitos multiplicados pelos pesos de 10 a 2:
                         </p>
                         <div className="space-y-1 rounded-lg bg-muted/60 p-2.5 font-mono text-xs">
@@ -637,7 +631,7 @@ export function CpfGeneratorFeature() {
                       </div>
 
                       {/* 2nd Check Digit Card */}
-                      <div className="space-y-2.5 rounded-xl border bg-card p-3.5 shadow-2xs">
+                      <div className="space-y-2.5 rounded-xl border bg-card p-3.5 sm:p-4 shadow-2xs">
                         <div className="flex flex-wrap items-center justify-between gap-2">
                           <span className="text-xs font-semibold sm:text-sm">
                             2º Dígito Verificador (11º dígito)
@@ -648,13 +642,13 @@ export function CpfGeneratorFeature() {
                                 ? "default"
                                 : "destructive"
                             }
-                            className="px-2 py-0.5 text-[11px] font-medium"
+                            className="px-2 py-0.5 text-xs font-medium"
                           >
                             Esperado: {validationResult.secondDigitStep.expectedDigit} | Informado:{" "}
                             {validationResult.secondDigitStep.providedDigit}
                           </Badge>
                         </div>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-xs sm:text-sm leading-relaxed text-muted-foreground">
                           Soma dos 10 primeiros dígitos multiplicados pelos pesos de 11 a 2:
                         </p>
                         <div className="space-y-1 rounded-lg bg-muted/60 p-2.5 font-mono text-xs">
@@ -679,22 +673,22 @@ export function CpfGeneratorFeature() {
         </TabsContent>
 
         {/* TAB 3: GERADOR EM MASSA (BULK) */}
-        <TabsContent value="bulk" className="mt-2 space-y-4 sm:mt-3">
-          <Card className="gap-3.5 p-3.5 sm:gap-4 sm:p-5">
-            <CardHeader className="gap-1 p-0">
-              <CardTitle className="text-base font-bold tracking-tight sm:text-lg">
+        <TabsContent value="bulk" className="mt-4 space-y-4 sm:space-y-5">
+          <Card className="gap-4 p-4 sm:p-5">
+            <CardHeader className="gap-1.5 p-0">
+              <CardTitle className="text-base sm:text-lg font-bold tracking-tight">
                 Gerador de CPF em Lote (1 a 100)
               </CardTitle>
-              <CardDescription className="text-xs sm:text-sm">
+              <CardDescription className="text-xs sm:text-sm leading-relaxed text-muted-foreground">
                 Gere dezenas de CPFs válidos e exporte em TXT, CSV ou JSON para testes.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-3.5 p-0 sm:space-y-4">
+            <CardContent className="space-y-4 p-0">
               {/* Bulk Controls */}
-              <div className="grid gap-3 rounded-xl border bg-muted/20 p-3 sm:p-4 lg:grid-cols-3">
+              <div className="grid gap-4 rounded-xl border bg-muted/20 p-3.5 sm:p-4 lg:grid-cols-3">
                 {/* Quantity Input + Quick Pills */}
                 <div className="space-y-1.5">
-                  <Label htmlFor="bulk-qty-input" className="text-xs font-semibold sm:text-sm">
+                  <Label htmlFor="bulk-qty-input" className="text-xs sm:text-sm font-medium">
                     Quantidade (1 a 100)
                   </Label>
                   <div className="flex flex-wrap items-center gap-1.5">
@@ -730,7 +724,7 @@ export function CpfGeneratorFeature() {
 
                 {/* State Filter */}
                 <div className="space-y-1.5">
-                  <Label htmlFor="bulk-state-select" className="text-xs font-semibold sm:text-sm">
+                  <Label htmlFor="bulk-state-select" className="text-xs sm:text-sm font-medium">
                     Estado de Origem (UF)
                   </Label>
                   <Select
@@ -758,7 +752,10 @@ export function CpfGeneratorFeature() {
                 {/* Punctuation + Action */}
                 <div className="flex flex-col justify-between gap-2">
                   <div className="flex h-9 items-center justify-between rounded-lg border bg-background px-3">
-                    <Label htmlFor="bulk-format-switch" className="text-xs font-semibold">
+                    <Label
+                      htmlFor="bulk-format-switch"
+                      className="cursor-pointer text-xs sm:text-sm font-medium"
+                    >
                       Incluir pontuação
                     </Label>
                     <Switch
@@ -831,13 +828,13 @@ export function CpfGeneratorFeature() {
                   </div>
                 </div>
 
-                <div className="grid max-h-72 grid-cols-1 gap-2 overflow-y-auto rounded-xl border bg-muted/20 p-3 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
+                <div className="grid max-h-72 grid-cols-1 gap-2 overflow-y-auto rounded-xl border bg-muted/20 p-3.5 sm:p-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
                   {displayedBulkList.map((cpfItem, idx) => (
                     <div
                       key={`${cpfItem}-${idx}`}
                       className="flex items-center justify-between gap-2 rounded-lg border bg-background px-3 py-2 font-mono text-xs shadow-2xs transition-colors hover:border-primary/40 sm:text-sm"
                     >
-                      <span className="w-6 font-mono text-[11px] text-muted-foreground">
+                      <span className="w-6 font-mono text-xs text-muted-foreground">
                         #{idx + 1}
                       </span>
                       <span className="flex-1 font-mono font-semibold tracking-wide">
@@ -865,17 +862,17 @@ export function CpfGeneratorFeature() {
 
       {/* Educational Section: Check Digits & 9th Digit Fiscal Regions */}
       <div className="grid gap-4 lg:grid-cols-12">
-        <Card className="gap-3.5 p-3.5 sm:p-5 lg:col-span-5">
-          <CardHeader className="gap-1 p-0">
-            <CardTitle className="flex items-center gap-2 text-base font-bold sm:text-lg">
+        <Card className="gap-4 p-4 sm:p-5 lg:col-span-5">
+          <CardHeader className="gap-1.5 p-0">
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg font-bold tracking-tight">
               <Info className="size-4 text-primary" />
               <span>Como funciona o cálculo do CPF?</span>
             </CardTitle>
-            <CardDescription className="text-xs sm:text-sm">
+            <CardDescription className="text-xs sm:text-sm leading-relaxed text-muted-foreground">
               Entenda a estrutura dos dígitos verificadores adotada pela Receita Federal.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3 p-0 text-xs leading-relaxed text-muted-foreground sm:text-sm">
+          <CardContent className="space-y-4 p-0 text-xs sm:text-sm leading-relaxed text-muted-foreground">
             <p>
               O Cadastro de Pessoas Físicas (CPF) é formado por{" "}
               <strong className="text-foreground">11 dígitos decimais</strong> no formato{" "}
@@ -884,7 +881,7 @@ export function CpfGeneratorFeature() {
               </code>
               .
             </p>
-            <div className="space-y-1 rounded-xl border bg-muted/30 p-3 text-xs leading-relaxed">
+            <div className="space-y-1 rounded-xl border bg-muted/30 p-3.5 sm:p-4 text-xs sm:text-sm leading-relaxed">
               <p className="font-semibold text-foreground">
                 1. Cálculo do 1º Dígito Verificador (dv₁):
               </p>
@@ -899,7 +896,7 @@ export function CpfGeneratorFeature() {
                 <code className="font-mono text-foreground">dv₁ = 11 - R₁</code>.
               </p>
             </div>
-            <div className="space-y-1 rounded-xl border bg-muted/30 p-3 text-xs leading-relaxed">
+            <div className="space-y-1 rounded-xl border bg-muted/30 p-3.5 sm:p-4 text-xs sm:text-sm leading-relaxed">
               <p className="font-semibold text-foreground">
                 2. Cálculo do 2º Dígito Verificador (dv₂):
               </p>
@@ -914,7 +911,7 @@ export function CpfGeneratorFeature() {
                 <code className="font-mono text-foreground">dv₂ = 11 - R₂</code>.
               </p>
             </div>
-            <p className="text-xs">
+            <p className="text-xs sm:text-sm leading-relaxed">
               <strong className="text-foreground">Nota Importante:</strong> Os CPFs gerados por
               esta ferramenta são números fictícios destinados exclusivamente a testes de
               desenvolvimento de software, QA e homologação.
@@ -922,38 +919,38 @@ export function CpfGeneratorFeature() {
           </CardContent>
         </Card>
 
-        <Card className="gap-3.5 p-3.5 sm:p-5 lg:col-span-7">
-          <CardHeader className="gap-1 p-0">
-            <CardTitle className="flex items-center gap-2 text-base font-bold sm:text-lg">
+        <Card className="gap-4 p-4 sm:p-5 lg:col-span-7">
+          <CardHeader className="gap-1.5 p-0">
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg font-bold tracking-tight">
               <MapPin className="size-4 text-primary" />
               <span>Tabela Oficial do 9º Dígito — Regiões Fiscais (UF)</span>
             </CardTitle>
-            <CardDescription className="text-xs sm:text-sm">
+            <CardDescription className="text-xs sm:text-sm leading-relaxed text-muted-foreground">
               O nono algarismo do CPF identifica a Região Fiscal de emissão. Clique em uma UF para
               gerar um CPF daquele estado.
             </CardDescription>
           </CardHeader>
-          <CardContent className="p-0">
-            <div className="grid gap-2.5 sm:grid-cols-2 sm:gap-3">
+          <CardContent className="space-y-4 p-0">
+            <div className="grid gap-3 sm:grid-cols-2">
               {[1, 2, 3, 4, 5, 6, 7, 8, 9, 0].map((digit) => {
                 const region = FISCAL_REGIONS[digit];
                 return (
                   <div
                     key={digit}
-                    className="flex flex-col justify-between gap-2 rounded-xl border bg-muted/20 p-3 transition-colors hover:border-primary/30"
+                    className="flex flex-col justify-between gap-2 rounded-xl border bg-muted/20 p-3.5 sm:p-4 transition-colors hover:border-primary/30"
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div>
                         <p className="text-xs font-bold text-foreground sm:text-sm">
                           {region.name}
                         </p>
-                        <p className="text-[11px] text-muted-foreground">
+                        <p className="text-xs leading-relaxed text-muted-foreground">
                           {region.description}
                         </p>
                       </div>
                       <Badge
                         variant="secondary"
-                        className="shrink-0 px-2 py-0.5 font-mono text-[11px] font-bold text-primary"
+                        className="shrink-0 px-2 py-0.5 font-mono text-xs font-bold text-primary"
                       >
                         Dígito {digit}
                       </Badge>

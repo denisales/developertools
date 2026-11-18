@@ -379,9 +379,14 @@ describe("CompoundInterestFeature", () => {
       fireEvent.click(screen.getByRole("button", { name: /Copiar/i }));
     });
     expect(writeTextMock).toHaveBeenCalledTimes(1);
-    expect(writeTextMock.mock.calls[0]?.[0]).toContain(
-      "Simulação de Juros Compostos"
-    );
+    const copiedText = writeTextMock.mock.calls[0]?.[0] as string;
+    expect(copiedText).toContain("Simulação de Juros Compostos");
+    expect(copiedText).toContain("Regime Tributário: Tabela Regressiva de IR");
+    expect(copiedText).toContain("Alíquota IR: 15,0%");
+    expect(copiedText).toContain("IR Estimado:");
+    expect(copiedText).toContain("10.054,43");
+    expect(copiedText).toContain("Valor Líquido Final:");
+    expect(copiedText).toContain("117.975,09");
     expect(screen.getByText("Copiado")).toBeInTheDocument();
     expect(toast.success).toHaveBeenCalledWith(
       "Resumo da simulação copiado para a área de transferência!"
@@ -704,6 +709,185 @@ describe("CompoundInterestFeature", () => {
     expect(capturedSignal?.aborted).toBe(false);
     unmount();
     expect(capturedSignal?.aborted).toBe(true);
+  });
+
+  it("toggles between Valor Bruto and Valor Líquido (IR), updates summary cards, charts, and table columns", () => {
+    const createObjectURLSpy = vi
+      .spyOn(URL, "createObjectURL")
+      .mockReturnValue("blob:mock-net-url");
+    const revokeObjectURLSpy = vi
+      .spyOn(URL, "revokeObjectURL")
+      .mockImplementation(() => {});
+    const anchorClickSpy = vi
+      .spyOn(HTMLAnchorElement.prototype, "click")
+      .mockImplementation(() => {});
+
+    const { container } = render(
+      <CompoundInterestFeature initialIndicators={MOCK_INDICATORS} />
+    );
+
+    // Default Gross View shows gross amounts + net preview hint
+    expect(screen.getByTestId("view-mode-gross")).toHaveAttribute(
+      "aria-pressed",
+      "true"
+    );
+    expect(screen.getByTestId("view-mode-net")).toHaveAttribute(
+      "aria-pressed",
+      "false"
+    );
+    expect(container.querySelector("#amount")).toHaveTextContent("128.029,52");
+    expect(container.querySelector("#interest")).toHaveTextContent("67.029,52");
+    expect(screen.getByTestId("net-preview-hint")).toHaveTextContent(
+      "117.975,09"
+    );
+
+    // Switch to Valor Líquido (IR)
+    fireEvent.click(screen.getByTestId("view-mode-net"));
+    expect(screen.getByTestId("view-mode-net")).toHaveAttribute(
+      "aria-pressed",
+      "true"
+    );
+    expect(container.querySelector("#amount")).toHaveTextContent("117.975,09");
+    expect(container.querySelector("#invested")).toHaveTextContent("61.000,00");
+    expect(container.querySelector("#interest")).toHaveTextContent("56.975,09");
+    expect(screen.getByTestId("ir-deduction-badge")).toHaveTextContent(
+      "IR 15,0%: -R$ 10.054,43"
+    );
+
+    // Charts reflect Net View
+    const chartSection = document.getElementById("resultGraphic");
+    expect(chartSection).not.toBeNull();
+    expect(
+      within(chartSection as HTMLElement).getByText("Líquido Acumulado")
+    ).toBeInTheDocument();
+
+    // Evolution table shows IR (%), IR (R$), Juros Líquidos, Total Líquido
+    const tableSection = document.getElementById("evolutionTable");
+    expect(tableSection).not.toBeNull();
+    const tableScope = within(tableSection as HTMLElement);
+    expect(tableScope.getByText("IR (%)")).toBeInTheDocument();
+    expect(tableScope.getByText("IR (R$)")).toBeInTheDocument();
+    expect(tableScope.getByText("Juros Líquidos")).toBeInTheDocument();
+    expect(tableScope.getByText("Total Líquido")).toBeInTheDocument();
+
+    // Export CSV in Net View
+    fireEvent.click(screen.getByRole("button", { name: /Exportar CSV/i }));
+    expect(createObjectURLSpy).toHaveBeenCalledTimes(1);
+    expect(anchorClickSpy).toHaveBeenCalledTimes(1);
+    expect(revokeObjectURLSpy).toHaveBeenCalledWith("blob:mock-net-url");
+
+    // Switch back to Valor Bruto
+    fireEvent.click(screen.getByTestId("view-mode-gross"));
+    expect(container.querySelector("#amount")).toHaveTextContent("128.029,52");
+    expect(tableScope.queryByText("IR (%)")).not.toBeInTheDocument();
+  });
+
+  it("highlights all 4 IR regressive brackets by term and handles Isento (LCI/LCA) regime", async () => {
+    const writeTextMock = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText: writeTextMock },
+    });
+
+    const { container } = render(
+      <CompoundInterestFeature initialIndicators={MOCK_INDICATORS} />
+    );
+
+    // Switch to Net View and set 1% a.m., P0=10000, PMT=1000
+    fireEvent.click(screen.getByTestId("view-mode-net"));
+    fireEvent.click(screen.getByTestId("preset-carteira-1"));
+    fireEvent.change(screen.getByLabelText("Valor Inicial em Reais"), {
+      target: { value: "1000000" },
+    });
+    fireEvent.change(screen.getByLabelText("Aporte Mensal em Reais"), {
+      target: { value: "100000" },
+    });
+
+    // Initially 10 years (120 months) -> >720d -> 15,0%
+    expect(screen.getByTestId("ir-bracket-above-720")).toHaveAttribute(
+      "data-active",
+      "true"
+    );
+    expect(screen.getByTestId("ir-active-rate-badge")).toHaveTextContent(
+      "Faixa atual: 15,0%"
+    );
+
+    // Switch period unit to Meses and test 6m (22,5%), 12m (20,0%), 24m (17,5%)
+    const periodInput = screen.getByLabelText("Período da Simulação");
+    const periodSelectTrigger = screen.getByLabelText("Unidade do Período");
+    fireEvent.keyDown(periodSelectTrigger, { key: "Enter" });
+    fireEvent.click(screen.getByRole("option", { name: "Meses" }));
+
+    // 6 months -> 22.5%
+    fireEvent.change(periodInput, { target: { value: "6" } });
+    expect(screen.getByTestId("ir-bracket-up-to-180")).toHaveAttribute(
+      "data-active",
+      "true"
+    );
+    expect(screen.getByTestId("ir-active-rate-badge")).toHaveTextContent(
+      "Faixa atual: 22,5%"
+    );
+
+    // 12 months -> 20.0%
+    fireEvent.change(periodInput, { target: { value: "12" } });
+    expect(screen.getByTestId("ir-bracket-181-to-360")).toHaveAttribute(
+      "data-active",
+      "true"
+    );
+    expect(container.querySelector("#amount")).toHaveTextContent("23.560,60");
+    expect(container.querySelector("#interest")).toHaveTextContent("1.560,60");
+    expect(screen.getByTestId("ir-deduction-badge")).toHaveTextContent(
+      "IR 20,0%: -R$ 390,15"
+    );
+
+    // 24 months -> 17.5%
+    fireEvent.change(periodInput, { target: { value: "24" } });
+    expect(screen.getByTestId("ir-bracket-361-to-720")).toHaveAttribute(
+      "data-active",
+      "true"
+    );
+    expect(screen.getByTestId("ir-active-rate-badge")).toHaveTextContent(
+      "Faixa atual: 17,5%"
+    );
+
+    // Toggle Isento (LCI/LCA) -> 0% IR, Net === Gross
+    fireEvent.change(periodInput, { target: { value: "12" } });
+    fireEvent.click(screen.getByTestId("tax-regime-exempt"));
+    expect(screen.getByTestId("tax-regime-exempt")).toHaveAttribute(
+      "aria-pressed",
+      "true"
+    );
+    expect(screen.getByTestId("ir-exempt-badge")).toHaveTextContent(
+      "Isento de IR (0,0%)"
+    );
+    expect(screen.getByTestId("ir-bracket-181-to-360")).toHaveAttribute(
+      "data-active",
+      "false"
+    );
+    expect(container.querySelector("#amount")).toHaveTextContent("23.950,75");
+    expect(container.querySelector("#interest")).toHaveTextContent("1.950,75");
+    expect(screen.getByTestId("ir-deduction-badge")).toHaveTextContent(
+      "Isento de IR (0,0%)"
+    );
+
+    // Copy summary in exempt mode
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: /Copiar/i }));
+    });
+    expect(writeTextMock.mock.calls[0]?.[0]).toContain(
+      "Regime Tributário: Isento de IR (LCI, LCA, Poupança)"
+    );
+
+    // Restore defaults resets both viewMode (gross) and taxRegime (regressive)
+    fireEvent.click(screen.getByRole("button", { name: /Restaurar/i }));
+    expect(screen.getByTestId("view-mode-gross")).toHaveAttribute(
+      "aria-pressed",
+      "true"
+    );
+    expect(screen.getByTestId("tax-regime-regressive")).toHaveAttribute(
+      "aria-pressed",
+      "true"
+    );
   });
 });
 

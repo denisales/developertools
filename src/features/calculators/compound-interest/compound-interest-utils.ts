@@ -103,7 +103,7 @@ export function roundCents(value: number): number {
 
 /**
  * Converte taxa de juros informada (% mensal ou % anual) para taxa efetiva mensal decimal (i_m).
- * Segue rigorosamente a fórmula de equivalência composta do Investidor10:
+ * Segue rigorosamente a fórmula de equivalência composta:
  * - Mensal: i_m = r
  * - Anual:  i_m = (1 + r)^(1/12) - 1
  */
@@ -140,7 +140,7 @@ export function toTotalMonths(period: number, periodUnit: TimePeriodUnit): numbe
 }
 
 /**
- * Calcula os Juros Compostos mês a mês seguindo exatamente o motor matemático do Investidor10.
+ * Calcula os Juros Compostos mês a mês com capitalização composta exata.
  */
 export function calculateCompoundInterest(
   input: CompoundInterestInput

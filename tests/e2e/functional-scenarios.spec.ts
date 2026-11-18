@@ -695,4 +695,251 @@ test.describe("Functional E2E Scenarios — All Screens (Desktop & Mobile)", () 
       normalizeCurrencyText(await page.locator("#interest").textContent())
     ).toBe("R$ 1.950,75");
   });
+
+  test("Compound Interest Net Value & Regressive IR (/calculadora-juros-compostos): Gross/Net toggle, all 4 IR brackets, LCI/LCA exempt, Evolution Table & IR Brackets Card", async ({
+    page,
+  }, testInfo) => {
+    await page.goto("/calculadora-juros-compostos", {
+      waitUntil: "networkidle",
+    });
+
+    const initialInput = page.locator("#mainValue");
+    const monthlyInput = page.locator("#investment");
+    const periodInput = page.locator("#period");
+    const periodSelect = page.locator("#select-period");
+
+    const amountEl = page.locator("#amount");
+    const investedEl = page.locator("#invested");
+    const interestEl = page.locator("#interest");
+
+    const viewGrossBtn = page.getByTestId("view-mode-gross");
+    const viewNetBtn = page.getByTestId("view-mode-net");
+    const regimeRegressiveBtn = page.getByTestId("tax-regime-regressive");
+    const regimeExemptBtn = page.getByTestId("tax-regime-exempt");
+    const irDeductionBadge = page.getByTestId("ir-deduction-badge");
+    const irBracketsCard = page.getByTestId("ir-brackets-card");
+    const evolutionSection = page.locator("#evolutionTable");
+
+    const assertActiveBracket = async (
+      activeId:
+        | "up-to-180"
+        | "181-to-360"
+        | "361-to-720"
+        | "above-720"
+        | null
+    ) => {
+      const bracketIds = [
+        "up-to-180",
+        "181-to-360",
+        "361-to-720",
+        "above-720",
+      ] as const;
+
+      for (const id of bracketIds) {
+        await expect(
+          irBracketsCard.getByTestId(`ir-bracket-${id}`)
+        ).toHaveAttribute("data-active", id === activeId ? "true" : "false");
+      }
+    };
+
+    // 1. Default 10 anos (120m, P0=1.000, PMT=500, 14,15% a.a.) -> 15,0% bracket
+    await expect(page.getByTestId("tax-controls-bar")).toBeVisible();
+    await expect(viewGrossBtn).toHaveAttribute("aria-pressed", "true");
+    await expect(viewNetBtn).toHaveAttribute("aria-pressed", "false");
+    await expect(regimeRegressiveBtn).toHaveAttribute("aria-pressed", "true");
+    await expect(regimeRegressiveBtn).toContainText("15,0%");
+
+    expect(normalizeCurrencyText(await investedEl.textContent())).toBe(
+      "R$ 61.000,00"
+    );
+    expect(normalizeCurrencyText(await amountEl.textContent())).toBe(
+      "R$ 128.029,52"
+    );
+    expect(normalizeCurrencyText(await interestEl.textContent())).toBe(
+      "R$ 67.029,52"
+    );
+
+    if (testInfo.project.name === "desktop") {
+      await expect(page.getByTestId("net-preview-hint")).toContainText(
+        "R$ 117.975,09"
+      );
+    }
+
+    // Gross evolution table headers (no IR columns)
+    await expect(
+      evolutionSection.locator("thead th", { hasText: "Total Juros" })
+    ).toBeVisible();
+    await expect(
+      evolutionSection.locator("thead th", { hasText: "IR (%)" })
+    ).toHaveCount(0);
+
+    // Switch to Valor Líquido (IR) and verify 10 anos (15,0%) numbers + table + IR brackets card
+    await viewNetBtn.click();
+    await expect(viewNetBtn).toHaveAttribute("aria-pressed", "true");
+    await expect(viewGrossBtn).toHaveAttribute("aria-pressed", "false");
+
+    expect(normalizeCurrencyText(await investedEl.textContent())).toBe(
+      "R$ 61.000,00"
+    );
+    expect(normalizeCurrencyText(await amountEl.textContent())).toBe(
+      "R$ 117.975,09"
+    );
+    expect(normalizeCurrencyText(await interestEl.textContent())).toBe(
+      "R$ 56.975,09"
+    );
+    await expect(irDeductionBadge).toContainText("IR 15,0%: -R$ 10.054,43");
+
+    await expect(
+      irBracketsCard.getByTestId("ir-active-rate-badge")
+    ).toContainText("Faixa atual: 15,0%");
+    await assertActiveBracket("above-720");
+
+    // Evolution Table in Net View shows IR / Líquido columns
+    for (const col of ["IR (%)", "IR (R$)", "Juros Líquidos", "Total Líquido"]) {
+      await expect(
+        evolutionSection.locator("thead th", { hasText: col })
+      ).toBeVisible();
+    }
+
+    // Switch back to Valor Bruto and return to Valor Líquido (IR)
+    await viewGrossBtn.click();
+    await expect(viewGrossBtn).toHaveAttribute("aria-pressed", "true");
+    expect(normalizeCurrencyText(await amountEl.textContent())).toBe(
+      "R$ 128.029,52"
+    );
+    await viewNetBtn.click();
+    await expect(viewNetBtn).toHaveAttribute("aria-pressed", "true");
+
+    // 2. Test all remaining regressive IR brackets with P0=10.000, PMT=1.000, 1,00% a.m.
+    await page.getByTestId("preset-carteira-1").click();
+    await initialInput.fill("1000000");
+    await monthlyInput.fill("100000");
+    await periodSelect.click();
+    await page.getByRole("option", { name: "Meses" }).click();
+    await expect(periodSelect).toContainText("Meses");
+
+    // 2a. 6 meses -> 22,5% (Bruto R$ 16.767,22 | IR -R$ 172,62 | Líquido R$ 16.594,60 | Juros Líq R$ 594,60)
+    await periodInput.fill("6");
+    await expect(regimeRegressiveBtn).toContainText("22,5%");
+    expect(normalizeCurrencyText(await investedEl.textContent())).toBe(
+      "R$ 16.000,00"
+    );
+    expect(normalizeCurrencyText(await amountEl.textContent())).toBe(
+      "R$ 16.594,60"
+    );
+    expect(normalizeCurrencyText(await interestEl.textContent())).toBe(
+      "R$ 594,60"
+    );
+    await expect(irDeductionBadge).toContainText("IR 22,5%: -R$ 172,62");
+    await expect(
+      irBracketsCard.getByTestId("ir-active-rate-badge")
+    ).toContainText("Faixa atual: 22,5%");
+    await assertActiveBracket("up-to-180");
+
+    // 2b. 12 meses -> 20,0% (Bruto R$ 23.950,75 | IR -R$ 390,15 | Líquido R$ 23.560,60 | Juros Líq R$ 1.560,60)
+    await periodInput.fill("12");
+    await expect(regimeRegressiveBtn).toContainText("20,0%");
+    expect(normalizeCurrencyText(await investedEl.textContent())).toBe(
+      "R$ 22.000,00"
+    );
+    expect(normalizeCurrencyText(await amountEl.textContent())).toBe(
+      "R$ 23.560,60"
+    );
+    expect(normalizeCurrencyText(await interestEl.textContent())).toBe(
+      "R$ 1.560,60"
+    );
+    await expect(irDeductionBadge).toContainText("IR 20,0%: -R$ 390,15");
+    await expect(
+      irBracketsCard.getByTestId("ir-active-rate-badge")
+    ).toContainText("Faixa atual: 20,0%");
+    await assertActiveBracket("181-to-360");
+
+    // Verify Mês 0 and Mês 12 rows in Net Evolution Table
+    const firstRow = evolutionSection.locator("tbody tr").first();
+    await expect(firstRow).toContainText("Mês 0");
+    await expect(firstRow).toContainText("—");
+    const month12Row = evolutionSection.locator("tbody tr").last();
+    await expect(month12Row).toContainText("Mês 12");
+    await expect(month12Row).toContainText("20,0%");
+    await expect(month12Row).toContainText("R$ 390,15");
+    await expect(month12Row).toContainText("R$ 1.560,60");
+    await expect(month12Row).toContainText("R$ 23.560,60");
+
+    // 2c. 24 meses -> 17,5% (Bruto R$ 39.670,81 | IR -R$ 992,39 | Líquido R$ 38.678,42 | Juros Líq R$ 4.678,42)
+    await periodInput.fill("24");
+    await expect(regimeRegressiveBtn).toContainText("17,5%");
+    expect(normalizeCurrencyText(await investedEl.textContent())).toBe(
+      "R$ 34.000,00"
+    );
+    expect(normalizeCurrencyText(await amountEl.textContent())).toBe(
+      "R$ 38.678,42"
+    );
+    expect(normalizeCurrencyText(await interestEl.textContent())).toBe(
+      "R$ 4.678,42"
+    );
+    await expect(irDeductionBadge).toContainText("IR 17,5%: -R$ 992,39");
+    await expect(
+      irBracketsCard.getByTestId("ir-active-rate-badge")
+    ).toContainText("Faixa atual: 17,5%");
+    await assertActiveBracket("361-to-720");
+
+    const month24Row = evolutionSection.locator("tbody tr").last();
+    await expect(month24Row).toContainText("Mês 24");
+    await expect(month24Row).toContainText("17,5%");
+    await expect(month24Row).toContainText("R$ 992,39");
+    await expect(month24Row).toContainText("R$ 4.678,42");
+    await expect(month24Row).toContainText("R$ 38.678,42");
+
+    // Yearly view in Net Evolution Table preserves per-year IR brackets (Ano 1 = 20,0%, Ano 2 = 17,5%)
+    await evolutionSection.getByRole("tab", { name: /Anual \(3\)/i }).click();
+    await expect(evolutionSection.locator("tbody tr")).toHaveCount(3);
+    await expect(evolutionSection.locator("tbody tr").nth(1)).toContainText(
+      "20,0%"
+    );
+    await expect(evolutionSection.locator("tbody tr").nth(2)).toContainText(
+      "17,5%"
+    );
+
+    // 3. Toggle Isento (LCI/LCA) -> 0,0% IR (Valor Líquido === Valor Bruto)
+    await regimeExemptBtn.click();
+    await expect(regimeExemptBtn).toHaveAttribute("aria-pressed", "true");
+    await expect(regimeRegressiveBtn).toHaveAttribute("aria-pressed", "false");
+    await expect(irDeductionBadge).toContainText("Isento de IR (0,0%)");
+
+    const netExemptAmount = normalizeCurrencyText(await amountEl.textContent());
+    const netExemptInterest = normalizeCurrencyText(
+      await interestEl.textContent()
+    );
+    expect(netExemptAmount).toBe("R$ 39.670,81");
+    expect(netExemptInterest).toBe("R$ 5.670,81");
+
+    // Verify Valor Líquido === Valor Bruto when Exempt
+    await viewGrossBtn.click();
+    expect(normalizeCurrencyText(await amountEl.textContent())).toBe(
+      netExemptAmount
+    );
+    expect(normalizeCurrencyText(await interestEl.textContent())).toBe(
+      netExemptInterest
+    );
+    await viewNetBtn.click();
+
+    await expect(irBracketsCard.getByTestId("ir-exempt-badge")).toContainText(
+      "Isento de IR (0,0%)"
+    );
+    await expect(
+      irBracketsCard.getByTestId("ir-active-rate-badge")
+    ).toHaveCount(0);
+    await assertActiveBracket(null);
+
+    // 4. Switch back to Tabela IR and confirm 10 anos (120m) highlights 15,0%
+    await regimeRegressiveBtn.click();
+    await periodSelect.click();
+    await page.getByRole("option", { name: "Anos" }).click();
+    await periodInput.fill("10");
+    await expect(regimeRegressiveBtn).toContainText("15,0%");
+    await expect(
+      irBracketsCard.getByTestId("ir-active-rate-badge")
+    ).toContainText("Faixa atual: 15,0%");
+    await assertActiveBracket("above-720");
+  });
 });

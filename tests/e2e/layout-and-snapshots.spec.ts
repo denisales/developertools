@@ -212,6 +212,12 @@ test.describe("Layout Rigor, Geometric Containment & Visual Snapshots", () => {
     expect(firstInputBox).not.toBeNull();
     expect(firstInputBox!.y + firstInputBox!.height).toBeLessThanOrEqual(667);
 
+    const amountEl = page.locator("#amount");
+    await expect(amountEl).toBeVisible();
+    const amountBox = await amountEl.boundingBox();
+    expect(amountBox).not.toBeNull();
+    expect(amountBox!.y + amountBox!.height).toBeLessThanOrEqual(667);
+
     // 5b. Mobile Search Overlay Snapshot
     await page.goto("/", { waitUntil: "networkidle" });
     const searchBtn = page.getByRole("button", { name: /buscar ferramenta/i });

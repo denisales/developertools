@@ -129,11 +129,11 @@ export const COMPOUND_INTEREST_PRESETS: CompoundInterestPreset[] = [
   },
   {
     id: "ipca-plus",
-    label: "Tesouro IPCA+ 6%",
-    description: "Taxa híbrida estimada (IPCA ~4,5% + 6% real)",
-    rate: 10.77,
+    label: "IPCA 12m",
+    description: "IPCA acumulado nos últimos 12 meses (Ref. padrão)",
+    rate: 4.5,
     rateUnit: "year",
-    badge: "10,77% a.a.",
+    badge: "4,50% a.a.",
   },
   {
     id: "carteira-1",
@@ -585,7 +585,6 @@ export function buildPresetsFromIndicators(
 
   const selicRate = indicators.selicMeta.value;
   const diRate = indicators.taxaDi.value;
-  const ipcaPlus6Rate = indicators.ipcaPlus6Anual.value;
   const ipca12mRate = indicators.ipca12Meses.value;
   const poupancaRate = indicators.poupancaAnual.value;
 
@@ -608,11 +607,11 @@ export function buildPresetsFromIndicators(
     },
     {
       id: "ipca-plus",
-      label: "Tesouro IPCA+ 6%",
-      description: `IPCA 12m (${formatRatePtBr(ipca12mRate)}%) + 6% a.a. real (Ref. ${indicators.ipca12Meses.date})`,
-      rate: ipcaPlus6Rate,
+      label: "IPCA 12m",
+      description: `IPCA acumulado nos últimos 12 meses (Ref. ${indicators.ipca12Meses.date})`,
+      rate: ipca12mRate,
       rateUnit: "year",
-      badge: `${formatRatePtBr(ipcaPlus6Rate)}% a.a.`,
+      badge: `${formatRatePtBr(ipca12mRate)}% a.a.`,
     },
     {
       id: "carteira-1",
@@ -644,7 +643,7 @@ export function formatPresetChipLabel(preset: CompoundInterestPreset): string {
     case "cdi-100":
       return `CDI ${formatted}%`;
     case "ipca-plus":
-      return `IPCA+ ${formatted}%`;
+      return `IPCA ${formatted}%`;
     case "carteira-1":
       return "1% a.m.";
     case "poupanca":

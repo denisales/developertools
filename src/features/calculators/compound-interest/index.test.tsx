@@ -178,7 +178,7 @@ describe("CompoundInterestFeature", () => {
     const presetExpectations = [
       { chip: "Selic 14,25%", rateValue: "14,25", equivSuffix: "% a.m." },
       { chip: "CDI 14,15%", rateValue: "14,15", equivSuffix: "% a.m." },
-      { chip: "IPCA+ 10,77%", rateValue: "10,77", equivSuffix: "% a.m." },
+      { chip: "IPCA 4,50%", rateValue: "4,50", equivSuffix: "% a.m." },
       { chip: "1% a.m.", rateValue: "1,00", equivSuffix: "% a.a." },
       { chip: "Poupança 6,17%", rateValue: "6,17", equivSuffix: "% a.m." },
     ];
@@ -480,7 +480,7 @@ describe("CompoundInterestFeature", () => {
       "CDI 15,15%"
     );
     expect(screen.getByTestId("preset-ipca-plus")).toHaveTextContent(
-      "IPCA+ 11,14%"
+      "IPCA 4,85%"
     );
     expect(screen.getByTestId("preset-poupanca")).toHaveTextContent(
       "Poupança 7,12%"
@@ -498,7 +498,7 @@ describe("CompoundInterestFeature", () => {
     expect(rateInput.value).toBe("15,15");
 
     fireEvent.click(screen.getByTestId("preset-ipca-plus"));
-    expect(rateInput.value).toBe("11,14");
+    expect(rateInput.value).toBe("4,85");
   });
 
   it("initializes and restores custom initialIndicators.taxaDi rate and does not overwrite manual edits on standalone mount", async () => {
@@ -627,7 +627,7 @@ describe("CompoundInterestFeature", () => {
 
     await waitFor(() => {
       expect(screen.getByTestId("bcb-indicators-status")).toHaveTextContent(
-        "Taxas de referência padrão • Selic 14,25% • CDI 14,15% • IPCA+ 10,77%"
+        "Taxas de referência padrão • Selic 14,25% • CDI 14,15% • IPCA 4,50%"
       );
     });
     expect(screen.getByTestId("preset-cdi-100")).toHaveTextContent(
@@ -661,7 +661,7 @@ describe("CompoundInterestFeature", () => {
 
     await waitFor(() => {
       expect(screen.getByTestId("bcb-indicators-status")).toHaveTextContent(
-        "Taxas de referência padrão • Selic 14,25% • CDI 14,15% • IPCA+ 10,77%"
+        "Taxas de referência padrão • Selic 14,25% • CDI 14,15% • IPCA 4,50%"
       );
     });
 

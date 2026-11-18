@@ -461,21 +461,21 @@ describe("compound-interest-utils", () => {
         ...sampleIndicators,
         selicMeta: { ...sampleIndicators.selicMeta, value: 15.0 },
         taxaDi: { ...sampleIndicators.taxaDi, value: 14.9 },
-        ipcaPlus6Anual: { ...sampleIndicators.ipcaPlus6Anual, value: 11.2 },
+        ipca12Meses: { ...sampleIndicators.ipca12Meses, value: 4.92 },
         poupancaAnual: { ...sampleIndicators.poupancaAnual, value: 7.45 },
       });
 
       expect(dynamicPresets.map((p) => p.rate)).toEqual([
         15.0,
         14.9,
-        11.2,
+        4.92,
         1.0,
         7.45,
       ]);
       expect(dynamicPresets.map(formatPresetChipLabel)).toEqual([
         "Selic 15,00%",
         "CDI 14,90%",
-        "IPCA+ 11,20%",
+        "IPCA 4,92%",
         "1% a.m.",
         "Poupança 7,45%",
       ]);

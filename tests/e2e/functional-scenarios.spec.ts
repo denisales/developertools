@@ -531,7 +531,7 @@ test.describe("Functional E2E Scenarios — All Screens (Desktop & Mobile)", () 
 
     await expect(cdiPreset).toContainText("CDI 14,15%");
     await expect(selicPreset).toContainText("Selic 14,25%");
-    await expect(ipcaPreset).toContainText("IPCA+ 10,77%");
+    await expect(ipcaPreset).toContainText("IPCA 4,50%");
     await expect(page.locator("#rate")).toHaveValue("14,15");
     await expect(page.locator("#select-rate")).toContainText("Anual");
 
@@ -645,7 +645,7 @@ test.describe("Functional E2E Scenarios — All Screens (Desktop & Mobile)", () 
       "Selic 15,00%"
     );
     await expect(page.getByTestId("preset-ipca-plus")).toContainText(
-      "IPCA+ 11,09%"
+      "IPCA 4,80%"
     );
     await expect(page.getByTestId("bcb-indicators-status")).toContainText(
       "Taxas BCB • Ref. 19/11/2026 • IPCA 12m: 4,80% • Dólar PTAX: R$ 5,85"
@@ -665,7 +665,7 @@ test.describe("Functional E2E Scenarios — All Screens (Desktop & Mobile)", () 
 
     await expect(page.getByTestId("bcb-presets-bar")).toBeVisible();
     await expect(page.getByTestId("bcb-indicators-status")).toContainText(
-      "Taxas de referência padrão • Selic 14,25% • CDI 14,15% • IPCA+ 10,77%"
+      "Taxas de referência padrão • Selic 14,25% • CDI 14,15% • IPCA 4,50%"
     );
     await expect(page.getByTestId("preset-selic")).toContainText(
       "Selic 14,25%"

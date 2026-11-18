@@ -489,7 +489,7 @@ export function CompoundInterestFeature({
                   ) : (
                     <span>
                       Taxas de referência padrão • Selic 14,25% • CDI 14,15% •
-                      IPCA+ 10,77%
+                      IPCA 4,50%
                     </span>
                   )}
                 </div>

@@ -73,9 +73,9 @@ const VALIDATOR_EXAMPLES = [
     badge: "Clássico",
   },
   {
-    label: "Alfanumérico RFB",
+    label: "Alfanumérico Válido",
     value: "12.ABC.345/01DE-35",
-    badge: "IN 2.229/2024",
+    badge: "Novo Padrão",
   },
   {
     label: "DV Inválido",
@@ -291,30 +291,30 @@ export function CnpjGeneratorFeature() {
   }, [validatorInput]);
 
   return (
-    <div className="mx-auto max-w-6xl space-y-8">
+    <div className="w-full space-y-5 pb-8">
       {/* Header Banner */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-start gap-4">
-          <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary shadow-xs">
-            <Building2 className="size-6" />
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-start gap-3.5">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary shadow-xs">
+            <Building2 className="size-5" />
           </div>
-          <div className="space-y-2">
-            <div className="flex flex-wrap items-center gap-3">
-              <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+          <div className="space-y-1">
+            <div className="flex flex-wrap items-center gap-2.5">
+              <h1 className="text-xl font-bold tracking-tight sm:text-2xl">
                 Gerador e Validador de CNPJ
               </h1>
               <Badge
-                variant="default"
-                className="gap-1.5 px-3 py-1 text-xs font-medium"
+                variant="secondary"
+                className="gap-1.5 px-2.5 py-0.5 text-xs font-medium"
               >
-                <Sparkles className="size-3.5" />
-                IN RFB 2.229/2024
+                <Sparkles className="size-3" />
+                Numérico e Alfanumérico
               </Badge>
             </div>
-            <p className="max-w-3xl text-base leading-relaxed text-muted-foreground">
-              Gere e valide CNPJs no padrão <strong>Numérico Clássico</strong>{" "}
-              ou no novo padrão <strong>Alfanumérico (Julho/2026)</strong> com
-              cálculo Módulo 11 passo a passo.
+            <p className="max-w-3xl text-sm leading-relaxed text-muted-foreground">
+              Gere e valide CNPJs para testes de software no formato{" "}
+              <strong>Numérico</strong> ou <strong>Alfanumérico</strong>, com
+              opção de matriz, filial e geração em lote.
             </p>
           </div>
         </div>
@@ -324,97 +324,97 @@ export function CnpjGeneratorFeature() {
       <Tabs
         value={activeTab}
         onValueChange={setActiveTab}
-        className="space-y-8"
+        className="space-y-5"
       >
-        <TabsList className="grid h-12 w-full grid-cols-3 gap-2 rounded-xl p-1.5 sm:w-fit">
+        <TabsList className="grid h-10 w-full grid-cols-3 gap-1 rounded-lg p-1 sm:w-fit">
           <TabsTrigger
             value="generator"
-            className="gap-2 rounded-lg px-4 py-2 text-xs font-medium sm:text-sm"
+            className="gap-1.5 rounded-md px-3.5 py-1.5 text-xs font-medium sm:text-sm"
           >
-            <RefreshCw className="size-4 shrink-0" />
+            <RefreshCw className="size-3.5 shrink-0" />
             <span>Gerador de CNPJ</span>
           </TabsTrigger>
           <TabsTrigger
             value="validator"
-            className="gap-2 rounded-lg px-4 py-2 text-xs font-medium sm:text-sm"
+            className="gap-1.5 rounded-md px-3.5 py-1.5 text-xs font-medium sm:text-sm"
           >
-            <ShieldCheck className="size-4 shrink-0" />
+            <ShieldCheck className="size-3.5 shrink-0" />
             <span>Validador de CNPJ</span>
           </TabsTrigger>
           <TabsTrigger
             value="batch"
-            className="gap-2 rounded-lg px-4 py-2 text-xs font-medium sm:text-sm"
+            className="gap-1.5 rounded-md px-3.5 py-1.5 text-xs font-medium sm:text-sm"
           >
-            <Layers className="size-4 shrink-0" />
+            <Layers className="size-3.5 shrink-0" />
             <span>Gerador em Massa</span>
           </TabsTrigger>
         </TabsList>
 
         {/* TAB 1: GERADOR DE CNPJ */}
-        <TabsContent value="generator" className="mt-6 space-y-8">
-          <div className="grid gap-6 sm:gap-8 lg:grid-cols-12">
+        <TabsContent value="generator" className="mt-4 space-y-5">
+          <div className="grid gap-4 sm:gap-5 lg:grid-cols-12">
             {/* Options Column */}
-            <Card className="flex flex-col justify-between gap-6 p-6 sm:gap-8 sm:p-8 lg:col-span-5">
-              <CardHeader className="space-y-2 p-0">
-                <CardTitle className="text-xl font-bold">
+            <Card className="flex flex-col justify-between gap-4 p-4 sm:gap-5 sm:p-5 lg:col-span-5">
+              <CardHeader className="space-y-1 p-0">
+                <CardTitle className="text-base font-bold sm:text-lg">
                   Opções de Geração
                 </CardTitle>
-                <CardDescription className="text-sm leading-relaxed">
+                <CardDescription className="text-xs leading-relaxed sm:text-sm">
                   Personalize o formato, pontuação e ordem do estabelecimento.
                 </CardDescription>
               </CardHeader>
 
-              <CardContent className="space-y-6 p-0">
+              <CardContent className="space-y-4 p-0">
                 {/* Mode selector: Numeric vs Alphanumeric */}
-                <div className="flex flex-col gap-4 rounded-xl border bg-muted/20 p-5">
-                  <div className="space-y-1">
+                <div className="flex flex-col gap-3 rounded-xl border bg-muted/20 p-3.5 sm:p-4">
+                  <div className="space-y-0.5">
                     <Label className="text-sm font-semibold">
                       Padrão do CNPJ
                     </Label>
                     <p className="text-xs leading-relaxed text-muted-foreground">
-                      Escolha entre o formato tradicional ou o novo padrão da
-                      Receita Federal.
+                      Escolha entre o formato numérico tradicional ou o padrão
+                      alfanumérico.
                     </p>
                   </div>
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
                     <Button
                       type="button"
                       variant={mode === "numeric" ? "default" : "outline"}
-                      className="h-auto flex-col items-start gap-1 rounded-xl px-4 py-3.5 text-left"
+                      className="h-auto flex-col items-start gap-0.5 rounded-lg px-3.5 py-2.5 text-left"
                       onClick={() => {
                         setMode("numeric");
                         handleGenerateSingle("numeric");
                       }}
                     >
-                      <span className="text-sm font-semibold">
-                        Numérico (Atual)
+                      <span className="text-xs font-semibold sm:text-sm">
+                        Numérico
                       </span>
-                      <span className="text-xs leading-relaxed opacity-85">
+                      <span className="text-xs leading-normal opacity-85">
                         Apenas dígitos 0-9
                       </span>
                     </Button>
                     <Button
                       type="button"
                       variant={mode === "alphanumeric" ? "default" : "outline"}
-                      className="h-auto flex-col items-start gap-1 rounded-xl px-4 py-3.5 text-left"
+                      className="h-auto flex-col items-start gap-0.5 rounded-lg px-3.5 py-2.5 text-left"
                       onClick={() => {
                         setMode("alphanumeric");
                         handleGenerateSingle("alphanumeric");
                       }}
                     >
-                      <span className="text-sm font-semibold">
+                      <span className="text-xs font-semibold sm:text-sm">
                         Alfanumérico
                       </span>
-                      <span className="text-xs leading-relaxed opacity-85">
-                        IN RFB 2.229/2024
+                      <span className="text-xs leading-normal opacity-85">
+                        Letras e números
                       </span>
                     </Button>
                   </div>
                 </div>
 
                 {/* Punctuation Toggle */}
-                <div className="flex items-center justify-between gap-4 rounded-xl border bg-muted/20 p-5">
-                  <div className="space-y-1">
+                <div className="flex items-center justify-between gap-3 rounded-xl border bg-muted/20 p-3.5 sm:p-4">
+                  <div className="space-y-0.5">
                     <Label
                       htmlFor="cnpj-punctuation-switch"
                       className="cursor-pointer text-sm font-semibold"
@@ -436,8 +436,8 @@ export function CnpjGeneratorFeature() {
                 </div>
 
                 {/* Branch / Establishment selector */}
-                <div className="flex flex-col gap-4 rounded-xl border bg-muted/20 p-5">
-                  <div className="space-y-1">
+                <div className="flex flex-col gap-3 rounded-xl border bg-muted/20 p-3.5 sm:p-4">
+                  <div className="space-y-0.5">
                     <Label
                       htmlFor="branch-preset-select"
                       className="text-sm font-semibold"
@@ -459,13 +459,13 @@ export function CnpjGeneratorFeature() {
                   >
                     <SelectTrigger
                       id="branch-preset-select"
-                      className="h-12 bg-background text-sm"
+                      className="h-10 bg-background px-4 text-sm"
                     >
                       <SelectValue placeholder="Selecione o tipo" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="headquarters">
-                        Matriz (0001 — Padrão 4Devs)
+                        Matriz (0001 — Padrão)
                       </SelectItem>
                       <SelectItem value="random_branch">
                         Filial Aleatória (0002 a 0099)
@@ -484,7 +484,7 @@ export function CnpjGeneratorFeature() {
                       >
                         Código da Ordem (4 posições)
                       </Label>
-                      <div className="flex gap-3">
+                      <div className="flex gap-2.5">
                         <Input
                           id="custom-branch-input"
                           maxLength={4}
@@ -500,12 +500,12 @@ export function CnpjGeneratorFeature() {
                             setCustomBranch(raw);
                           }}
                           placeholder={mode === "numeric" ? "0002" : "01DE"}
-                          className="h-12 bg-background font-mono text-base uppercase"
+                          className="h-10 bg-background px-4 font-mono text-sm uppercase"
                         />
                         <Button
                           type="button"
                           variant="secondary"
-                          className="h-12 px-5 text-sm font-medium"
+                          className="h-10 px-4 text-sm font-medium"
                           onClick={() => handleGenerateSingle()}
                         >
                           Aplicar
@@ -521,44 +521,43 @@ export function CnpjGeneratorFeature() {
                 </div>
               </CardContent>
 
-              <CardFooter className="border-t p-0 pt-6">
+              <CardFooter className="border-t p-0 pt-4">
                 <Button
                   type="button"
-                  size="lg"
-                  className="h-12 w-full gap-3 px-6 text-base font-medium"
+                  className="h-10 w-full gap-2 px-4 text-sm font-medium"
                   onClick={() => handleGenerateSingle()}
                 >
-                  <RefreshCw className="size-5" />
+                  <RefreshCw className="size-4" />
                   Gerar Novo CNPJ
                 </Button>
               </CardFooter>
             </Card>
 
             {/* Result & Anatomy Column */}
-            <Card className="flex flex-col justify-between gap-6 p-6 sm:gap-8 sm:p-8 lg:col-span-7">
+            <Card className="flex flex-col justify-between gap-4 p-4 sm:gap-5 sm:p-5 lg:col-span-7">
               <CardHeader className="p-0">
-                <div className="flex flex-wrap items-start justify-between gap-4">
-                  <div className="space-y-1.5">
-                    <CardTitle className="text-xl font-bold">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="space-y-1">
+                    <CardTitle className="text-base font-bold sm:text-lg">
                       CNPJ Gerado
                     </CardTitle>
-                    <CardDescription className="text-sm leading-relaxed">
-                      Válido pelo algoritmo oficial Módulo 11 da Receita
-                      Federal.
+                    <CardDescription className="text-xs leading-relaxed sm:text-sm">
+                      Pronto para uso em cadastros, homologação e testes de
+                      sistemas.
                     </CardDescription>
                   </div>
-                  <div className="flex flex-wrap items-center gap-2.5">
+                  <div className="flex flex-wrap items-center gap-2">
                     <Badge
                       variant={mode === "alphanumeric" ? "default" : "secondary"}
-                      className="px-3 py-1 text-xs font-medium"
+                      className="px-2.5 py-0.5 text-xs font-medium"
                     >
                       {mode === "alphanumeric"
-                        ? "Alfanumérico (ASCII - 48)"
+                        ? "Padrão Alfanumérico"
                         : "Numérico Clássico"}
                     </Badge>
                     <Badge
                       variant="outline"
-                      className="px-3 py-1 text-xs font-medium"
+                      className="px-2.5 py-0.5 text-xs font-medium"
                     >
                       {singleParts.branch === "0001"
                         ? "Matriz (0001)"
@@ -568,36 +567,35 @@ export function CnpjGeneratorFeature() {
                 </div>
               </CardHeader>
 
-              <CardContent className="space-y-8 p-0">
+              <CardContent className="space-y-4 p-0">
                 {/* Hero CNPJ Output Box */}
-                <div className="relative flex flex-col items-center justify-center rounded-2xl border-2 border-primary/20 bg-muted/40 p-6 text-center shadow-inner sm:p-8">
-                  <span className="mb-3 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+                <div className="relative flex flex-col items-center justify-center rounded-xl border-2 border-primary/20 bg-muted/40 p-4 text-center shadow-inner sm:p-5">
+                  <span className="mb-2 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                     Clique para copiar ou gere um novo
                   </span>
                   <button
                     type="button"
                     onClick={handleCopySingle}
                     title="Clique para copiar o CNPJ"
-                    className="cursor-pointer font-mono text-2xl font-bold tracking-wider text-foreground transition-colors hover:text-primary sm:text-4xl"
+                    className="cursor-pointer font-mono text-2xl font-bold tracking-wider text-foreground transition-colors hover:text-primary sm:text-3xl"
                   >
                     {displayedSingleCnpj}
                   </button>
 
-                  <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+                  <div className="mt-4 flex flex-wrap items-center justify-center gap-2.5">
                     <Button
                       type="button"
-                      size="lg"
                       onClick={handleCopySingle}
-                      className="h-12 min-w-44 gap-3 px-6 text-base font-medium"
+                      className="h-10 min-w-36 gap-2 px-4 text-sm font-medium"
                     >
                       {copiedSingle ? (
                         <>
-                          <Check className="size-5" />
+                          <Check className="size-4" />
                           Copiado!
                         </>
                       ) : (
                         <>
-                          <Copy className="size-5" />
+                          <Copy className="size-4" />
                           Copiar CNPJ
                         </>
                       )}
@@ -605,68 +603,66 @@ export function CnpjGeneratorFeature() {
                     <Button
                       type="button"
                       variant="outline"
-                      size="lg"
                       onClick={() => handleGenerateSingle()}
-                      className="h-12 gap-3 px-6 text-base font-medium"
+                      className="h-10 gap-2 px-4 text-sm font-medium"
                     >
-                      <RefreshCw className="size-5" />
+                      <RefreshCw className="size-4" />
                       Gerar Outro
                     </Button>
                     <Button
                       type="button"
                       variant="ghost"
-                      size="lg"
                       onClick={() =>
                         handleInspectInValidator(currentCleanCnpj)
                       }
-                      className="h-12 gap-2.5 px-5 text-sm font-medium"
+                      className="h-10 gap-2 px-4 text-sm font-medium"
                     >
                       <ShieldCheck className="size-4" />
-                      Ver Cálculo DV1/DV2
+                      Validar CNPJ
                     </Button>
                   </div>
                 </div>
 
                 {/* Structural Anatomy Breakdown */}
-                <div className="grid grid-cols-1 gap-4 text-center sm:grid-cols-3">
-                  <div className="space-y-1.5 rounded-xl border bg-background p-5">
+                <div className="grid grid-cols-1 gap-3 text-center sm:grid-cols-3">
+                  <div className="space-y-1 rounded-xl border bg-background p-3.5 sm:p-4">
                     <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                       Raiz (8 pos.)
                     </p>
-                    <p className="font-mono text-lg font-bold sm:text-xl">
+                    <p className="font-mono text-base font-bold sm:text-lg">
                       {singleParts.root}
                     </p>
                     <p className="text-xs leading-relaxed text-muted-foreground">
                       Inscrição Base
                     </p>
                   </div>
-                  <div className="space-y-1.5 rounded-xl border bg-background p-5">
+                  <div className="space-y-1 rounded-xl border bg-background p-3.5 sm:p-4">
                     <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                       Ordem (4 pos.)
                     </p>
-                    <p className="font-mono text-lg font-bold sm:text-xl">
+                    <p className="font-mono text-base font-bold sm:text-lg">
                       {singleParts.branch}
                     </p>
                     <p className="text-xs leading-relaxed text-muted-foreground">
                       {singleParts.branch === "0001" ? "Matriz" : "Filial"}
                     </p>
                   </div>
-                  <div className="space-y-1.5 rounded-xl border bg-primary/5 p-5">
+                  <div className="space-y-1 rounded-xl border bg-primary/5 p-3.5 sm:p-4">
                     <p className="text-xs font-semibold tracking-wider text-primary uppercase">
                       DVs (2 pos.)
                     </p>
-                    <p className="font-mono text-lg font-bold text-primary sm:text-xl">
+                    <p className="font-mono text-base font-bold text-primary sm:text-lg">
                       {singleParts.dv}
                     </p>
                     <p className="text-xs leading-relaxed text-muted-foreground">
-                      Módulo 11
+                      Dígitos Verificadores
                     </p>
                   </div>
                 </div>
 
                 {/* Recent Session History */}
                 {history.length > 1 && (
-                  <div className="space-y-3 rounded-xl border bg-muted/20 p-5">
+                  <div className="space-y-2.5 rounded-xl border bg-muted/20 p-3.5 sm:p-4">
                     <div className="flex items-center justify-between gap-2">
                       <span className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                         Últimos CNPJs gerados nesta sessão
@@ -675,13 +671,13 @@ export function CnpjGeneratorFeature() {
                         type="button"
                         variant="ghost"
                         size="sm"
-                        className="h-8 px-3 text-xs font-medium text-muted-foreground"
+                        className="h-7 px-2.5 text-xs font-medium text-muted-foreground"
                         onClick={() => setHistory([currentCleanCnpj])}
                       >
                         Limpar histórico
                       </Button>
                     </div>
-                    <div className="flex flex-wrap gap-2.5">
+                    <div className="flex flex-wrap gap-2">
                       {history.slice(1).map((item) => {
                         const text = formatted ? formatCnpj(item) : item;
                         return (
@@ -689,10 +685,10 @@ export function CnpjGeneratorFeature() {
                             key={item}
                             type="button"
                             onClick={() => handleCopyText(text, "CNPJ")}
-                            className="inline-flex cursor-pointer items-center gap-2 rounded-lg border bg-background px-3.5 py-2 font-mono text-xs font-medium transition-colors hover:border-primary/40 hover:bg-muted sm:text-sm"
+                            className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border bg-background px-3 py-1.5 font-mono text-xs font-medium transition-colors hover:border-primary/40 hover:bg-muted"
                           >
                             <span>{text}</span>
-                            <Copy className="size-3.5 opacity-60" />
+                            <Copy className="size-3 opacity-60" />
                           </button>
                         );
                       })}
@@ -701,8 +697,8 @@ export function CnpjGeneratorFeature() {
                 )}
               </CardContent>
 
-              <CardFooter className="border-t p-0 pt-6 text-xs leading-relaxed text-muted-foreground sm:text-sm">
-                <Info className="mr-2.5 size-4 shrink-0 text-primary" />
+              <CardFooter className="border-t p-0 pt-4 text-xs leading-relaxed text-muted-foreground">
+                <Info className="mr-2 size-4 shrink-0 text-primary" />
                 Os números são gerados exclusivamente para testes de software e
                 homologação (sem vínculo com empresas reais).
               </CardFooter>
@@ -711,28 +707,27 @@ export function CnpjGeneratorFeature() {
         </TabsContent>
 
         {/* TAB 2: VALIDADOR DE CNPJ */}
-        <TabsContent value="validator" className="mt-6 space-y-8">
-          <Card className="gap-6 p-6 sm:gap-8 sm:p-8">
-            <CardHeader className="space-y-2 p-0">
-              <CardTitle className="text-xl font-bold">
+        <TabsContent value="validator" className="mt-4 space-y-5">
+          <Card className="gap-4 p-4 sm:gap-5 sm:p-5">
+            <CardHeader className="space-y-1 p-0">
+              <CardTitle className="text-base font-bold sm:text-lg">
                 Validador de CNPJ (Numérico e Alfanumérico)
               </CardTitle>
-              <CardDescription className="text-sm leading-relaxed">
+              <CardDescription className="text-xs leading-relaxed sm:text-sm">
                 Digite ou cole qualquer CNPJ com ou sem máscara para verificar
-                os dígitos verificadores e inspecionar a memória de cálculo
-                Módulo 11.
+                sua validade e conferir os dígitos verificadores.
               </CardDescription>
             </CardHeader>
 
-            <CardContent className="space-y-8 p-0">
-              <div className="space-y-4">
+            <CardContent className="space-y-5 p-0">
+              <div className="space-y-3">
                 <Label
                   htmlFor="cnpj-validator-input"
                   className="text-sm font-semibold"
                 >
                   CNPJ para validação
                 </Label>
-                <div className="flex flex-col gap-3 sm:flex-row">
+                <div className="flex flex-col gap-2.5 sm:flex-row">
                   <Input
                     id="cnpj-validator-input"
                     maxLength={18}
@@ -742,13 +737,13 @@ export function CnpjGeneratorFeature() {
                       setValidatorInput(formatCnpj(raw));
                     }}
                     placeholder="Ex: 11.222.333/0001-81 ou 12.ABC.345/01DE-35"
-                    className="h-12 font-mono text-lg uppercase"
+                    className="h-10 px-4 font-mono text-sm uppercase sm:text-base"
                   />
-                  <div className="flex gap-3">
+                  <div className="flex gap-2.5">
                     <Button
                       type="button"
                       variant="outline"
-                      className="h-12 gap-2 px-5 text-sm font-medium"
+                      className="h-10 gap-2 px-4 text-sm font-medium"
                       onClick={() => setValidatorInput("")}
                     >
                       <Trash2 className="size-4" />
@@ -758,8 +753,8 @@ export function CnpjGeneratorFeature() {
                 </div>
 
                 {/* Quick Example Pills */}
-                <div className="flex flex-wrap items-center gap-2.5 pt-1">
-                  <span className="text-xs font-medium text-muted-foreground sm:text-sm">
+                <div className="flex flex-wrap items-center gap-2 pt-0.5">
+                  <span className="text-xs font-medium text-muted-foreground">
                     Exemplos rápidos:
                   </span>
                   {VALIDATOR_EXAMPLES.map((ex) => (
@@ -767,7 +762,7 @@ export function CnpjGeneratorFeature() {
                       key={ex.value}
                       type="button"
                       onClick={() => setValidatorInput(ex.value)}
-                      className="inline-flex cursor-pointer items-center gap-2.5 rounded-full border bg-muted/40 px-3.5 py-2 text-xs transition-colors hover:border-primary/40 hover:bg-muted sm:text-sm"
+                      className="inline-flex cursor-pointer items-center gap-2 rounded-full border bg-muted/40 px-3 py-1 text-xs transition-colors hover:border-primary/40 hover:bg-muted"
                     >
                       <span className="font-medium">{ex.label}:</span>
                       <code className="font-mono font-semibold">
@@ -780,24 +775,24 @@ export function CnpjGeneratorFeature() {
 
               {/* Validation Result Banner */}
               {validationResult && (
-                <div className="space-y-8">
+                <div className="space-y-5">
                   <div
-                    className={`rounded-2xl border-2 p-6 ${
+                    className={`rounded-xl border-2 p-4 sm:p-5 ${
                       validationResult.isValid
                         ? "border-emerald-500/30 bg-emerald-500/5"
                         : "border-destructive/30 bg-destructive/5"
                     }`}
                   >
-                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                      <div className="flex items-start gap-4">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="flex items-start gap-3">
                         {validationResult.isValid ? (
-                          <CheckCircle2 className="mt-0.5 size-7 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                          <CheckCircle2 className="mt-0.5 size-6 shrink-0 text-emerald-600 dark:text-emerald-400" />
                         ) : (
-                          <ShieldAlert className="mt-0.5 size-7 shrink-0 text-destructive" />
+                          <ShieldAlert className="mt-0.5 size-6 shrink-0 text-destructive" />
                         )}
-                        <div className="space-y-2">
-                          <div className="flex flex-wrap items-center gap-2.5">
-                            <h3 className="text-lg font-bold">
+                        <div className="space-y-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <h3 className="text-base font-bold">
                               {validationResult.isValid
                                 ? "CNPJ Válido!"
                                 : "CNPJ Inválido"}
@@ -808,7 +803,7 @@ export function CnpjGeneratorFeature() {
                                   ? "default"
                                   : "destructive"
                               }
-                              className="px-3 py-1 font-mono text-xs font-medium"
+                              className="px-2.5 py-0.5 font-mono text-xs font-medium"
                             >
                               {validationResult.formattedCnpj ||
                                 validationResult.cleanCnpj}
@@ -816,17 +811,17 @@ export function CnpjGeneratorFeature() {
                             {validationResult.cleanCnpj.length === 14 && (
                               <Badge
                                 variant="outline"
-                                className="px-3 py-1 text-xs font-medium"
+                                className="px-2.5 py-0.5 text-xs font-medium"
                               >
                                 {validationResult.mode === "alphanumeric"
-                                  ? "Alfanumérico (IN 2.229/2024)"
+                                  ? "Padrão Alfanumérico"
                                   : "Numérico Clássico"}
                               </Badge>
                             )}
                           </div>
-                          <p className="text-sm leading-relaxed text-muted-foreground sm:text-base">
+                          <p className="text-xs leading-relaxed text-muted-foreground sm:text-sm">
                             {validationResult.isValid
-                              ? `Os dígitos verificadores (${validationResult.providedCheckDigits}) conferem exatamente com o cálculo Módulo 11 da Receita Federal.`
+                              ? `Os dígitos verificadores (${validationResult.providedCheckDigits}) estão corretos.`
                               : validationResult.reasonMessage}
                           </p>
                         </div>
@@ -842,7 +837,7 @@ export function CnpjGeneratorFeature() {
                               "CNPJ validado"
                             )
                           }
-                          className="h-11 shrink-0 gap-2 px-4 text-sm font-medium"
+                          className="h-10 shrink-0 gap-2 px-4 text-sm font-medium"
                         >
                           <Copy className="size-4" />
                           Copiar Formatado
@@ -852,20 +847,20 @@ export function CnpjGeneratorFeature() {
 
                     {/* Diagnostic Metadata Grid */}
                     {validationResult.cleanCnpj.length === 14 && (
-                      <div className="mt-6 grid grid-cols-2 gap-4 border-t pt-6 sm:grid-cols-4">
-                        <div className="space-y-1">
+                      <div className="mt-4 grid grid-cols-2 gap-3 border-t pt-4 sm:grid-cols-4">
+                        <div className="space-y-0.5">
                           <span className="text-xs font-medium text-muted-foreground">
                             Raiz (Inscrição)
                           </span>
-                          <p className="font-mono text-base font-bold">
+                          <p className="font-mono text-sm font-bold sm:text-base">
                             {validationResult.rootCode}
                           </p>
                         </div>
-                        <div className="space-y-1">
+                        <div className="space-y-0.5">
                           <span className="text-xs font-medium text-muted-foreground">
                             Estabelecimento
                           </span>
-                          <p className="font-mono text-base font-bold">
+                          <p className="font-mono text-sm font-bold sm:text-base">
                             {validationResult.branchCode} (
                             {validationResult.isHeadquarters
                               ? "Matriz"
@@ -873,19 +868,19 @@ export function CnpjGeneratorFeature() {
                             )
                           </p>
                         </div>
-                        <div className="space-y-1">
+                        <div className="space-y-0.5">
                           <span className="text-xs font-medium text-muted-foreground">
                             DVs Informados
                           </span>
-                          <p className="font-mono text-base font-bold">
+                          <p className="font-mono text-sm font-bold sm:text-base">
                             {validationResult.providedCheckDigits}
                           </p>
                         </div>
-                        <div className="space-y-1">
+                        <div className="space-y-0.5">
                           <span className="text-xs font-medium text-muted-foreground">
-                            DVs Esperados (Mod 11)
+                            DVs Esperados
                           </span>
-                          <p className="font-mono text-base font-bold text-primary">
+                          <p className="font-mono text-sm font-bold text-primary sm:text-base">
                             {validationResult.expectedCheckDigits || "—"}
                           </p>
                         </div>
@@ -895,35 +890,32 @@ export function CnpjGeneratorFeature() {
 
                   {/* Step-by-Step DV1 and DV2 Breakdown Tables */}
                   {validationResult.steps && (
-                    <div className="space-y-6">
-                      <div className="space-y-1">
-                        <h4 className="text-base font-bold tracking-tight">
-                          Memória de Cálculo Passo a Passo (Módulo 11 — ASCII -
-                          48)
+                    <div className="space-y-4">
+                      <div className="space-y-0.5">
+                        <h4 className="text-sm font-bold tracking-tight sm:text-base">
+                          Detalhamento dos Dígitos Verificadores
                         </h4>
-                        <p className="text-sm leading-relaxed text-muted-foreground">
-                          Confira o peso multiplicador aplicado a cada uma das
-                          posições do CNPJ.
+                        <p className="text-xs leading-relaxed text-muted-foreground sm:text-sm">
+                          Confira os pesos aplicados a cada posição do CNPJ.
                         </p>
                       </div>
-                      <div className="grid gap-6 lg:grid-cols-2">
+                      <div className="grid gap-4 sm:gap-5 lg:grid-cols-2">
                         {/* 1st Check Digit Table */}
-                        <Card className="gap-6 p-6">
-                          <CardHeader className="space-y-1.5 p-0">
+                        <Card className="gap-4 p-3.5 sm:p-4">
+                          <CardHeader className="space-y-1 p-0">
                             <div className="flex items-center justify-between gap-2">
-                              <CardTitle className="text-base font-bold">
+                              <CardTitle className="text-sm font-bold sm:text-base">
                                 1º Dígito Verificador (DV1)
                               </CardTitle>
                               <Badge
                                 variant="secondary"
-                                className="px-3 py-1 font-mono text-xs font-semibold"
+                                className="px-2.5 py-0.5 font-mono text-xs font-semibold"
                               >
                                 DV1 = {validationResult.steps.expectedDv1}
                               </Badge>
                             </div>
-                            <CardDescription className="text-xs leading-relaxed sm:text-sm">
-                              Soma = {validationResult.steps.sum1} | Resto (
-                              {validationResult.steps.sum1} mod 11) ={" "}
+                            <CardDescription className="text-xs leading-relaxed">
+                              Soma dos produtos = {validationResult.steps.sum1} | Resto da divisão ={" "}
                               {validationResult.steps.remainder1}
                             </CardDescription>
                           </CardHeader>
@@ -931,19 +923,19 @@ export function CnpjGeneratorFeature() {
                             <Table>
                               <TableHeader>
                                 <TableRow>
-                                  <TableHead className="h-10 px-3 text-xs font-semibold">
+                                  <TableHead className="h-9 px-2.5 text-xs font-semibold">
                                     Pos
                                   </TableHead>
-                                  <TableHead className="h-10 px-3 text-xs font-semibold">
+                                  <TableHead className="h-9 px-2.5 text-xs font-semibold">
                                     Caractere
                                   </TableHead>
-                                  <TableHead className="h-10 px-3 text-xs font-semibold">
-                                    Valor (ASCII-48)
+                                  <TableHead className="h-9 px-2.5 text-xs font-semibold">
+                                    Valor Base
                                   </TableHead>
-                                  <TableHead className="h-10 px-3 text-xs font-semibold">
+                                  <TableHead className="h-9 px-2.5 text-xs font-semibold">
                                     Peso
                                   </TableHead>
-                                  <TableHead className="h-10 px-3 text-right text-xs font-semibold">
+                                  <TableHead className="h-9 px-2.5 text-right text-xs font-semibold">
                                     Produto
                                   </TableHead>
                                 </TableRow>
@@ -951,22 +943,19 @@ export function CnpjGeneratorFeature() {
                               <TableBody>
                                 {validationResult.steps.dv1Steps.map((step) => (
                                   <TableRow key={`dv1-${step.position}`}>
-                                    <TableCell className="px-3 py-2 font-mono text-xs text-muted-foreground sm:text-sm">
+                                    <TableCell className="px-2.5 py-1.5 font-mono text-xs text-muted-foreground">
                                       {step.position}ª
                                     </TableCell>
-                                    <TableCell className="px-3 py-2 font-mono text-xs font-bold sm:text-sm">
+                                    <TableCell className="px-2.5 py-1.5 font-mono text-xs font-bold">
                                       {step.char}
                                     </TableCell>
-                                    <TableCell className="px-3 py-2 font-mono text-xs sm:text-sm">
-                                      {step.calcValue}{" "}
-                                      <span className="text-xs text-muted-foreground">
-                                        ({step.asciiCode}-48)
-                                      </span>
+                                    <TableCell className="px-2.5 py-1.5 font-mono text-xs">
+                                      {step.calcValue}
                                     </TableCell>
-                                    <TableCell className="px-3 py-2 font-mono text-xs sm:text-sm">
+                                    <TableCell className="px-2.5 py-1.5 font-mono text-xs">
                                       × {step.weight}
                                     </TableCell>
-                                    <TableCell className="px-3 py-2 text-right font-mono text-xs font-semibold sm:text-sm">
+                                    <TableCell className="px-2.5 py-1.5 text-right font-mono text-xs font-semibold">
                                       {step.product}
                                     </TableCell>
                                   </TableRow>
@@ -977,22 +966,21 @@ export function CnpjGeneratorFeature() {
                         </Card>
 
                         {/* 2nd Check Digit Table */}
-                        <Card className="gap-6 p-6">
-                          <CardHeader className="space-y-1.5 p-0">
+                        <Card className="gap-4 p-3.5 sm:p-4">
+                          <CardHeader className="space-y-1 p-0">
                             <div className="flex items-center justify-between gap-2">
-                              <CardTitle className="text-base font-bold">
+                              <CardTitle className="text-sm font-bold sm:text-base">
                                 2º Dígito Verificador (DV2)
                               </CardTitle>
                               <Badge
                                 variant="secondary"
-                                className="px-3 py-1 font-mono text-xs font-semibold"
+                                className="px-2.5 py-0.5 font-mono text-xs font-semibold"
                               >
                                 DV2 = {validationResult.steps.expectedDv2}
                               </Badge>
                             </div>
-                            <CardDescription className="text-xs leading-relaxed sm:text-sm">
-                              Soma = {validationResult.steps.sum2} | Resto (
-                              {validationResult.steps.sum2} mod 11) ={" "}
+                            <CardDescription className="text-xs leading-relaxed">
+                              Soma dos produtos = {validationResult.steps.sum2} | Resto da divisão ={" "}
                               {validationResult.steps.remainder2}
                             </CardDescription>
                           </CardHeader>
@@ -1000,19 +988,19 @@ export function CnpjGeneratorFeature() {
                             <Table>
                               <TableHeader>
                                 <TableRow>
-                                  <TableHead className="h-10 px-3 text-xs font-semibold">
+                                  <TableHead className="h-9 px-2.5 text-xs font-semibold">
                                     Pos
                                   </TableHead>
-                                  <TableHead className="h-10 px-3 text-xs font-semibold">
+                                  <TableHead className="h-9 px-2.5 text-xs font-semibold">
                                     Caractere
                                   </TableHead>
-                                  <TableHead className="h-10 px-3 text-xs font-semibold">
-                                    Valor (ASCII-48)
+                                  <TableHead className="h-9 px-2.5 text-xs font-semibold">
+                                    Valor Base
                                   </TableHead>
-                                  <TableHead className="h-10 px-3 text-xs font-semibold">
+                                  <TableHead className="h-9 px-2.5 text-xs font-semibold">
                                     Peso
                                   </TableHead>
-                                  <TableHead className="h-10 px-3 text-right text-xs font-semibold">
+                                  <TableHead className="h-9 px-2.5 text-right text-xs font-semibold">
                                     Produto
                                   </TableHead>
                                 </TableRow>
@@ -1020,22 +1008,19 @@ export function CnpjGeneratorFeature() {
                               <TableBody>
                                 {validationResult.steps.dv2Steps.map((step) => (
                                   <TableRow key={`dv2-${step.position}`}>
-                                    <TableCell className="px-3 py-2 font-mono text-xs text-muted-foreground sm:text-sm">
+                                    <TableCell className="px-2.5 py-1.5 font-mono text-xs text-muted-foreground">
                                       {step.position}ª
                                     </TableCell>
-                                    <TableCell className="px-3 py-2 font-mono text-xs font-bold sm:text-sm">
+                                    <TableCell className="px-2.5 py-1.5 font-mono text-xs font-bold">
                                       {step.char}
                                     </TableCell>
-                                    <TableCell className="px-3 py-2 font-mono text-xs sm:text-sm">
-                                      {step.calcValue}{" "}
-                                      <span className="text-xs text-muted-foreground">
-                                        ({step.asciiCode}-48)
-                                      </span>
+                                    <TableCell className="px-2.5 py-1.5 font-mono text-xs">
+                                      {step.calcValue}
                                     </TableCell>
-                                    <TableCell className="px-3 py-2 font-mono text-xs sm:text-sm">
+                                    <TableCell className="px-2.5 py-1.5 font-mono text-xs">
                                       × {step.weight}
                                     </TableCell>
-                                    <TableCell className="px-3 py-2 text-right font-mono text-xs font-semibold sm:text-sm">
+                                    <TableCell className="px-2.5 py-1.5 text-right font-mono text-xs font-semibold">
                                       {step.product}
                                     </TableCell>
                                   </TableRow>
@@ -1054,20 +1039,20 @@ export function CnpjGeneratorFeature() {
         </TabsContent>
 
         {/* TAB 3: GERADOR EM MASSA */}
-        <TabsContent value="batch" className="mt-6 space-y-8">
-          <Card className="gap-6 p-6 sm:gap-8 sm:p-8">
+        <TabsContent value="batch" className="mt-4 space-y-5">
+          <Card className="gap-4 p-4 sm:gap-5 sm:p-5">
             <CardHeader className="p-0">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div className="space-y-1.5">
-                  <CardTitle className="text-xl font-bold">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="space-y-1">
+                  <CardTitle className="text-base font-bold sm:text-lg">
                     Gerador de CNPJ em Massa (Lote)
                   </CardTitle>
-                  <CardDescription className="text-sm leading-relaxed">
+                  <CardDescription className="text-xs leading-relaxed sm:text-sm">
                     Gere até 100 CNPJs simultaneamente para popular bancos de
                     dados, testes automatizados e planilhas.
                   </CardDescription>
                 </div>
-                <div className="flex flex-wrap items-center gap-2.5">
+                <div className="flex flex-wrap items-center gap-2">
                   <Button
                     type="button"
                     variant="outline"
@@ -1077,7 +1062,7 @@ export function CnpjGeneratorFeature() {
                         `${displayedBatchList.length} CNPJs`
                       )
                     }
-                    className="h-10 gap-2 px-4 text-xs font-medium sm:text-sm"
+                    className="h-10 gap-2 px-4 text-sm font-medium"
                   >
                     <Copy className="size-4" />
                     Copiar Todos
@@ -1086,7 +1071,7 @@ export function CnpjGeneratorFeature() {
                     type="button"
                     variant="outline"
                     onClick={() => handleDownloadBatch("txt")}
-                    className="h-10 gap-2 px-4 text-xs font-medium sm:text-sm"
+                    className="h-10 gap-2 px-4 text-sm font-medium"
                   >
                     <FileText className="size-4" />
                     .TXT
@@ -1095,7 +1080,7 @@ export function CnpjGeneratorFeature() {
                     type="button"
                     variant="outline"
                     onClick={() => handleDownloadBatch("csv")}
-                    className="h-10 gap-2 px-4 text-xs font-medium sm:text-sm"
+                    className="h-10 gap-2 px-4 text-sm font-medium"
                   >
                     <FileSpreadsheet className="size-4" />
                     .CSV
@@ -1104,7 +1089,7 @@ export function CnpjGeneratorFeature() {
                     type="button"
                     variant="outline"
                     onClick={() => handleDownloadBatch("json")}
-                    className="h-10 gap-2 px-4 text-xs font-medium sm:text-sm"
+                    className="h-10 gap-2 px-4 text-sm font-medium"
                   >
                     <FileCode2 className="size-4" />
                     .JSON
@@ -1113,13 +1098,13 @@ export function CnpjGeneratorFeature() {
               </div>
             </CardHeader>
 
-            <CardContent className="space-y-8 p-0">
+            <CardContent className="space-y-5 p-0">
               {/* Batch Controls Bar */}
-              <div className="grid gap-6 rounded-2xl border bg-muted/20 p-5 sm:p-6 md:grid-cols-2 lg:grid-cols-4">
-                <div className="space-y-2.5">
+              <div className="grid gap-4 rounded-xl border bg-muted/20 p-3.5 sm:gap-5 sm:p-4 md:grid-cols-2 lg:grid-cols-4">
+                <div className="space-y-2">
                   <Label
                     htmlFor="batch-count-input"
-                    className="text-sm font-semibold"
+                    className="text-xs font-semibold sm:text-sm"
                   >
                     Quantidade (1 a 100)
                   </Label>
@@ -1138,7 +1123,7 @@ export function CnpjGeneratorFeature() {
                           )
                         )
                       }
-                      className="h-11 w-20 bg-background font-mono text-base"
+                      className="h-10 w-20 bg-background px-3 font-mono text-sm"
                     />
                     <div className="flex flex-wrap gap-1.5">
                       {BATCH_PRESETS.map((preset) => (
@@ -1149,7 +1134,7 @@ export function CnpjGeneratorFeature() {
                           variant={
                             batchCount === preset ? "default" : "outline"
                           }
-                          className="h-9 px-3 text-xs font-medium"
+                          className="h-8 px-2.5 text-xs font-medium"
                           onClick={() => setBatchCount(preset)}
                         >
                           {preset}
@@ -1159,13 +1144,15 @@ export function CnpjGeneratorFeature() {
                   </div>
                 </div>
 
-                <div className="space-y-2.5">
-                  <Label className="text-sm font-semibold">Padrão</Label>
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold sm:text-sm">
+                    Padrão
+                  </Label>
                   <div className="grid grid-cols-2 gap-2">
                     <Button
                       type="button"
                       variant={mode === "numeric" ? "default" : "outline"}
-                      className="h-11 text-xs font-medium sm:text-sm"
+                      className="h-10 px-4 text-sm font-medium"
                       onClick={() => setMode("numeric")}
                     >
                       Numérico
@@ -1173,7 +1160,7 @@ export function CnpjGeneratorFeature() {
                     <Button
                       type="button"
                       variant={mode === "alphanumeric" ? "default" : "outline"}
-                      className="h-11 text-xs font-medium sm:text-sm"
+                      className="h-10 px-4 text-sm font-medium"
                       onClick={() => setMode("alphanumeric")}
                     >
                       Alfanumérico
@@ -1181,9 +1168,11 @@ export function CnpjGeneratorFeature() {
                   </div>
                 </div>
 
-                <div className="space-y-2.5">
-                  <Label className="text-sm font-semibold">Pontuação</Label>
-                  <div className="flex h-11 items-center justify-between rounded-xl border bg-background px-4">
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold sm:text-sm">
+                    Pontuação
+                  </Label>
+                  <div className="flex h-10 items-center justify-between rounded-lg border bg-background px-4">
                     <span className="text-xs font-medium sm:text-sm">
                       {formatted ? "Com máscara" : "Apenas caracteres"}
                     </span>
@@ -1197,7 +1186,7 @@ export function CnpjGeneratorFeature() {
                 <div className="flex items-end">
                   <Button
                     type="button"
-                    className="h-11 w-full gap-2.5 text-sm font-medium sm:text-base"
+                    className="h-10 w-full gap-2 px-4 text-sm font-medium"
                     onClick={handleGenerateBatch}
                   >
                     <RefreshCw className="size-4" />
@@ -1207,18 +1196,18 @@ export function CnpjGeneratorFeature() {
               </div>
 
               {/* Batch Output Grid */}
-              <div className="max-h-[28rem] overflow-y-auto rounded-2xl border bg-background p-4 sm:p-5">
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="max-h-[26rem] overflow-y-auto rounded-xl border bg-background p-3.5 sm:p-4">
+                <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
                   {displayedBatchList.map((item, idx) => (
                     <div
                       key={`${item}-${idx}`}
-                      className="group flex items-center justify-between rounded-xl border bg-muted/20 py-3 px-4 font-mono text-sm transition-colors hover:border-primary/40 hover:bg-muted/50 sm:text-base"
+                      className="group flex items-center justify-between rounded-lg border bg-muted/20 py-2 px-3.5 font-mono text-sm transition-colors hover:border-primary/40 hover:bg-muted/50"
                     >
-                      <div className="flex items-center gap-3">
-                        <span className="w-7 font-mono text-xs font-medium text-muted-foreground">
+                      <div className="flex items-center gap-2.5">
+                        <span className="w-6 font-mono text-xs font-medium text-muted-foreground">
                           #{idx + 1}
                         </span>
-                        <span className="font-mono text-sm font-semibold sm:text-base">
+                        <span className="font-mono text-xs font-semibold sm:text-sm">
                           {item}
                         </span>
                       </div>
@@ -1227,13 +1216,13 @@ export function CnpjGeneratorFeature() {
                           type="button"
                           variant="ghost"
                           size="icon"
-                          className="size-8"
+                          className="size-7"
                           title="Copiar CNPJ"
                           onClick={() =>
                             handleCopyText(item, `CNPJ #${idx + 1}`)
                           }
                         >
-                          <Copy className="size-4" />
+                          <Copy className="size-3.5" />
                         </Button>
                       </div>
                     </div>
@@ -1242,13 +1231,13 @@ export function CnpjGeneratorFeature() {
               </div>
             </CardContent>
 
-            <CardFooter className="flex flex-wrap items-center justify-between gap-3 border-t p-0 pt-6 text-xs leading-relaxed text-muted-foreground sm:text-sm">
+            <CardFooter className="flex flex-wrap items-center justify-between gap-2 border-t p-0 pt-4 text-xs leading-relaxed text-muted-foreground">
               <span>
                 Total exibido: <strong>{displayedBatchList.length}</strong>{" "}
                 CNPJs ({mode === "alphanumeric" ? "Alfanumérico" : "Numérico"})
               </span>
-              <div className="flex items-center gap-2">
-                <Download className="size-4 text-primary" />
+              <div className="flex items-center gap-1.5">
+                <Download className="size-3.5 text-primary" />
                 <span>
                   Exporte em TXT, CSV ou JSON para importar nos seus testes.
                 </span>
@@ -1260,63 +1249,60 @@ export function CnpjGeneratorFeature() {
 
       <Separator />
 
-      {/* Educational Section: How Numeric & Alphanumeric CNPJ Mod-11 Works */}
-      <Card className="gap-6 p-6 sm:gap-8 sm:p-8">
-        <CardHeader className="space-y-2 p-0">
-          <CardTitle className="text-xl font-bold">
-            Como funciona o cálculo do CNPJ Numérico e Alfanumérico (IN RFB nº
-            2.229/2024)?
+      {/* Educational Section */}
+      <Card className="gap-4 p-4 sm:gap-5 sm:p-5">
+        <CardHeader className="space-y-1 p-0">
+          <CardTitle className="text-base font-bold sm:text-lg">
+            Como funciona a estrutura do CNPJ Numérico e Alfanumérico?
           </CardTitle>
-          <CardDescription className="text-sm leading-relaxed">
-            Entenda a estrutura de 14 posições e o cálculo unificado dos Dígitos
-            Verificadores por Módulo 11.
+          <CardDescription className="text-xs leading-relaxed sm:text-sm">
+            Entenda a composição das 14 posições e o cálculo dos dígitos
+            verificadores.
           </CardDescription>
         </CardHeader>
         <CardContent className="p-0 text-sm leading-relaxed text-muted-foreground">
-          <div className="grid gap-6 md:grid-cols-3">
-            <div className="space-y-2 rounded-xl border bg-muted/20 p-5">
-              <h4 className="text-base font-semibold text-foreground">
-                1. Conversão ASCII - 48
+          <div className="grid gap-4 sm:gap-5 md:grid-cols-3">
+            <div className="space-y-1.5 rounded-xl border bg-muted/20 p-3.5 sm:p-4">
+              <h4 className="text-sm font-semibold text-foreground">
+                1. Raiz e Ordem (12 posições)
               </h4>
-              <p className="text-sm leading-relaxed">
-                Pela Instrução Normativa RFB nº 2.229/2024, cada um dos 12
-                primeiros caracteres (<code className="font-mono">0-9</code> e{" "}
-                <code className="font-mono">A-Z</code>) é convertido subtraindo{" "}
-                <strong>48</strong> do seu código ASCII. Dígitos{" "}
-                <code className="font-mono">0-9</code> valem{" "}
-                <strong>0 a 9</strong>, e letras{" "}
-                <code className="font-mono">A-Z</code> valem{" "}
-                <strong>17 a 42</strong> (ex: A=17, B=18, C=19).
+              <p className="text-xs leading-relaxed sm:text-sm">
+                As 8 primeiras posições formam a raiz da empresa e as 4
+                seguintes identificam o estabelecimento (ex:{" "}
+                <code className="font-mono">0001</code> para matriz). No padrão
+                alfanumérico, essas 12 posições aceitam números (
+                <code className="font-mono">0-9</code>) e letras (
+                <code className="font-mono">A-Z</code>).
               </p>
             </div>
-            <div className="space-y-2 rounded-xl border bg-muted/20 p-5">
-              <h4 className="text-base font-semibold text-foreground">
+            <div className="space-y-1.5 rounded-xl border bg-muted/20 p-3.5 sm:p-4">
+              <h4 className="text-sm font-semibold text-foreground">
                 2. Pesos do 1º Dígito (DV1)
               </h4>
-              <p className="text-sm leading-relaxed">
+              <p className="text-xs leading-relaxed sm:text-sm">
                 Multiplicam-se as 12 posições pelos pesos{" "}
                 <code className="font-mono">
                   [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
                 </code>
-                . Calcula-se o resto da soma por <strong>11</strong>. Se o resto
-                for menor que 2, <code className="font-mono">DV1 = 0</code>;
-                caso contrário,{" "}
+                . Calcula-se o resto da soma dividida por <strong>11</strong>:
+                se o resto for menor que 2,{" "}
+                <code className="font-mono">DV1 = 0</code>; caso contrário,{" "}
                 <code className="font-mono">DV1 = 11 - resto</code>.
               </p>
             </div>
-            <div className="space-y-2 rounded-xl border bg-muted/20 p-5">
-              <h4 className="text-base font-semibold text-foreground">
+            <div className="space-y-1.5 rounded-xl border bg-muted/20 p-3.5 sm:p-4">
+              <h4 className="text-sm font-semibold text-foreground">
                 3. Pesos do 2º Dígito (DV2)
               </h4>
-              <p className="text-sm leading-relaxed">
+              <p className="text-xs leading-relaxed sm:text-sm">
                 Inclui-se o <code className="font-mono">DV1</code> na 13ª
                 posição e aplicam-se os pesos{" "}
                 <code className="font-mono">
                   [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
                 </code>
-                . Novamente divide-se a soma por <strong>11</strong>: se o resto
-                for menor que 2, <code className="font-mono">DV2 = 0</code>;
-                senão, <code className="font-mono">DV2 = 11 - resto</code>.
+                . Divide-se a soma por <strong>11</strong>: se o resto for menor
+                que 2, <code className="font-mono">DV2 = 0</code>; senão,{" "}
+                <code className="font-mono">DV2 = 11 - resto</code>.
               </p>
             </div>
           </div>

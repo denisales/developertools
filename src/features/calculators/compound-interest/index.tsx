@@ -53,6 +53,7 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
+import { ToolPageHeader } from "@/components/layout/tool-page-header";
 
 import type { MarketIndicators } from "@/services/bcb/bcb-client";
 import { BcbPresetsSkeleton } from "./compound-interest-skeleton";
@@ -390,25 +391,19 @@ export function CompoundInterestFeature({
 
   return (
     <div className="w-full space-y-4 sm:space-y-5 pb-8">
-      {/* Cabeçalho Compacto da Ferramenta */}
-      <div className="space-y-1.5">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex min-w-0 flex-1 items-center gap-2">
-            <div className="flex size-7 sm:size-8 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-              <TrendingUp className="size-4" />
-            </div>
-            <h1 className="truncate text-base sm:text-2xl font-bold tracking-tight">
-              <span className="sm:hidden">Juros Compostos</span>
-              <span className="hidden sm:inline">Calculadora de Juros Compostos</span>
-            </h1>
-          </div>
-
-          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+      <ToolPageHeader
+        icon={<TrendingUp className="size-4 sm:size-5" />}
+        iconClassName="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+        title="Calculadora de Juros Compostos"
+        mobileTitle="Juros Compostos"
+        description="Simule aportes mensais, equivalência de taxas, valor líquido após IR e tabela mês a mês."
+        actions={
+          <>
             <Button
               type="button"
               variant="ghost"
               onClick={handleResetDefaults}
-              className="h-8 px-2 sm:px-2.5 text-xs font-medium text-muted-foreground hover:text-foreground"
+              className="h-8 sm:h-9 px-2.5 sm:px-3 text-xs font-medium text-muted-foreground hover:text-foreground"
             >
               Restaurar
             </Button>
@@ -416,7 +411,7 @@ export function CompoundInterestFeature({
               type="button"
               variant="outline"
               onClick={handleCopySummary}
-              className="h-8 gap-1.5 px-2 sm:px-2.5 text-xs font-medium"
+              className="h-8 sm:h-9 gap-1.5 px-2.5 sm:px-3 text-xs font-medium"
             >
               {copiedSummary ? (
                 <Check className="size-3.5 text-emerald-500" />
@@ -432,12 +427,9 @@ export function CompoundInterestFeature({
                 </>
               )}
             </Button>
-          </div>
-        </div>
-        <p className="text-xs sm:text-sm text-muted-foreground line-clamp-1 sm:line-clamp-none">
-          Simule aportes mensais, equivalência de taxas, evolução patrimonial e tabela mês a mês.
-        </p>
-      </div>
+          </>
+        }
+      />
 
       {/* Card Principal de Simulação com Presets Integrados (#feesCompostosForm) */}
       <Card className="border-border/80 gap-0 p-4 sm:p-5 shadow-xs">
@@ -525,11 +517,14 @@ export function CompoundInterestFeature({
             }}
             className="space-y-4"
           >
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* Campo 1: Valor Inicial */}
               <div className="space-y-2">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <Label htmlFor="mainValue" className="text-xs font-medium">
+                  <Label
+                    htmlFor="mainValue"
+                    className="text-xs sm:text-sm font-medium"
+                  >
                     Valor Inicial
                   </Label>
                   <div className="flex items-center gap-2">
@@ -567,7 +562,10 @@ export function CompoundInterestFeature({
               {/* Campo 2: Aporte Mensal */}
               <div className="space-y-2">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <Label htmlFor="investment" className="text-xs font-medium">
+                  <Label
+                    htmlFor="investment"
+                    className="text-xs sm:text-sm font-medium"
+                  >
                     Aporte Mensal
                   </Label>
                   <div className="flex items-center gap-2">
@@ -607,7 +605,10 @@ export function CompoundInterestFeature({
               {/* Campo 3: Taxa de Juros */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between gap-2">
-                  <Label htmlFor="rate" className="text-xs font-medium">
+                  <Label
+                    htmlFor="rate"
+                    className="text-xs sm:text-sm font-medium"
+                  >
                     Taxa de Juros
                   </Label>
                   <span className="rounded-md bg-emerald-500/10 px-2 py-1 font-mono text-xs font-medium leading-none text-emerald-700 dark:text-emerald-300">
@@ -662,7 +663,10 @@ export function CompoundInterestFeature({
               {/* Campo 4: Período */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between gap-2">
-                  <Label htmlFor="period" className="text-xs font-medium">
+                  <Label
+                    htmlFor="period"
+                    className="text-xs sm:text-sm font-medium"
+                  >
                     Período ({result.totalMonths}m)
                   </Label>
                 </div>
@@ -824,7 +828,7 @@ export function CompoundInterestFeature({
       {/* Seção 1: Os 3 Cards de Resumo Imediatamente Abaixo dos Inputs (#result) */}
       <div
         id="result"
-        className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4"
+        className="grid grid-cols-1 md:grid-cols-3 gap-4"
       >
         {/* Card 1: Valor Total Final */}
         <Card className="relative overflow-hidden border-emerald-500/40 bg-gradient-to-br from-emerald-500/10 via-background to-background gap-2 p-4 sm:p-5 shadow-sm">
@@ -953,20 +957,20 @@ export function CompoundInterestFeature({
       {/* Seção 2: Visualização Gráfica Dupla (#resultGraphic) */}
       <div
         id="resultGraphic"
-        className="grid grid-cols-1 gap-3.5 sm:gap-5 lg:grid-cols-12"
+        className="grid grid-cols-1 gap-4 lg:grid-cols-12"
       >
         {/* Gráfico 1: Rosca (Donut) de Composição */}
-        <Card className="p-3.5 sm:p-5 lg:col-span-5">
-          <CardHeader className="p-0 pb-2">
-            <CardTitle className="flex items-center gap-2 text-base font-bold sm:text-lg">
+        <Card className="gap-4 p-4 sm:p-5 lg:col-span-5">
+          <CardHeader className="p-0">
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg font-bold tracking-tight">
               <PieChartIcon className="size-4 text-primary sm:size-5" />
               Composição do Montante
             </CardTitle>
-            <CardDescription className="text-xs sm:text-sm leading-relaxed">
+            <CardDescription className="text-xs sm:text-sm leading-relaxed text-muted-foreground">
               Proporção entre aportes próprios e juros compostos
             </CardDescription>
           </CardHeader>
-          <CardContent className="flex flex-col items-center justify-between gap-4 p-0 pt-2">
+          <CardContent className="flex flex-col items-center justify-between gap-4 p-0">
             <div className="relative flex size-40 sm:size-44 items-center justify-center">
               <svg
                 viewBox="0 0 160 160"
@@ -1057,15 +1061,15 @@ export function CompoundInterestFeature({
         </Card>
 
         {/* Gráfico 2: Evolução Patrimonial no Tempo (Barras Empilhadas Interativas) */}
-        <Card className="p-3.5 sm:p-5 lg:col-span-7">
-          <CardHeader className="p-0 pb-2">
+        <Card className="gap-4 p-4 sm:p-5 lg:col-span-7">
+          <CardHeader className="p-0">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div className="space-y-0.5">
-                <CardTitle className="flex items-center gap-2 text-base font-bold sm:text-lg">
+                <CardTitle className="flex items-center gap-2 text-base sm:text-lg font-bold tracking-tight">
                   <BarChart3 className="size-4 text-primary sm:size-5" />
                   Evolução Patrimonial no Tempo
                 </CardTitle>
-                <CardDescription className="text-xs sm:text-sm leading-relaxed">
+                <CardDescription className="text-xs sm:text-sm leading-relaxed text-muted-foreground">
                   Toque ou passe o mouse nas colunas para inspecionar cada{" "}
                   {chartUsesYears ? "ano" : "mês"}
                   {isNetView ? " (valores líquidos após IR)" : ""}
@@ -1083,9 +1087,9 @@ export function CompoundInterestFeature({
               </div>
             </div>
           </CardHeader>
-          <CardContent className="space-y-3.5 p-0">
+          <CardContent className="space-y-4 p-0">
             {/* Painel de Inspeção Interativo (Tooltip Fixo Responsivo) */}
-            <div className="grid grid-cols-2 gap-2.5 sm:gap-4 rounded-xl border bg-muted/40 p-3 sm:p-3.5 text-xs sm:grid-cols-4">
+            <div className="grid grid-cols-2 gap-4 rounded-xl border bg-muted/40 p-3.5 sm:p-4 text-xs sm:grid-cols-4">
               <div className="space-y-0.5">
                 <span className="text-xs font-medium text-muted-foreground">
                   Período
@@ -1214,15 +1218,15 @@ export function CompoundInterestFeature({
       </div>
 
       {/* Seção 3: Tabela de Evolução Período a Período (#evolutionTable) */}
-      <Card id="evolutionTable" className="p-3.5 sm:p-5">
-        <CardHeader className="p-0 pb-2">
+      <Card id="evolutionTable" className="gap-4 p-4 sm:p-5">
+        <CardHeader className="p-0">
           <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
             <div className="space-y-0.5">
-              <CardTitle className="flex items-center gap-2 text-base font-bold sm:text-lg">
+              <CardTitle className="flex items-center gap-2 text-base sm:text-lg font-bold tracking-tight">
                 <TableIcon className="size-4 text-primary sm:size-5" />
                 Tabela de Evolução Detalhada
               </CardTitle>
-              <CardDescription className="text-xs sm:text-sm leading-relaxed">
+              <CardDescription className="text-xs sm:text-sm leading-relaxed text-muted-foreground">
                 {isNetView
                   ? "Acompanhe juros, alíquota de IR por prazo e valor líquido período a período."
                   : "Acompanhe o efeito dos juros compostos período a período."}
@@ -1256,7 +1260,7 @@ export function CompoundInterestFeature({
             </div>
           </div>
         </CardHeader>
-        <CardContent className="space-y-3.5 p-0">
+        <CardContent className="space-y-4 p-0">
           <div className="max-h-[440px] overflow-auto rounded-xl border">
             <Table>
               <TableHeader className="sticky top-0 z-10 bg-muted/95 backdrop-blur-xs">
@@ -1390,16 +1394,16 @@ export function CompoundInterestFeature({
       {/* Seção 3.5: Tabela Regressiva de Imposto de Renda (Renda Fixa) */}
       <Card
         data-testid="ir-brackets-card"
-        className="min-w-0 overflow-hidden p-3.5 sm:p-5"
+        className="min-w-0 overflow-hidden gap-4 p-4 sm:p-5"
       >
-        <CardHeader className="p-0 pb-2">
+        <CardHeader className="p-0">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div className="space-y-0.5">
-              <CardTitle className="flex items-center gap-2 text-base font-bold sm:text-lg">
+              <CardTitle className="flex items-center gap-2 text-base sm:text-lg font-bold tracking-tight">
                 <Receipt className="size-4 text-primary sm:size-5" />
                 Tabela Regressiva de IR (Renda Fixa)
               </CardTitle>
-              <CardDescription className="text-xs sm:text-sm leading-relaxed">
+              <CardDescription className="text-xs sm:text-sm leading-relaxed text-muted-foreground">
                 O Imposto de Renda incide apenas sobre os rendimentos (juros) no
                 resgate, conforme o prazo da aplicação ({result.totalMonths}{" "}
                 meses ≈ {result.totalMonths * 30} dias).
@@ -1426,8 +1430,8 @@ export function CompoundInterestFeature({
             )}
           </div>
         </CardHeader>
-        <CardContent className="space-y-3 p-0">
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
+        <CardContent className="space-y-4 p-0">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {INCOME_TAX_BRACKETS.map((bracket) => {
               const isActive =
                 taxRegime === "regressive" &&
@@ -1441,7 +1445,7 @@ export function CompoundInterestFeature({
                   key={bracket.id}
                   data-testid={`ir-bracket-${bracket.id}`}
                   data-active={isActive ? "true" : "false"}
-                  className={`rounded-xl border p-3 transition-colors ${
+                  className={`rounded-xl border p-3.5 sm:p-4 transition-colors ${
                     isActive
                       ? "border-emerald-500 bg-emerald-500/10 shadow-2xs"
                       : "border-border bg-muted/30"
@@ -1474,7 +1478,7 @@ export function CompoundInterestFeature({
             })}
           </div>
 
-          <div className="grid grid-cols-1 gap-2 rounded-xl border bg-muted/30 p-3 text-xs sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 rounded-xl border bg-muted/30 p-3.5 sm:p-4 text-xs sm:grid-cols-3">
             <div className="flex items-center justify-between sm:block sm:space-y-0.5">
               <span className="text-muted-foreground">Valor Total Bruto</span>
               <p className="font-mono font-semibold text-foreground">
@@ -1502,25 +1506,25 @@ export function CompoundInterestFeature({
       </Card>
 
       {/* Seção 4: Guia Educativo e Fórmula Passo a Passo */}
-      <Card className="p-3.5 sm:p-5">
-        <CardHeader className="p-0 pb-2">
-          <CardTitle className="flex items-center gap-2 text-base font-bold sm:text-lg">
+      <Card className="gap-4 p-4 sm:p-5">
+        <CardHeader className="p-0">
+          <CardTitle className="flex items-center gap-2 text-base sm:text-lg font-bold tracking-tight">
             <BookOpen className="size-4 text-primary sm:size-5" />
             Como Funciona o Cálculo de Juros Compostos?
           </CardTitle>
-          <CardDescription className="text-xs sm:text-sm leading-relaxed">
+          <CardDescription className="text-xs sm:text-sm leading-relaxed text-muted-foreground">
             Entenda a matemática financeira aplicada na simulação e acompanhe o
             passo a passo com os seus números.
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4 p-0 text-sm leading-relaxed">
-          <div className="grid grid-cols-1 gap-3.5 sm:gap-5 md:grid-cols-2">
+        <CardContent className="space-y-4 p-0 text-xs sm:text-sm leading-relaxed">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="space-y-2.5 rounded-xl border bg-muted/30 p-3.5 sm:p-4">
               <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
                 <Info className="size-4 text-emerald-500" />
                 1. Fórmulas Matemáticas Exatas
               </h3>
-              <p className="text-xs leading-relaxed text-muted-foreground">
+              <p className="text-xs sm:text-sm leading-relaxed text-muted-foreground">
                 Quando há um aporte inicial (<code className="font-mono">P₀</code>)
                 combinado com aportes mensais constantes (
                 <code className="font-mono">PMT</code>), o Valor Futuro (
@@ -1530,7 +1534,7 @@ export function CompoundInterestFeature({
               <div className="overflow-x-auto rounded-lg border bg-background p-2.5 font-mono text-xs">
                 FV = P₀ · (1 + iₘ)ᴺ + PMT · [((1 + iₘ)ᴺ - 1) / iₘ]
               </div>
-              <p className="text-xs leading-relaxed text-muted-foreground">
+              <p className="text-xs sm:text-sm leading-relaxed text-muted-foreground">
                 Onde <code className="font-mono">iₘ</code> é a taxa efetiva
                 mensal. Quando você informa uma taxa anual (
                 <code className="font-mono">iₐ</code>), usamos a equivalência
@@ -1606,7 +1610,7 @@ export function CompoundInterestFeature({
 
           <Separator />
 
-          <div className="grid grid-cols-1 gap-3.5 sm:gap-5 text-xs leading-relaxed text-muted-foreground sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 text-xs sm:text-sm leading-relaxed text-muted-foreground sm:grid-cols-3">
             <div className="space-y-1">
               <h4 className="font-semibold text-foreground">
                 Juros Simples vs. Compostos

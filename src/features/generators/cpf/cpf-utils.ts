@@ -192,7 +192,7 @@ export function formatCpf(cpf: string): string {
 }
 
 /**
- * Calcula um dígito verificador pelo algoritmo Módulo 11 do CPF.
+ * Calcula um dígito verificador do CPF.
  */
 export function calculateMod11Digit(digits: number[], startWeight: number): {
   weights: number[];
@@ -224,7 +224,7 @@ export function getCpfRegion(regionDigit: number): FiscalRegionInfo | null {
 }
 
 /**
- * Gera um número de CPF matematicamente válido pelo Módulo 11.
+ * Gera um número de CPF válido.
  */
 export function generateCpf(options?: GenerateCpfOptions): string {
   const formatted = options?.formatted ?? true;
@@ -269,7 +269,7 @@ export function generateCpfBatch(
 }
 
 /**
- * Valida um CPF passo a passo pelo Módulo 11, identificando a Região Fiscal e estados de origem.
+ * Valida um CPF passo a passo, identificando a Região Fiscal e estados de origem.
  */
 export function validateCpf(input: string): CpfValidationResult {
   const cleanCpf = stripCpfDigits(input);

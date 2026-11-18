@@ -8,7 +8,7 @@ import {
 } from "./compound-interest-utils";
 
 /**
- * Executa a suíte de validação matemática da Calculadora de Juros Compostos (Investidor10 Golden Tests).
+ * Executa a suíte de validação matemática da Calculadora de Juros Compostos (Golden Tests).
  * Pode ser invocada em testes automatizados ou validação de sanidade.
  */
 export function runCompoundInterestGoldenTests(): {

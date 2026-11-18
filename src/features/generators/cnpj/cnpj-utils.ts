@@ -53,7 +53,7 @@ export interface CnpjValidationResult {
 }
 
 /**
- * Weights for the 1st and 2nd check digits of CNPJ (Mod-11)
+ * Weights for the 1st and 2nd check digits of CNPJ
  */
 export const CNPJ_WEIGHTS_DV1 = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2] as const;
 export const CNPJ_WEIGHTS_DV2 = [
@@ -62,10 +62,9 @@ export const CNPJ_WEIGHTS_DV2 = [
 
 const NUMERIC_CHARS = "0123456789";
 /**
- * IN RFB nº 2.229/2024: Alphanumeric CNPJ uses digits 0-9 and uppercase letters.
- * Following SERPRO/RFB technical guidance, we exclude visually ambiguous or
- * reserved letters (I, O, U, Q, F) during random generation while accepting any
- * [0-9A-Z] in the validator via ASCII - 48.
+ * Alphanumeric CNPJ uses digits 0-9 and uppercase letters.
+ * We exclude visually ambiguous or reserved letters (I, O, U, Q, F) during
+ * random generation while accepting any [0-9A-Z] in the validator.
  */
 const ALPHANUMERIC_GEN_CHARS = "0123456789ABCDEGHJKLMNPRSTVWXYZ";
 
@@ -112,7 +111,7 @@ export function charToCnpjValue(char: string): number {
 }
 
 /**
- * Computes DV1, DV2, and the full step-by-step Mod-11 breakdown for a 12-character base CNPJ.
+ * Computes DV1, DV2, and the full step-by-step breakdown for a 12-character base CNPJ.
  */
 export function calculateCnpjCheckDigits(base12: string): {
   dv1: number;
@@ -357,6 +356,6 @@ export function validateCnpj(input: string): CnpjValidationResult {
     reason: isValid ? undefined : "INVALID_CHECK_DIGITS",
     reasonMessage: isValid
       ? undefined
-      : `Dígitos verificadores inválidos: informado "${providedCheckDigits}", mas o cálculo Módulo 11 exige "${expectedCheckDigits}".`,
+      : `Dígitos verificadores inválidos: foi informado "${providedCheckDigits}", mas o esperado é "${expectedCheckDigits}".`,
   };
 }

@@ -37,7 +37,7 @@ test.describe("Functional E2E Scenarios — All Screens (Desktop & Mobile)", () 
       page.getByRole("link", { name: /Gerador e Validador de CNPJ/i })
     ).toBeVisible();
     await expect(
-      page.locator('a[href="/gerador-de-cnpj?tab=validador"]')
+      page.locator('main a[href="/gerador-de-cnpj?tab=validador"]')
     ).toBeVisible();
 
     // 2. Filter by "Juros" and verify only Calculadoras category shows

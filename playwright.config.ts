@@ -33,14 +33,18 @@ export default defineConfig({
   webServer: [
     {
       command: "node tests/mocks/bcb-mock-server.mjs",
-      url: "http://127.0.0.1:4100/__health",
+      wait: {
+        stdout: /BCB SGS mock server listening on/,
+      },
       reuseExistingServer: false,
       timeout: 15000,
     },
     {
       command:
         "node -e \"const fs=require('fs'),{execSync}=require('child_process');if(!fs.existsSync('.next/BUILD_ID'))execSync('npm run build',{stdio:'inherit'})\" && npx next start -p 3100 -H 127.0.0.1",
-      url: "http://127.0.0.1:3100",
+      wait: {
+        stdout: /Ready in/,
+      },
       env: {
         BCB_API_BASE_URL: "http://127.0.0.1:4100",
       },

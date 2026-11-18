@@ -6,11 +6,15 @@ O backlog está estruturado em **8 Épicos (`Epic 0` a `Epic 7`)** e decomposto 
 
 Cada validador, gerador, calculadora e utilitário possui sua própria **Task ID**, **Agente/Role Responsável**, **Branch/Worktree isolada** e **Diretório exclusivo (`src/features/<category>/<tool-slug>/`)** para permitir desenvolvimento massivamente paralelo sem conflitos de merge.
 
-> **Gate Obrigatório de Qualidade E2E & Snapshots Visuais (Todas as Tasks `TASK-000` a `TASK-095`):**
-> Nenhuma tarefa é considerada concluída sem:
-> 1. Cobertura da rota em `tests/e2e/layout-and-snapshots.spec.ts` validando **Zero Page Overflow**, **Contenção Geométrica de Cards (`[data-slot="card"]`)**, **Zero Colisão de Abas/Botões** e **Usabilidade Above-the-Fold no Mobile (`375x667`)**.
-> 2. Geração e commit dos snapshots visuais determinísticos (`npm run test:e2e:snapshots`) para **Desktop (`1440x900`)** e **Mobile (`375x667`)**.
-> 3. Execução de `npm run test:e2e` com 100% de aprovação + **inspeção visual obrigatória das imagens PNG geradas usando `read_file`** pelo agente `@verifier` antes do merge/deploy.
+> **Gates Obrigatórios de Qualidade (Todas as Tasks `TASK-000` a `TASK-095`):**
+> Nenhuma tarefa é considerada concluída ou apta para commit/merge sem cumprir **todos** os 4 gates abaixo:
+> 1. **Política Zero `any` em TypeScript:** `"strict": true` no `tsconfig.json` e `"@typescript-eslint/no-explicit-any": "error"` no ESLint (`npm run lint` e `npm run typecheck` com zero erros).
+> 2. **Cobertura Unitária & Componentes `>= 90%` (Vitest V8):** Todo módulo `src/features/<category>/<slug>/` deve incluir testes unitários e de componente atingindo no mínimo **90% de cobertura** em **lines, branches, functions e statements** (`npm run test:coverage`).
+> 3. **Cobertura E2E Completa (Rotas + Cenários Funcionais + Snapshots):** Toda nova página/tela em `src/app/` e toda ferramenta `"ready"` em `src/config/tools-registry.ts` **deve obrigatoriamente** possuir:
+>    - Registro validado em `scripts/check-e2e-coverage.mjs` (`npm run test:e2e:coverage`);
+>    - Cenários funcionais interativos em `tests/e2e/functional-scenarios.spec.ts`;
+>    - Verificações geométricas de bounding-box (`[data-slot="card"]`, zero overflow, zero colisão de abas/botões, usabilidade Above-the-Fold no Mobile `375x667`) + snapshots determinísticos Desktop (`1440x900`) e Mobile (`375x667`) em `tests/e2e/layout-and-snapshots.spec.ts` (`npm run test:e2e:snapshots`), **inspecionados visualmente via `read_file`** por um agente Verifier antes do merge/deploy.
+> 4. **Git Pre-Commit Quality Gate (`.husky/pre-commit`):** O hook Husky exige `npm run lint`, `npm run typecheck`, `npm run test:coverage`, `npm run test:e2e:coverage` e `npm run test:e2e` antes que qualquer commit seja aceito.
 
 ---
 
@@ -35,7 +39,7 @@ Cada validador, gerador, calculadora e utilitário possui sua própria **Task ID
 
 | Task ID | Ferramenta / Entrega | Agente Responsável | Branch / Worktree | Diretório / Escopo | Dependências | Critérios de Aceite |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| `TASK-000` | **Scaffold Next.js + shadcn/ui + Layout Mobile + Git Setup** | `@scaffold` | `main` | `src/app/`, `src/components/ui/`, `src/components/layout/`, `src/config/tools-registry.ts` | Nenhuma | 1. Next.js + TS + ESLint + Tailwind + `shadcn/ui` configurados.<br>2. Header fixo, Sidebar desktop e Drawer (`Sheet`) mobile funcionando.<br>3. `tools-registry.ts` populado e páginas de rota `/gerador-de-cpf`, `/gerador-de-cnpj`, `/calculadora-juros-compostos` criadas.<br>4. `npm run lint` e `npm run build` passando; commit inicial e push para o GitHub concluídos. |
+| `TASK-000` | **Scaffold Next.js + shadcn/ui + Layout Mobile + QA Gates** | `@scaffold` | `main` | `src/app/`, `src/components/ui/`, `src/components/layout/`, `src/config/tools-registry.ts`, `.husky/pre-commit`, `scripts/check-e2e-coverage.mjs` | Nenhuma | 1. Next.js + TS (`strict: true`) + ESLint (`no-explicit-any: "error"`) + Tailwind + `shadcn/ui` configurados.<br>2. Header fixo, Sidebar desktop e Drawer (`Sheet`) mobile funcionando.<br>3. `tools-registry.ts` populado e páginas de rota `/gerador-de-cpf`, `/gerador-de-cnpj`, `/calculadora-juros-compostos` criadas.<br>4. Vitest (`>= 90%` V8), Playwright E2E (`functional-scenarios.spec.ts` + `layout-and-snapshots.spec.ts`), `check-e2e-coverage.mjs` e `.husky/pre-commit` ativos e passando (`lint`, `typecheck`, `test:coverage`, `test:e2e:coverage`, `test:e2e`, `build`). |
 
 ---
 
@@ -193,4 +197,4 @@ Cada validador, gerador, calculadora e utilitário possui sua própria **Task ID
 | `TASK-092` | **Command Palette Global (`Cmd+K` / Busca Instantânea Mobile)** | `@worker-search` | `feat/task-092-command-palette` | `src/components/layout/command-search.tsx` | `TASK-000` | Busca rápida por teclado (`Cmd+K` / `Ctrl+K`) ou toque no Header mobile filtrando todas as 91 ferramentas por título, categoria ou palavras-chave. |
 | `TASK-093` | **SEO Dinâmico (`sitemap.ts`, `robots.ts` & Sub-rotas Estaduais)** | `@worker-seo` | `feat/task-093-seo-sitemap` | `src/app/sitemap.ts`, `src/app/robots.ts` | `TASK-000` | Geração automática de `/sitemap.xml` cobrindo as 91 ferramentas e as +34 sub-rotas estaduais/temáticas mapeadas no catálogo. |
 | `TASK-094` | **PWA Mobile Support (`manifest.ts` + Favoritos / Recentes)** | `@worker-pwa` | `feat/task-094-pwa-favorites` | `src/app/manifest.ts`, `src/hooks/use-favorites.ts` | `TASK-000` | Web App Manifest para instalação na tela inicial no Android/iOS + persistência de ferramentas favoritas e recentes no `localStorage`. |
-| `TASK-095` | **GitHub Actions CI Workflow & Vercel Production Config** | `@scaffold` / `@devops` | `feat/task-095-ci-vercel` | `.github/workflows/ci.yml` | `TASK-001`..`TASK-003` | Pipeline de ESLint + TypeScript Check + Next.js Build validado no GitHub e pronto para deploy contínuo na Vercel. |
+| `TASK-095` | **GitHub Actions CI Workflow & Vercel Production Config** | `@scaffold` / `@devops` | `feat/task-095-ci-vercel` | `.github/workflows/ci.yml` | `TASK-001`..`TASK-003` | Pipeline de `lint`, `typecheck`, `test:coverage` (`>= 90%`), `test:e2e:coverage`, `build` e `test:e2e` validado no GitHub (alinhado ao `.husky/pre-commit`) e pronto para deploy contínuo na Vercel. |

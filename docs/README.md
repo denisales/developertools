@@ -6,10 +6,11 @@ Bem-vindo à documentação oficial do projeto **DeveloperTools**, uma plataform
 
 ## 1. Visão Geral do Projeto
 
-- **Framework & Stack:** Next.js (App Router) + TypeScript + ESLint + Tailwind CSS + `shadcn/ui` + `lucide-react`.
-- **Experiência Mobile-First:** Interface projetada desde o início para uso ágil no celular (navegação via *Bottom Sheet / Drawer*, alvos de toque de `48px+`, cópia com 1 toque, geração instantânea client-side, suporte a Dark/Light Mode).
+- **Framework & Stack:** Next.js (App Router) + TypeScript (`strict: true`, Zero `any`) + ESLint (`@typescript-eslint/no-explicit-any: "error"`) + Tailwind CSS + `shadcn/ui` + `lucide-react`.
+- **Qualidade & Testes Automatizados:** Vitest com cobertura V8 obrigatória (`>= 90%` em linhas, branches, funções e statements), Playwright E2E (cenários funcionais + contenção geométrica + snapshots Desktop/Mobile) e gate local de pre-commit via Husky (`.husky/pre-commit`).
+- **Experiência Mobile-First:** Interface projetada desde o início para uso ágil no celular (navegação via *Bottom Sheet / Drawer*, alvos de toque de `48px+`, cópia com 1 toque, geração instantânea no navegador, suporte a Dark/Light Mode).
 - **Arquitetura Paralela (Git Worktrees Ready):** Cada ferramenta vive de forma 100% independente em `src/features/<category>/<tool-slug>/`, permitindo que múltiplos agentes autônomos desenvolvam ferramentas em paralelo sem conflitos de merge.
-- **Deploy & Versionamento:** Pronto para deploy contínuo na **Vercel** e versionado no **GitHub** com validação automatizada de ESLint, TypeScript e Build.
+- **Deploy & Versionamento:** Pronto para deploy contínuo na **Vercel** e versionado no **GitHub** com validação automatizada em pre-commit e GitHub Actions CI (`lint`, `typecheck`, `test:coverage`, `test:e2e:coverage`, `build` e `test:e2e`).
 
 ---
 
@@ -29,21 +30,35 @@ Bem-vindo à documentação oficial do projeto **DeveloperTools**, uma plataform
 
 ### Arquitetura e Design System (`docs/architecture/`)
 - [**Diretrizes Obrigatórias de UX Mobile-First (`architecture/mobile-ux-guidelines.md`)**](./architecture/mobile-ux-guidelines.md)
-  Regras inegociáveis para viewport móvel (`375x667`): regra Above-the-Fold (`< 600px`), ordem do DOM = prioridade mobile, abas compactas `grid-cols-3` em linha única, botões lado a lado (`grid-cols-2 gap-2.5`), overlay de busca mobile, gaveta animada a 60fps e linguagem limpa sem jargões.
+  Regras inegociáveis para viewport móvel (`375x667`): regra Above-the-Fold (`< 600px`), ordem do DOM = prioridade mobile, abas compactas `grid-cols-3` em linha única, botões lado a lado (`grid-cols-2 gap-2.5`), overlay de busca mobile, gaveta animada a 60fps, linguagem limpa sem jargões e gate E2E (cobertura de rotas, cenários funcionais, contenção geométrica e snapshots).
 - [**Estrutura do Projeto e Arquitetura Modular (`architecture/project-structure.md`)**](./architecture/project-structure.md)
-  Organização de pastas `src/features/<category>/<tool-slug>/`, funcionamento do registro central `src/config/tools-registry.ts` livre de conflitos e diretrizes de UI/UX Mobile-First com `shadcn/ui`.
+  Organização de pastas `src/features/<category>/<tool-slug>/`, funcionamento do registro central `src/config/tools-registry.ts` livre de conflitos, política Zero `any`, cobertura Vitest V8 >= 90% e diretrizes de UI/UX Mobile-First com `shadcn/ui`.
 
 ### Plano de Implementação, Épicos, Worktrees e Deploy (`docs/plan/`)
 - [**Épicos e Tarefas — Backlog Completo (`plan/epics-and-tasks.md`)**](./plan/epics-and-tasks.md)
-  Divisão estratégica em **8 Épicos (`Epic 0` a `Epic 7`)** e **96 Tarefas (`TASK-000` a `TASK-095`)**, sincronizadas 1:1 com as 91 ferramentas principais do catálogo, atribuindo agente responsável, branch/worktree, diretório isolado e critérios de aceite para cada ferramenta.
+  Divisão estratégica em **8 Épicos (`Epic 0` a `Epic 7`)** e **96 Tarefas (`TASK-000` a `TASK-095`)**, sincronizadas 1:1 com as 91 ferramentas principais do catálogo, atribuindo agente responsável, branch/worktree, diretório isolado e critérios de aceite e gates de qualidade para cada ferramenta.
 - [**Guia de Execução Paralela com Git Worktrees (`plan/parallel-worktrees-guide.md`)**](./plan/parallel-worktrees-guide.md)
-  Como orquestrar agentes paralelos via `git worktree add` ou Swarm `workspace: "share"`, convenções de branches, regras anti-conflito e checklist de verificação.
+  Como orquestrar agentes paralelos via `git worktree add` ou Swarm `workspace: "share"`, convenções de branches, regras anti-conflito e checklist obrigatório de verificação (`@verifier`).
 - [**Versionamento GitHub, CI/CD e Deploy na Vercel (`plan/deploy-and-github.md`)**](./plan/deploy-and-github.md)
-  Passo a passo de inicialização do repositório GitHub, workflow de CI com GitHub Actions (ESLint + Typecheck + Next Build) e publicação na Vercel.
+  Passo a passo de inicialização do repositório GitHub, gate local Husky (`.husky/pre-commit`), workflow de CI com GitHub Actions (`lint`, `typecheck`, `test:coverage`, `test:e2e:coverage`, `build`, `test:e2e`) e publicação na Vercel.
 
 ---
 
-## 3. Prioridades do MVP (Onda 1 — Execução Imediata)
+## 3. Gates Obrigatórios de Qualidade (Governança Contínua)
+
+Toda entrega atual e futura no repositório está sujeita a quatro gates automatizados e inegociáveis:
+
+1. **Git Pre-Commit Quality Gate (`.husky/pre-commit`):** Todo `git commit` executa obrigatoriamente `npm run lint`, `npm run typecheck`, `npm run test:coverage`, `npm run test:e2e:coverage` e `npm run test:e2e` antes de ser aceito.
+2. **Cobertura Unitária e de Componentes `>= 90%` (Vitest V8):** Todo módulo de ferramenta (`src/features/<category>/<slug>/`) deve incluir testes unitários e de componente atingindo no mínimo **90%** em **lines, branches, functions e statements**.
+3. **Cobertura E2E Obrigatória (Rotas + Cenários Funcionais + Snapshots):** Toda nova página em `src/app/` e toda ferramenta com `status: "ready"` em `src/config/tools-registry.ts` deve possuir:
+   - Registro validado em `scripts/check-e2e-coverage.mjs` (`npm run test:e2e:coverage`);
+   - Cenários funcionais interativos em `tests/e2e/functional-scenarios.spec.ts`;
+   - Verificações geométricas de bounding-box + snapshots visuais Desktop (`1440x900`) e Mobile (`375x667`) em `tests/e2e/layout-and-snapshots.spec.ts`, auditados visualmente por um agente Verifier.
+4. **Política Zero `any` em TypeScript:** `"strict": true` em `tsconfig.json` combinado com `"@typescript-eslint/no-explicit-any": "error"` no ESLint.
+
+---
+
+## 4. Prioridades do MVP (Onda 1 — Execução Imediata)
 
 | Prioridade | Task ID | Ferramenta | Rota da Aplicação | Módulo Isolado | Especificação |
 | :---: | :--- | :--- | :--- | :--- | :--- |

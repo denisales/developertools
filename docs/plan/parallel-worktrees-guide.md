@@ -63,28 +63,27 @@ git worktree list
 
 ---
 
-## 4. Regras de Ouro Anti-Conflito para Agentes de Feature
+## 4. Regras de Ouro Anti-Conflito e Gates de Qualidade para Agentes de Feature
 
-Para garantir **Zero Merge Conflicts** quando 3 a 10 agentes terminarem suas tarefas simultaneamente:
+Para garantir **Zero Merge Conflicts** e **100% de Conformidade com os Gates de Qualidade** quando 3 a 10 agentes terminarem suas tarefas simultaneamente:
 
 1. **Proibido editar arquivos globais sem coordenação:**
-   - Agentes de feature **NÃO** devem editar `package.json`, `src/app/layout.tsx`, `src/components/layout/*` ou `src/config/tools-registry.ts`.
-   - Todas as dependências necessárias (`lucide-react`, componentes `shadcn/ui`, utilitários de formatação) já são instaladas na **Epic 0 (Scaffold)**.
-2. **Escopo restrito à pasta da Feature e sua Page:**
-   - O agente responsável por `TASK-001` (CPF) só pode criar/modificar arquivos em:
-     - `src/features/generators/cpf/*`
-     - `src/app/gerador-de-cpf/page.tsx`
-   - O agente responsável por `TASK-002` (CNPJ) só pode criar/modificar arquivos em:
-     - `src/features/generators/cnpj/*`
-     - `src/app/gerador-de-cnpj/page.tsx`
-   - O agente responsável por `TASK-003` (Juros Compostos) só pode criar/modificar arquivos em:
-     - `src/features/calculators/compound-interest/*`
-     - `src/app/calculadora-juros-compostos/page.tsx`
-3. **Commits Atômicos e Padronizados (Conventional Commits):**
-   - Cada agente realiza commit na sua própria branch seguindo o padrão:
-     - `feat(cpf): implement Mod-11 CPF generator with UF selector and bulk export (TASK-001)`
-     - `feat(cnpj): implement numeric and alphanumeric CNPJ generator (TASK-002)`
-     - `feat(compound-interest): implement Investidor10 calculator with chart and evolution table (TASK-003)`
+   - Agentes de feature **NÃO** devem editar `package.json`, `.husky/`, `src/app/layout.tsx`, `src/components/layout/*` ou `src/config/tools-registry.ts` (salvo quando o escopo da tarefa exigir explicitamente promover uma ferramenta para `status: "ready"`).
+   - Todas as dependências necessárias (`lucide-react`, componentes `shadcn/ui`, Vitest, Playwright, utilitários de formatação) já são instaladas na infraestrutura base.
+2. **Escopo restrito à pasta da Feature, sua Page e seus Testes:**
+   - Cada agente de feature entrega seu código com **tipagem estrita (`"strict": true` em `tsconfig.json`) e Zero `any` (`"@typescript-eslint/no-explicit-any": "error"`)**.
+   - Cada módulo `src/features/<category>/<slug>/` deve incluir testes unitários (`<slug>-utils.test.ts` / `<slug>-math.test.ts`) e testes de componente (`<slug>.test.tsx`) atingindo **>= 90% de cobertura V8 em lines, branches, functions e statements** (`npm run test:coverage`).
+   - Cada nova rota em `src/app/` e ferramenta `"ready"` em `src/config/tools-registry.ts` deve possuir registro em `scripts/check-e2e-coverage.mjs`, cenários funcionais em `tests/e2e/functional-scenarios.spec.ts` e checks geométricos + snapshots Desktop/Mobile em `tests/e2e/layout-and-snapshots.spec.ts` (quando múltiplas worktrees rodam em paralelo, um agente integrador/E2E dedicado ou a etapa de merge consolida os arquivos compartilhados de `tests/e2e/` e `scripts/check-e2e-coverage.mjs` sem conflitos).
+   - Exemplos de escopo isolado de feature:
+     - `TASK-001` (CPF): `src/features/generators/cpf/*` e `src/app/gerador-de-cpf/page.tsx`
+     - `TASK-002` (CNPJ): `src/features/generators/cnpj/*` e `src/app/gerador-de-cnpj/page.tsx`
+     - `TASK-003` (Juros Compostos): `src/features/calculators/compound-interest/*` e `src/app/calculadora-juros-compostos/page.tsx`
+3. **Commits Atômicos e Padronizados (Conventional Commits + Pre-Commit Gate):**
+   - O hook `.husky/pre-commit` executa `npm run lint`, `npm run typecheck`, `npm run test:coverage`, `npm run test:e2e:coverage` e `npm run test:e2e` antes de aprovar qualquer commit.
+   - Cada agente realiza commit seguindo o padrão:
+     - `feat(cpf): implement CPF generator with UF selector, bulk export and >=90% tests (TASK-001)`
+     - `feat(cnpj): implement numeric and alphanumeric CNPJ generator and tests (TASK-002)`
+     - `feat(compound-interest): implement compound interest calculator with chart, table and tests (TASK-003)`
 
 ---
 
@@ -101,8 +100,11 @@ git merge --no-ff feat/task-001-cpf-generator -m "Merge feat/task-001-cpf-genera
 git merge --no-ff feat/task-002-cnpj-generator -m "Merge feat/task-002-cnpj-generator into main"
 git merge --no-ff feat/task-003-compound-interest -m "Merge feat/task-003-compound-interest into main"
 
-# 2. Validação integrada na main (Estática + Playwright E2E + Snapshots)
+# 2. Validação integrada na main (Gates Obrigatórios: Lint, Typecheck, Coverage >= 90%, E2E Coverage, Build & E2E)
 npm run lint
+npm run typecheck
+npm run test:coverage
+npm run test:e2e:coverage
 npm run build
 npm run test:e2e
 
@@ -128,8 +130,12 @@ Antes de aprovar o merge de qualquer worktree, o agente `@verifier` executa o ch
   - CNPJ gera 14 caracteres válidos no Mod-11 (incluindo matriz `0001` ou filial customizada) e valida dígitos verificadores corretamente?
   - Calculadora de Juros Compostos converte taxa anual para mensal via taxa equivalente $(1 + i_{anual})^{1/12} - 1$ (igual ao Investidor10) e bate os valores de *Total Final*, *Total Investido* e *Total em Juros* centavo a centavo?
 - [ ] **Responsividade Mobile & Contenção Geométrica:** Layout funciona em `375x667` (Mobile) e `1440x900` (Desktop) sem barra de rolagem horizontal (`scrollWidth <= innerWidth`), sem vazamento de badges/títulos para fora de `[data-slot="card"]`, e com controles principais acima da dobra (`bottom <= 667` no mobile)?
-- [ ] **Playwright E2E + Inspeção Visual de Snapshots PNG (`Obrigatório`):**
-  - O worker adicionou/atualizou a rota em `tests/e2e/layout-and-snapshots.spec.ts` e atualizou os snapshots (`npm run test:e2e:snapshots`)?
-  - `npm run test:e2e` passa 100% nos projetos `desktop` (`1440x900`) e `mobile` (`375x667`)?
+- [ ] **Política Zero `any` & Strict TypeScript:** `tsconfig.json` mantém `"strict": true`, ESLint aplica `"@typescript-eslint/no-explicit-any": "error"`, e `npm run lint` + `npm run typecheck` passam com código de saída `0`?
+- [ ] **Cobertura Unitária & Componentes >= 90% (Vitest V8):** O módulo `src/features/<category>/<slug>/` possui testes unitários e de componente atingindo **>= 90%** em **lines, branches, functions e statements** via `npm run test:coverage`?
+- [ ] **Cobertura E2E Obrigatória (Rotas + Cenários Funcionais + Snapshots + Inspeção Visual):**
+  - Toda nova página em `src/app/` e toda ferramenta `"ready"` em `src/config/tools-registry.ts` está registrada em `scripts/check-e2e-coverage.mjs` (`npm run test:e2e:coverage`)?
+  - Possui cenários funcionais interativos em `tests/e2e/functional-scenarios.spec.ts`?
+  - O worker adicionou/atualizou a rota em `tests/e2e/layout-and-snapshots.spec.ts` (checks geométricos de bounding-box + snapshots) e atualizou os snapshots (`npm run test:e2e:snapshots`)?
+  - `npm run test:e2e` passa 100% nos projetos `desktop` (`1440x900`) e `mobile` (`375x667`) após `npm run build`?
   - O agente `@verifier` inspecionou visualmente cada imagem `.png` em `tests/e2e/__screenshots__/desktop/` e `tests/e2e/__screenshots__/mobile/` utilizando a ferramenta `read_file` para confirmar ausência total de sobreposição, truncamento indevido ou colisão visual?
-- [ ] **Qualidade Estática:** `npm run lint` e `npm run build` executam com código de saída `0` sem erros de TypeScript ou ESLint?
+- [ ] **Hook Git Pre-Commit Ativo:** `.husky/pre-commit` está configurado e todas as verificações passam sem bypass (`--no-verify` / `HUSKY=0`)?

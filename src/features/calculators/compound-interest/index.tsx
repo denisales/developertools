@@ -251,25 +251,26 @@ export function CompoundInterestFeature() {
     result.totalInvested > 0 ? result.finalAmount / result.totalInvested : 1;
 
   return (
-    <div className="w-full space-y-3.5 sm:space-y-5 pb-8">
+    <div className="w-full space-y-2.5 sm:space-y-5 pb-8">
       {/* Cabeçalho Compacto da Ferramenta */}
-      <div className="mb-2 space-y-1">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
+      <div className="mb-1.5 sm:mb-2 space-y-0.5 sm:space-y-1">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex min-w-0 flex-1 items-center gap-2">
             <div className="flex size-7 sm:size-8 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
               <TrendingUp className="size-4" />
             </div>
-            <h1 className="text-lg sm:text-2xl font-bold tracking-tight">
-              Calculadora de Juros Compostos
+            <h1 className="truncate text-base sm:text-2xl font-bold tracking-tight">
+              <span className="sm:hidden">Juros Compostos</span>
+              <span className="hidden sm:inline">Calculadora de Juros Compostos</span>
             </h1>
           </div>
 
-          <div className="flex items-center gap-1.5">
+          <div className="flex shrink-0 items-center gap-1.5">
             <Button
               type="button"
               variant="ghost"
               onClick={handleResetDefaults}
-              className="h-8 px-2.5 text-xs font-medium text-muted-foreground hover:text-foreground"
+              className="h-7 sm:h-8 px-2 sm:px-2.5 text-xs font-medium text-muted-foreground hover:text-foreground"
             >
               Restaurar
             </Button>
@@ -277,14 +278,21 @@ export function CompoundInterestFeature() {
               type="button"
               variant="outline"
               onClick={handleCopySummary}
-              className="h-8 gap-1.5 px-2.5 text-xs font-medium"
+              className="h-7 sm:h-8 gap-1 sm:gap-1.5 px-2 sm:px-2.5 text-xs font-medium"
             >
               {copiedSummary ? (
                 <Check className="size-3.5 text-emerald-500" />
               ) : (
                 <Copy className="size-3.5" />
               )}
-              {copiedSummary ? "Copiado" : "Copiar Resumo"}
+              {copiedSummary ? (
+                <span>Copiado</span>
+              ) : (
+                <>
+                  <span className="sm:hidden">Copiar</span>
+                  <span className="hidden sm:inline">Copiar Resumo</span>
+                </>
+              )}
             </Button>
           </div>
         </div>
@@ -294,10 +302,10 @@ export function CompoundInterestFeature() {
       </div>
 
       {/* Card Principal de Simulação com Presets Integrados (#feesCompostosForm) */}
-      <Card className="border-border/80 p-3.5 sm:p-5 shadow-xs">
-        <CardContent className="p-0 space-y-3 sm:space-y-4">
+      <Card className="border-border/80 p-3 sm:p-5 shadow-xs">
+        <CardContent className="p-0 space-y-2.5 sm:space-y-4">
           {/* Barra Horizontal Compacta de Presets (1 linha rolável sem barra visível) */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 no-scrollbar">
             <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-muted-foreground shrink-0 pr-1">
               <Sparkles className="size-3 text-amber-500" />
               Taxas:
@@ -331,9 +339,9 @@ export function CompoundInterestFeature() {
               e.preventDefault();
               toast.success("Simulação de juros compostos atualizada!");
             }}
-            className="space-y-3 sm:space-y-4"
+            className="space-y-2.5 sm:space-y-4"
           >
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-4">
               {/* Campo 1: Valor Inicial */}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between gap-1.5">

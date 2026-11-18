@@ -81,9 +81,9 @@ export default function HomePage() {
                 key={tool.id}
                 className="group relative flex flex-col justify-between gap-2.5 border-primary/25 bg-gradient-to-b from-card to-accent/20 py-3 sm:py-5 transition-all hover:-translate-y-0.5 hover:border-primary hover:shadow-sm"
               >
-                <CardHeader className="space-y-1.5 px-3.5 sm:px-5 pb-0">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2.5 min-w-0">
+                <CardHeader className="min-w-0 space-y-1.5 px-3.5 sm:px-5 pb-0">
+                  <div className="flex min-w-0 items-center justify-between gap-2">
+                    <div className="flex min-w-0 flex-1 items-center gap-2.5">
                       <div className="flex size-8 sm:size-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-2xs">
                         <ToolIcon name={tool.iconName} className="size-4 sm:size-5" />
                       </div>
@@ -219,9 +219,9 @@ export default function HomePage() {
                           !isReady && "opacity-85"
                         )}
                       >
-                        <CardHeader className="px-3.5 sm:px-4 py-0">
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="flex items-center gap-2.5 min-w-0">
+                        <CardHeader className="min-w-0 px-3.5 sm:px-4 py-0">
+                          <div className="flex min-w-0 items-start justify-between gap-2">
+                            <div className="flex min-w-0 flex-1 items-center gap-2.5">
                               <div
                                 className={cn(
                                   "flex size-8 sm:size-9 shrink-0 items-center justify-center rounded-lg",

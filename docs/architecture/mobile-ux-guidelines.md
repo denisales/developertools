@@ -17,8 +17,12 @@ Em dispositivos móveis (`375px` de largura por `667px` de altura útil), **o us
 2. **Geradores (CPF, CNPJ e futuros geradores)**:
    - O **Valor Gerado + Botões `Copiar` / `Gerar Novo` + Opções Principais (Pontuação / Estado / Formato)** devem caber integralmente nos primeiros `520px` verticais da tela (`375x667`).
 3. **Calculadoras (Juros Compostos e futuras calculadoras)**:
-   - Os **Presets rápidos** devem ficar em **uma única faixa horizontal rolável** (`flex items-center gap-1.5 overflow-x-auto no-scrollbar`) integrada ao topo do card de simulação — nunca em um card vertical separado que empurre os inputs para fora da tela.
-   - Os **4 campos de entrada** e os **3 cards de resultado resumido** devem aparecer imediatamente, sem exigir rolagem longa.
+   - Os **Presets rápidos** devem ficar em **uma única faixa horizontal rolável** (`flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar`) integrada ao topo do card de simulação — nunca em um card vertical separado que empurre os inputs para fora da tela.
+   - Os campos de entrada principais (`#mainValue`, `#investment`, `#rate`) devem permanecer visíveis logo na dobra inicial (`375x667`), com espaçamento respirável (`p-4`, `space-y-4`, `gap-4`) que evite elementos espremidos ou colados no celular.
+   - **Ergonomia Mínima de Toque e Espaçamento no Mobile**:
+     - Todos os **inputs e botões de ação primária/secundária** (`#mainValue`, `#investment`, `#rate`, `#period`, `SelectTrigger`, `Limpar`, `Calcular`) devem ter altura mínima de **`>= 40px` (`h-10`)** no mobile e no desktop.
+     - Todos os **chips de atalho de período/taxa/sincronização** (`1a`..`30a`, presets BCB, botão `Sincronizar`, toggles segmentados) devem ter altura mínima de **`>= 32px` (`h-8`)**, e chips de incremento rápido inline (`+1k`, `+5k`, etc.) altura confortável (`>= 28px`, `h-7`), com espaçamento mínimo de **`gap-2` (`8px`)** entre botões interativos adjacentes para toque seguro sem erros.
+     - Textos de status com dados dinâmicos (ex.: indicadores BCB) devem quebrar linha naturalmente (`leading-relaxed`, sem `whitespace-nowrap` truncando palavras ao meio) em sua própria barra sutil ao lado do botão `Sincronizar`.
 
 ---
 

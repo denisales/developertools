@@ -204,19 +204,47 @@ test.describe("Layout Rigor, Geometric Containment & Visual Snapshots", () => {
     expect(cnpjCopyBox!.y + cnpjCopyBox!.height).toBeLessThanOrEqual(667);
     expect(cnpjNewBox!.y + cnpjNewBox!.height).toBeLessThanOrEqual(667);
 
-    // 4c. Compound Interest Above-the-Fold
+    // 4c. Compound Interest Above-the-Fold & Touch Target Ergonomics
     await page.goto("/calculadora-juros-compostos", { waitUntil: "networkidle" });
-    const firstInput = page.locator("main input").first();
+    await expect(page.getByTestId("bcb-presets-bar")).toBeVisible();
+
+    const syncBtn = page.getByTestId("refresh-bcb-indicators");
+    await expect(syncBtn).toBeVisible();
+    const syncBox = await syncBtn.boundingBox();
+    expect(syncBox).not.toBeNull();
+    expect(syncBox!.height).toBeGreaterThanOrEqual(30);
+
+    const firstInput = page.locator("#mainValue");
     await expect(firstInput).toBeVisible();
     const firstInputBox = await firstInput.boundingBox();
     expect(firstInputBox).not.toBeNull();
+    expect(firstInputBox!.height).toBeGreaterThanOrEqual(38);
     expect(firstInputBox!.y + firstInputBox!.height).toBeLessThanOrEqual(667);
+
+    const rateInput = page.locator("#rate");
+    await expect(rateInput).toBeVisible();
+    const rateBox = await rateInput.boundingBox();
+    expect(rateBox).not.toBeNull();
+    expect(rateBox!.y + rateBox!.height).toBeLessThanOrEqual(667);
+
+    const year1Btn = page.getByRole("button", { name: "1a", exact: true });
+    const year5Btn = page.getByRole("button", { name: "5a", exact: true });
+    const year10Btn = page.getByRole("button", { name: "10a", exact: true });
+    await expect(year1Btn).toBeVisible();
+    await expect(year5Btn).toBeVisible();
+    await expect(year10Btn).toBeVisible();
+    const year1Box = await year1Btn.boundingBox();
+    const year5Box = await year5Btn.boundingBox();
+    const year10Box = await year10Btn.boundingBox();
+    expect(year1Box).not.toBeNull();
+    expect(year5Box).not.toBeNull();
+    expect(year10Box).not.toBeNull();
+    expect(year1Box!.height).toBeGreaterThanOrEqual(30);
+    expect(year10Box!.height).toBeGreaterThanOrEqual(30);
+    expect(year5Box!.x - (year1Box!.x + year1Box!.width)).toBeGreaterThanOrEqual(6);
 
     const amountEl = page.locator("#amount");
     await expect(amountEl).toBeVisible();
-    const amountBox = await amountEl.boundingBox();
-    expect(amountBox).not.toBeNull();
-    expect(amountBox!.y + amountBox!.height).toBeLessThanOrEqual(667);
 
     // 5b. Mobile Search Overlay Snapshot
     await page.goto("/", { waitUntil: "networkidle" });

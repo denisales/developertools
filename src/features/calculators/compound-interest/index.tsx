@@ -389,9 +389,9 @@ export function CompoundInterestFeature({
     .replace(".", ",");
 
   return (
-    <div className="w-full space-y-1 sm:space-y-4 pb-8">
+    <div className="w-full space-y-4 sm:space-y-5 pb-8">
       {/* Cabeçalho Compacto da Ferramenta */}
-      <div className="mb-0.5 sm:mb-2 space-y-0.5 sm:space-y-1">
+      <div className="space-y-1.5">
         <div className="flex items-center justify-between gap-2">
           <div className="flex min-w-0 flex-1 items-center gap-2">
             <div className="flex size-7 sm:size-8 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
@@ -403,12 +403,12 @@ export function CompoundInterestFeature({
             </h1>
           </div>
 
-          <div className="flex shrink-0 items-center gap-1.5">
+          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
             <Button
               type="button"
               variant="ghost"
               onClick={handleResetDefaults}
-              className="h-7 sm:h-8 px-2 sm:px-2.5 text-xs font-medium text-muted-foreground hover:text-foreground"
+              className="h-8 px-2 sm:px-2.5 text-xs font-medium text-muted-foreground hover:text-foreground"
             >
               Restaurar
             </Button>
@@ -416,7 +416,7 @@ export function CompoundInterestFeature({
               type="button"
               variant="outline"
               onClick={handleCopySummary}
-              className="h-7 sm:h-8 gap-1 sm:gap-1.5 px-2 sm:px-2.5 text-xs font-medium"
+              className="h-8 gap-1.5 px-2 sm:px-2.5 text-xs font-medium"
             >
               {copiedSummary ? (
                 <Check className="size-3.5 text-emerald-500" />
@@ -440,20 +440,20 @@ export function CompoundInterestFeature({
       </div>
 
       {/* Card Principal de Simulação com Presets Integrados (#feesCompostosForm) */}
-      <Card className="border-border/80 gap-0 p-2 sm:p-5 shadow-xs">
-        <CardContent className="p-0 space-y-1.5 sm:space-y-4">
-          {/* Barra Horizontal Compacta de Presets ou Skeleton Loader */}
+      <Card className="border-border/80 gap-0 p-4 sm:p-5 shadow-xs">
+        <CardContent className="p-0 space-y-4">
+          {/* Barra Horizontal de Presets ou Skeleton Loader */}
           {isLoadingIndicators ? (
             <BcbPresetsSkeleton />
           ) : (
-            <div className="space-y-1">
+            <div className="space-y-2.5">
               <div
                 id="presets-bar"
                 data-testid="bcb-presets-bar"
-                className="flex items-center gap-1.5 overflow-x-auto pb-0.5 no-scrollbar"
+                className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar"
               >
                 <span className="inline-flex items-center gap-1 text-xs font-semibold text-muted-foreground shrink-0 pr-1">
-                  <Sparkles className="size-3 text-amber-500" />
+                  <Sparkles className="size-3.5 text-amber-500" />
                   Taxas:
                 </span>
                 {presets.map((preset) => {
@@ -468,7 +468,7 @@ export function CompoundInterestFeature({
                       data-testid={`preset-${preset.id}`}
                       onClick={() => handleApplyPreset(preset)}
                       title={preset.description}
-                      className={`inline-flex h-7 items-center px-2.5 text-xs font-medium rounded-md border shrink-0 transition-colors cursor-pointer ${
+                      className={`inline-flex h-8 items-center px-3 text-xs font-medium rounded-lg border shrink-0 transition-colors cursor-pointer ${
                         isSelected
                           ? "border-emerald-500 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 shadow-2xs"
                           : "border-border bg-background hover:bg-muted/80 text-foreground"
@@ -480,10 +480,10 @@ export function CompoundInterestFeature({
                 })}
               </div>
 
-              <div className="flex min-h-5 items-center justify-between gap-2">
+              <div className="flex flex-wrap items-center justify-between gap-2.5 rounded-lg bg-muted/40 px-3 py-2">
                 <div
                   data-testid="bcb-indicators-status"
-                  className="min-w-0 flex-1 overflow-x-auto whitespace-nowrap text-xs leading-none text-muted-foreground no-scrollbar"
+                  className="min-w-0 flex-1 text-xs leading-relaxed text-muted-foreground"
                 >
                   {indicators ? (
                     <span>
@@ -508,10 +508,10 @@ export function CompoundInterestFeature({
                   aria-label="Atualizar taxas BCB"
                   title="Atualizar taxas BCB"
                   onClick={handleRefreshIndicators}
-                  className="inline-flex h-5 shrink-0 items-center gap-1 rounded px-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground cursor-pointer"
+                  className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border bg-background px-3 text-xs font-medium text-foreground shadow-2xs transition-colors hover:bg-muted cursor-pointer"
                 >
-                  <RefreshCw className="size-3" />
-                  <span className="hidden sm:inline">Atualizar</span>
+                  <RefreshCw className="size-3.5" />
+                  <span>Sincronizar</span>
                 </button>
               </div>
             </div>
@@ -523,22 +523,22 @@ export function CompoundInterestFeature({
               e.preventDefault();
               toast.success("Simulação de juros compostos atualizada!");
             }}
-            className="space-y-1.5 sm:space-y-4"
+            className="space-y-4"
           >
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 sm:gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
               {/* Campo 1: Valor Inicial */}
-              <div className="space-y-0.5 sm:space-y-1.5">
-                <div className="flex items-center justify-between gap-1.5">
+              <div className="space-y-2">
+                <div className="flex flex-wrap items-center justify-between gap-2">
                   <Label htmlFor="mainValue" className="text-xs font-medium">
                     Valor Inicial
                   </Label>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-2">
                     {[1000, 5000, 10000].map((inc) => (
                       <button
                         key={inc}
                         type="button"
                         onClick={() => setInitialValue((prev) => prev + inc)}
-                        className="rounded border bg-muted/50 px-1.5 py-0.5 text-xs font-medium leading-none text-muted-foreground transition-colors hover:bg-muted hover:text-foreground cursor-pointer"
+                        className="inline-flex h-7 items-center rounded-md border bg-muted/50 px-2.5 text-xs font-medium leading-none text-muted-foreground transition-colors hover:bg-muted hover:text-foreground cursor-pointer"
                       >
                         +{inc >= 1000 ? `${inc / 1000}k` : inc}
                       </button>
@@ -546,7 +546,7 @@ export function CompoundInterestFeature({
                   </div>
                 </div>
                 <div className="relative">
-                  <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2.5 text-xs font-semibold text-muted-foreground">
+                  <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-xs font-semibold text-muted-foreground">
                     R$
                   </span>
                   <Input
@@ -557,7 +557,7 @@ export function CompoundInterestFeature({
                     onChange={(e) =>
                       setInitialValue(parseCurrencyInputBR(e.target.value))
                     }
-                    className="h-8 sm:h-10 pl-8 text-sm font-mono font-medium"
+                    className="h-10 pl-9 text-sm font-mono font-medium"
                     placeholder="0,00"
                     aria-label="Valor Inicial em Reais"
                   />
@@ -565,12 +565,12 @@ export function CompoundInterestFeature({
               </div>
 
               {/* Campo 2: Aporte Mensal */}
-              <div className="space-y-0.5 sm:space-y-1.5">
-                <div className="flex items-center justify-between gap-1.5">
+              <div className="space-y-2">
+                <div className="flex flex-wrap items-center justify-between gap-2">
                   <Label htmlFor="investment" className="text-xs font-medium">
                     Aporte Mensal
                   </Label>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-2">
                     {[200, 500, 1000].map((inc) => (
                       <button
                         key={inc}
@@ -578,7 +578,7 @@ export function CompoundInterestFeature({
                         onClick={() =>
                           setMonthlyContribution((prev) => prev + inc)
                         }
-                        className="rounded border bg-muted/50 px-1.5 py-0.5 text-xs font-medium leading-none text-muted-foreground transition-colors hover:bg-muted hover:text-foreground cursor-pointer"
+                        className="inline-flex h-7 items-center rounded-md border bg-muted/50 px-2.5 text-xs font-medium leading-none text-muted-foreground transition-colors hover:bg-muted hover:text-foreground cursor-pointer"
                       >
                         +{inc >= 1000 ? `${inc / 1000}k` : inc}
                       </button>
@@ -586,7 +586,7 @@ export function CompoundInterestFeature({
                   </div>
                 </div>
                 <div className="relative">
-                  <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2.5 text-xs font-semibold text-muted-foreground">
+                  <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-xs font-semibold text-muted-foreground">
                     R$
                   </span>
                   <Input
@@ -597,7 +597,7 @@ export function CompoundInterestFeature({
                     onChange={(e) =>
                       setMonthlyContribution(parseCurrencyInputBR(e.target.value))
                     }
-                    className="h-8 sm:h-10 pl-8 text-sm font-mono font-medium"
+                    className="h-10 pl-9 text-sm font-mono font-medium"
                     placeholder="0,00"
                     aria-label="Aporte Mensal em Reais"
                   />
@@ -605,12 +605,12 @@ export function CompoundInterestFeature({
               </div>
 
               {/* Campo 3: Taxa de Juros */}
-              <div className="space-y-0.5 sm:space-y-1.5">
-                <div className="flex items-center justify-between gap-1.5">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between gap-2">
                   <Label htmlFor="rate" className="text-xs font-medium">
                     Taxa de Juros
                   </Label>
-                  <span className="rounded bg-emerald-500/10 px-1.5 py-0.5 font-mono text-xs font-medium leading-none text-emerald-700 dark:text-emerald-300">
+                  <span className="rounded-md bg-emerald-500/10 px-2 py-1 font-mono text-xs font-medium leading-none text-emerald-700 dark:text-emerald-300">
                     {rateUnit === "year"
                       ? `≈ ${(result.effectiveMonthlyRate * 100).toFixed(2).replace(".", ",")}% a.m.`
                       : `≈ ${(result.effectiveAnnualRate * 100).toFixed(2).replace(".", ",")}% a.a.`}
@@ -618,7 +618,7 @@ export function CompoundInterestFeature({
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="relative flex-1">
-                    <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2.5 text-xs font-semibold text-muted-foreground">
+                    <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-xs font-semibold text-muted-foreground">
                       %
                     </span>
                     <Input
@@ -630,7 +630,7 @@ export function CompoundInterestFeature({
                         hasUserEditedRateRef.current = true;
                         setRateText(e.target.value);
                       }}
-                      className="h-8 sm:h-10 pl-7 text-sm font-mono font-medium"
+                      className="h-10 pl-8 text-sm font-mono font-medium"
                       placeholder={formatRatePtBr(
                         DEFAULT_COMPOUND_INTEREST_INPUT.interestRate
                       )}
@@ -646,7 +646,7 @@ export function CompoundInterestFeature({
                   >
                     <SelectTrigger
                       id="select-rate"
-                      className="h-8 sm:h-10 w-[105px] sm:w-[120px] shrink-0 px-2.5 text-xs font-medium"
+                      className="h-10 w-[105px] sm:w-[120px] shrink-0 px-3 text-xs font-medium"
                       aria-label="Unidade da Taxa de Juros"
                     >
                       <SelectValue />
@@ -660,30 +660,11 @@ export function CompoundInterestFeature({
               </div>
 
               {/* Campo 4: Período */}
-              <div className="space-y-0.5 sm:space-y-1.5">
-                <div className="flex items-center justify-between gap-1.5">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between gap-2">
                   <Label htmlFor="period" className="text-xs font-medium">
                     Período ({result.totalMonths}m)
                   </Label>
-                  <div className="flex items-center gap-1">
-                    {[1, 5, 10, 20, 30].map((yr) => (
-                      <button
-                        key={yr}
-                        type="button"
-                        onClick={() => {
-                          setPeriodUnit("years");
-                          setPeriodText(String(yr));
-                        }}
-                        className={`rounded border px-1.5 py-0.5 text-xs font-medium leading-none transition-colors cursor-pointer ${
-                          periodUnit === "years" && parsedPeriod === yr
-                            ? "border-primary bg-primary/10 text-primary"
-                            : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
-                        }`}
-                      >
-                        {yr}a
-                      </button>
-                    ))}
-                  </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <Input
@@ -692,7 +673,7 @@ export function CompoundInterestFeature({
                     inputMode="numeric"
                     value={periodText}
                     onChange={(e) => setPeriodText(e.target.value)}
-                    className="h-8 sm:h-10 flex-1 text-sm font-mono font-medium"
+                    className="h-10 flex-1 text-sm font-mono font-medium"
                     placeholder="10"
                     aria-label="Período da Simulação"
                   />
@@ -704,7 +685,7 @@ export function CompoundInterestFeature({
                   >
                     <SelectTrigger
                       id="select-period"
-                      className="h-8 sm:h-10 w-[105px] sm:w-[120px] shrink-0 px-2.5 text-xs font-medium"
+                      className="h-10 w-[105px] sm:w-[120px] shrink-0 px-3 text-xs font-medium"
                       aria-label="Unidade do Período"
                     >
                       <SelectValue />
@@ -715,17 +696,36 @@ export function CompoundInterestFeature({
                     </SelectContent>
                   </Select>
                 </div>
+                <div className="grid grid-cols-5 gap-2 sm:flex sm:flex-wrap sm:items-center sm:gap-2">
+                  {[1, 5, 10, 20, 30].map((yr) => (
+                    <button
+                      key={yr}
+                      type="button"
+                      onClick={() => {
+                        setPeriodUnit("years");
+                        setPeriodText(String(yr));
+                      }}
+                      className={`inline-flex h-8 items-center justify-center rounded-lg border px-2.5 text-xs font-medium leading-none transition-colors cursor-pointer ${
+                        periodUnit === "years" && parsedPeriod === yr
+                          ? "border-primary bg-primary/10 text-primary"
+                          : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
+                      }`}
+                    >
+                      {yr}a
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
 
-            {/* Barra de Ações Compacta */}
-            <div className="flex items-center justify-between gap-2 border-t pt-1 sm:pt-3">
+            {/* Barra de Ações */}
+            <div className="flex items-center justify-between gap-3 border-t pt-3">
               <Button
                 id="btn-clear"
                 type="button"
                 variant="outline"
                 onClick={handleClear}
-                className="h-7 sm:h-9 gap-1.5 px-3 text-xs font-medium"
+                className="h-10 gap-1.5 px-4 text-xs sm:text-sm font-medium"
               >
                 <RotateCcw className="size-3.5" />
                 Limpar
@@ -733,7 +733,7 @@ export function CompoundInterestFeature({
 
               <Button
                 type="submit"
-                className="h-7 sm:h-9 gap-1.5 bg-emerald-600 px-3 sm:px-4 text-xs font-semibold text-white hover:bg-emerald-700"
+                className="h-10 gap-1.5 bg-emerald-600 px-4 text-xs sm:text-sm font-semibold text-white hover:bg-emerald-700"
               >
                 <Calculator className="size-3.5" />
                 Calcular Juros Compostos
@@ -743,22 +743,22 @@ export function CompoundInterestFeature({
         </CardContent>
       </Card>
 
-      {/* Controles Compactos de Visão (Bruto vs Líquido) e Regime de IR */}
+      {/* Controles de Visão (Bruto vs Líquido) e Regime de IR */}
       <div
         data-testid="tax-controls-bar"
-        className="flex items-center justify-between gap-1.5 sm:gap-2 rounded-lg border border-border/80 bg-muted/40 px-1.5 py-1 sm:px-3 sm:py-1.5"
+        className="flex flex-wrap items-center justify-between gap-2.5 rounded-xl border border-border/80 bg-muted/40 p-2 sm:p-2.5"
       >
         <div
           role="group"
           aria-label="Modo de visualização do resultado"
-          className="inline-flex items-center rounded-md bg-background p-0.5 border border-border/60"
+          className="inline-flex items-center gap-1 rounded-lg bg-background p-1 border border-border/60"
         >
           <button
             type="button"
             data-testid="view-mode-gross"
             aria-pressed={viewMode === "gross"}
             onClick={() => setViewMode("gross")}
-            className={`h-6 sm:h-7 rounded px-2 sm:px-2.5 text-xs font-medium transition-colors cursor-pointer ${
+            className={`h-8 rounded-lg px-3 text-xs font-medium transition-colors cursor-pointer ${
               viewMode === "gross"
                 ? "bg-emerald-600 text-white shadow-2xs"
                 : "text-muted-foreground hover:text-foreground"
@@ -772,7 +772,7 @@ export function CompoundInterestFeature({
             data-testid="view-mode-net"
             aria-pressed={viewMode === "net"}
             onClick={() => setViewMode("net")}
-            className={`h-6 sm:h-7 rounded px-2 sm:px-2.5 text-xs font-medium transition-colors cursor-pointer ${
+            className={`h-8 rounded-lg px-3 text-xs font-medium transition-colors cursor-pointer ${
               viewMode === "net"
                 ? "bg-emerald-600 text-white shadow-2xs"
                 : "text-muted-foreground hover:text-foreground"
@@ -786,14 +786,14 @@ export function CompoundInterestFeature({
         <div
           role="group"
           aria-label="Regime tributário"
-          className="inline-flex items-center rounded-md bg-background p-0.5 border border-border/60"
+          className="inline-flex items-center gap-1 rounded-lg bg-background p-1 border border-border/60"
         >
           <button
             type="button"
             data-testid="tax-regime-regressive"
             aria-pressed={taxRegime === "regressive"}
             onClick={() => setTaxRegime("regressive")}
-            className={`h-6 sm:h-7 rounded px-2 sm:px-2.5 text-xs font-medium transition-colors cursor-pointer ${
+            className={`h-8 rounded-lg px-3 text-xs font-medium transition-colors cursor-pointer ${
               taxRegime === "regressive"
                 ? "bg-primary text-primary-foreground shadow-2xs"
                 : "text-muted-foreground hover:text-foreground"
@@ -809,7 +809,7 @@ export function CompoundInterestFeature({
             data-testid="tax-regime-exempt"
             aria-pressed={taxRegime === "exempt"}
             onClick={() => setTaxRegime("exempt")}
-            className={`h-6 sm:h-7 rounded px-2 sm:px-2.5 text-xs font-medium transition-colors cursor-pointer ${
+            className={`h-8 rounded-lg px-3 text-xs font-medium transition-colors cursor-pointer ${
               taxRegime === "exempt"
                 ? "bg-sky-600 text-white shadow-2xs"
                 : "text-muted-foreground hover:text-foreground"
@@ -824,24 +824,24 @@ export function CompoundInterestFeature({
       {/* Seção 1: Os 3 Cards de Resumo Imediatamente Abaixo dos Inputs (#result) */}
       <div
         id="result"
-        className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4"
+        className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4"
       >
         {/* Card 1: Valor Total Final */}
-        <Card className="relative overflow-hidden border-emerald-500/40 bg-gradient-to-br from-emerald-500/10 via-background to-background gap-0.5 sm:gap-2 p-2 sm:p-4 shadow-sm">
-          <CardHeader className="p-0 pb-0.5 sm:pb-1">
+        <Card className="relative overflow-hidden border-emerald-500/40 bg-gradient-to-br from-emerald-500/10 via-background to-background gap-2 p-4 sm:p-5 shadow-sm">
+          <CardHeader className="p-0 pb-1">
             <div className="flex items-center justify-between gap-2">
               <span className="text-xs font-semibold tracking-wider text-emerald-700 uppercase dark:text-emerald-400">
                 {isNetView ? "Valor Líquido Final" : "Valor Total Final"}
               </span>
-              <div className="flex size-6 sm:size-7 shrink-0 items-center justify-center rounded-md bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+              <div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
                 <Wallet className="size-3.5" />
               </div>
             </div>
           </CardHeader>
-          <CardContent className="space-y-1 p-0">
+          <CardContent className="space-y-1.5 p-0">
             <div
               id="amount"
-              className="text-lg sm:text-2xl font-bold font-mono tracking-tight text-emerald-700 dark:text-emerald-300"
+              className="text-xl sm:text-2xl font-bold font-mono tracking-tight text-emerald-700 dark:text-emerald-300"
             >
               {formatCurrencyBRL(displayedFinalAmount)}
             </div>
@@ -882,7 +882,7 @@ export function CompoundInterestFeature({
         </Card>
 
         {/* Card 2: Total Investido */}
-        <Card className="border-blue-500/30 bg-gradient-to-br from-blue-500/5 via-background to-background gap-1 sm:gap-2 p-3 sm:p-4 shadow-xs">
+        <Card className="border-blue-500/30 bg-gradient-to-br from-blue-500/5 via-background to-background gap-2 p-4 sm:p-5 shadow-xs">
           <CardHeader className="p-0 pb-1">
             <div className="flex items-center justify-between gap-2">
               <span className="text-xs font-semibold tracking-wider text-blue-700 uppercase dark:text-blue-400">
@@ -893,10 +893,10 @@ export function CompoundInterestFeature({
               </div>
             </div>
           </CardHeader>
-          <CardContent className="space-y-1 p-0">
+          <CardContent className="space-y-1.5 p-0">
             <div
               id="invested"
-              className="text-lg sm:text-2xl font-bold font-mono tracking-tight"
+              className="text-xl sm:text-2xl font-bold font-mono tracking-tight"
             >
               {formatCurrencyBRL(result.totalInvested)}
             </div>
@@ -913,7 +913,7 @@ export function CompoundInterestFeature({
         </Card>
 
         {/* Card 3: Total em Juros */}
-        <Card className="border-amber-500/30 bg-gradient-to-br from-amber-500/10 via-background to-background gap-1 sm:gap-2 p-3 sm:p-4 shadow-xs">
+        <Card className="border-amber-500/30 bg-gradient-to-br from-amber-500/10 via-background to-background gap-2 p-4 sm:p-5 shadow-xs">
           <CardHeader className="p-0 pb-1">
             <div className="flex items-center justify-between gap-2">
               <span className="text-xs font-semibold tracking-wider text-amber-700 uppercase dark:text-amber-400">
@@ -924,10 +924,10 @@ export function CompoundInterestFeature({
               </div>
             </div>
           </CardHeader>
-          <CardContent className="space-y-1 p-0">
+          <CardContent className="space-y-1.5 p-0">
             <div
               id="interest"
-              className="text-lg sm:text-2xl font-bold font-mono tracking-tight text-amber-700 dark:text-amber-300"
+              className="text-xl sm:text-2xl font-bold font-mono tracking-tight text-amber-700 dark:text-amber-300"
             >
               {formatCurrencyBRL(displayedTotalInterest)}
             </div>

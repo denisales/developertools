@@ -892,7 +892,7 @@ describe("CompoundInterestFeature", () => {
 });
 
 describe("CompoundInterestSkeleton & BcbPresetsSkeleton", () => {
-  it("renders 5 preset pill skeletons and 1 status caption inside #presets-bar", () => {
+  it("renders 5 preset pill skeletons, status caption, and sync button skeleton inside #presets-bar", () => {
     const { container } = render(<BcbPresetsSkeleton />);
     const wrapper = screen.getByTestId("bcb-presets-skeleton");
     expect(wrapper).toBeInTheDocument();
@@ -903,7 +903,7 @@ describe("CompoundInterestSkeleton & BcbPresetsSkeleton", () => {
     expect(pills).toHaveLength(5);
 
     const allSkeletons = wrapper.querySelectorAll('[data-slot="skeleton"]');
-    expect(allSkeletons).toHaveLength(6);
+    expect(allSkeletons).toHaveLength(7);
   });
 
   it("renders full-page CompoundInterestSkeleton with presets, 4 inputs, and 3 summary cards", () => {

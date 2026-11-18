@@ -6,6 +6,12 @@ O backlog está estruturado em **8 Épicos (`Epic 0` a `Epic 7`)** e decomposto 
 
 Cada validador, gerador, calculadora e utilitário possui sua própria **Task ID**, **Agente/Role Responsável**, **Branch/Worktree isolada** e **Diretório exclusivo (`src/features/<category>/<tool-slug>/`)** para permitir desenvolvimento massivamente paralelo sem conflitos de merge.
 
+> **Gate Obrigatório de Qualidade E2E & Snapshots Visuais (Todas as Tasks `TASK-000` a `TASK-095`):**
+> Nenhuma tarefa é considerada concluída sem:
+> 1. Cobertura da rota em `tests/e2e/layout-and-snapshots.spec.ts` validando **Zero Page Overflow**, **Contenção Geométrica de Cards (`[data-slot="card"]`)**, **Zero Colisão de Abas/Botões** e **Usabilidade Above-the-Fold no Mobile (`375x667`)**.
+> 2. Geração e commit dos snapshots visuais determinísticos (`npm run test:e2e:snapshots`) para **Desktop (`1440x900`)** e **Mobile (`375x667`)**.
+> 3. Execução de `npm run test:e2e` com 100% de aprovação + **inspeção visual obrigatória das imagens PNG geradas usando `read_file`** pelo agente `@verifier` antes do merge/deploy.
+
 ---
 
 ## Visão Geral dos Épicos e Ondas de Execução Paralela

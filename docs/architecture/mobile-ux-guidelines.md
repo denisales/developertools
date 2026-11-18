@@ -75,3 +75,21 @@ Todas as ferramentas do **DevToolsBR** são implementações próprias e indepen
 - **PROIBIDO** citar nomes de sites externos (ex.: *"4Devs"*, *"Investidor10"*).
 - **PROIBIDO** exibir jargões internos de engenharia ou implementação nos títulos, subtítulos, badges ou cards (ex.: *"Motor Módulo 11"*, *"Módulo 11"*, *"Mod-11"*, *"Motor Financeiro"*, *"100% Client-Side"*).
 - Usar sempre linguagem clara, direta e focada no usuário final (ex.: *"Cálculo Oficial da Receita Federal"*, *"Dígitos Verificadores"*, *"Equivalência Composta de Taxas"*).
+
+---
+
+## 7. Gate Obrigatório: Playwright E2E, Contenção Geométrica e Snapshots Visuais (Desktop & Mobile)
+
+Nenhuma tarefa ou branch pode ser aprovada sem validação automatizada no **Playwright** (`playwright.config.ts` e `tests/e2e/layout-and-snapshots.spec.ts`) em **Desktop (`1440x900`)** e **Mobile (`375x667`)**:
+
+1. **Contenção Geométrica de Cards (`[data-slot="card"]`)**:
+   - Todo `Card` deve possuir `min-w-0 overflow-hidden` e `CardHeader` deve utilizar `flex min-w-0 flex-col gap-1.5`.
+   - Em cards de catálogo (4 colunas no desktop), **nunca** colocar `[Ícone] + [Título Completo] + [Badge]` na mesma linha horizontal. Utilizar sempre o padrão **Vercel / Linear Card Header**:
+     - **Linha 1**: `<div className="flex items-center justify-between gap-2">` com o Ícone à esquerda e a `Badge` (`Disponível` / `Catálogo`) à direita.
+     - **Linha 2**: `<CardTitle className="mt-2 ... line-clamp-1">` ocupando 100% da largura útil do card.
+   - O teste automatizado verifica que nenhum elemento filho (`badge`, `card-title`, `h1..h4`, `button`, `input`) ultrapasse as bordas laterais do card (`childBox.right <= cardBox.right + 1` e `childBox.left >= cardBox.left - 1`).
+2. **Snapshots Visuais Determinísticos (`toHaveScreenshot`)**:
+   - Todo worker que implementar ou alterar uma rota deve adicionar/atualizar o teste da rota em `tests/e2e/layout-and-snapshots.spec.ts` e gerar os snapshots Desktop (`1440x900`) e Mobile (`375x667`) via `npm run test:e2e:snapshots`.
+   - O agente verificador (`@verifier` / `@pw-verifier`) é **obrigado** a:
+     1. Executar `npm run test:e2e` e confirmar 100% de aprovação.
+     2. Inspecionar visualmente cada arquivo `.png` gerado em `tests/e2e/__screenshots__/` usando a ferramenta `read_file` antes de aprovar o merge.

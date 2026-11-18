@@ -101,9 +101,10 @@ git merge --no-ff feat/task-001-cpf-generator -m "Merge feat/task-001-cpf-genera
 git merge --no-ff feat/task-002-cnpj-generator -m "Merge feat/task-002-cnpj-generator into main"
 git merge --no-ff feat/task-003-compound-interest -m "Merge feat/task-003-compound-interest into main"
 
-# 2. Validação integrada na main
+# 2. Validação integrada na main (Estática + Playwright E2E + Snapshots)
 npm run lint
 npm run build
+npm run test:e2e
 
 # 3. Remoção das worktrees concluídas e limpeza de branches locais
 git worktree remove ../developertools-wt-cpf
@@ -126,5 +127,9 @@ Antes de aprovar o merge de qualquer worktree, o agente `@verifier` executa o ch
   - CPF gera 11 dígitos válidos no Mod-11, respeita o 9º dígito da UF selecionada e rejeita sequências repetidas (`111.111.111-11`)?
   - CNPJ gera 14 caracteres válidos no Mod-11 (incluindo matriz `0001` ou filial customizada) e valida dígitos verificadores corretamente?
   - Calculadora de Juros Compostos converte taxa anual para mensal via taxa equivalente $(1 + i_{anual})^{1/12} - 1$ (igual ao Investidor10) e bate os valores de *Total Final*, *Total Investido* e *Total em Juros* centavo a centavo?
-- [ ] **Responsividade Mobile:** Layout funciona em `375px` (iPhone SE / celulares compactos) sem barra de rolagem horizontal quebrada, com botões de fácil toque e cópia com 1 clique?
+- [ ] **Responsividade Mobile & Contenção Geométrica:** Layout funciona em `375x667` (Mobile) e `1440x900` (Desktop) sem barra de rolagem horizontal (`scrollWidth <= innerWidth`), sem vazamento de badges/títulos para fora de `[data-slot="card"]`, e com controles principais acima da dobra (`bottom <= 667` no mobile)?
+- [ ] **Playwright E2E + Inspeção Visual de Snapshots PNG (`Obrigatório`):**
+  - O worker adicionou/atualizou a rota em `tests/e2e/layout-and-snapshots.spec.ts` e atualizou os snapshots (`npm run test:e2e:snapshots`)?
+  - `npm run test:e2e` passa 100% nos projetos `desktop` (`1440x900`) e `mobile` (`375x667`)?
+  - O agente `@verifier` inspecionou visualmente cada imagem `.png` em `tests/e2e/__screenshots__/desktop/` e `tests/e2e/__screenshots__/mobile/` utilizando a ferramenta `read_file` para confirmar ausência total de sobreposição, truncamento indevido ou colisão visual?
 - [ ] **Qualidade Estática:** `npm run lint` e `npm run build` executam com código de saída `0` sem erros de TypeScript ou ESLint?

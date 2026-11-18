@@ -81,21 +81,19 @@ export default function HomePage() {
                 key={tool.id}
                 className="group relative flex flex-col justify-between gap-2.5 border-primary/25 bg-gradient-to-b from-card to-accent/20 py-3 sm:py-5 transition-all hover:-translate-y-0.5 hover:border-primary hover:shadow-sm"
               >
-                <CardHeader className="min-w-0 space-y-1.5 px-3.5 sm:px-5 pb-0">
-                  <div className="flex min-w-0 items-center justify-between gap-2">
-                    <div className="flex min-w-0 flex-1 items-center gap-2.5">
-                      <div className="flex size-8 sm:size-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-2xs">
-                        <ToolIcon name={tool.iconName} className="size-4 sm:size-5" />
-                      </div>
-                      <CardTitle className="truncate text-sm sm:text-lg font-bold group-hover:text-primary transition-colors">
-                        {tool.name}
-                      </CardTitle>
+                <CardHeader className="min-w-0 gap-1 px-3.5 sm:px-5 pb-0">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex size-8 sm:size-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-2xs">
+                      <ToolIcon name={tool.iconName} className="size-4 sm:size-5" />
                     </div>
                     <Badge variant="default" className="shrink-0 gap-1 text-xs">
                       <CheckCircle2 className="size-3" />
                       <span>{tool.badge ?? "Ativo"}</span>
                     </Badge>
                   </div>
+                  <CardTitle className="mt-2 text-sm sm:text-base font-bold leading-snug line-clamp-1 group-hover:text-primary transition-colors">
+                    {tool.name}
+                  </CardTitle>
                   <CardDescription className="line-clamp-2 text-xs sm:text-sm leading-snug sm:leading-relaxed">
                     {tool.description}
                   </CardDescription>
@@ -219,25 +217,20 @@ export default function HomePage() {
                           !isReady && "opacity-85"
                         )}
                       >
-                        <CardHeader className="min-w-0 px-3.5 sm:px-4 py-0">
-                          <div className="flex min-w-0 items-start justify-between gap-2">
-                            <div className="flex min-w-0 flex-1 items-center gap-2.5">
-                              <div
-                                className={cn(
-                                  "flex size-8 sm:size-9 shrink-0 items-center justify-center rounded-lg",
-                                  isReady
-                                    ? "bg-primary/10 text-primary"
-                                    : "bg-muted text-muted-foreground"
-                                )}
-                              >
-                                <ToolIcon
-                                  name={tool.iconName}
-                                  className="size-4"
-                                />
-                              </div>
-                              <CardTitle className="truncate text-sm sm:text-base font-bold group-hover:text-primary transition-colors">
-                                {tool.name}
-                              </CardTitle>
+                        <CardHeader className="min-w-0 gap-0 px-3.5 sm:px-4 py-0">
+                          <div className="flex items-center justify-between gap-2">
+                            <div
+                              className={cn(
+                                "flex size-8 sm:size-9 shrink-0 items-center justify-center rounded-lg",
+                                isReady
+                                  ? "bg-primary/10 text-primary"
+                                  : "bg-muted text-muted-foreground"
+                              )}
+                            >
+                              <ToolIcon
+                                name={tool.iconName}
+                                className="size-4"
+                              />
                             </div>
                             <Badge
                               variant={isReady ? "default" : "secondary"}
@@ -246,6 +239,9 @@ export default function HomePage() {
                               {isReady ? "Disponível" : "Catálogo"}
                             </Badge>
                           </div>
+                          <CardTitle className="mt-2 text-sm sm:text-base font-bold leading-snug line-clamp-1 group-hover:text-primary transition-colors">
+                            {tool.name}
+                          </CardTitle>
                         </CardHeader>
                         <CardContent className="px-3.5 sm:px-4 py-0">
                           <p className="line-clamp-2 text-xs sm:text-sm leading-relaxed text-muted-foreground">

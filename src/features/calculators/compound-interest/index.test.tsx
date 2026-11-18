@@ -133,7 +133,14 @@ describe("CompoundInterestFeature", () => {
     expect(screen.getByTestId("preset-cdi-100")).toHaveTextContent(
       "CDI 14,15%"
     );
+    expect(screen.getByTestId("preset-cdi-100").className).toContain(
+      "border-emerald-500"
+    );
     expect(screen.getByTestId("refresh-bcb-indicators")).toBeInTheDocument();
+    expect(screen.getByLabelText("Taxa de Juros")).toHaveValue("14,15");
+    expect(screen.getByLabelText("Unidade da Taxa de Juros")).toHaveTextContent(
+      "Anual"
+    );
 
     expect(
       screen.getByRole("heading", { name: /Calculadora de Juros Compostos/i })
@@ -147,9 +154,9 @@ describe("CompoundInterestFeature", () => {
     expect(resultScope.getByText("Total Investido")).toBeInTheDocument();
     expect(resultScope.getByText("Total em Juros")).toBeInTheDocument();
 
-    expect(container.querySelector("#amount")).toHaveTextContent("102.525,67");
+    expect(container.querySelector("#amount")).toHaveTextContent("128.029,52");
     expect(container.querySelector("#invested")).toHaveTextContent("61.000,00");
-    expect(container.querySelector("#interest")).toHaveTextContent("41.525,67");
+    expect(container.querySelector("#interest")).toHaveTextContent("67.029,52");
     expect(screen.getByText(/após 120 meses/i)).toBeInTheDocument();
 
     expect(
@@ -360,7 +367,11 @@ describe("CompoundInterestFeature", () => {
 
     // Restore defaults
     fireEvent.click(screen.getByRole("button", { name: /Restaurar/i }));
-    expect(container.querySelector("#amount")).toHaveTextContent("102.525,67");
+    expect(screen.getByLabelText("Taxa de Juros")).toHaveValue("14,15");
+    expect(screen.getByLabelText("Unidade da Taxa de Juros")).toHaveTextContent(
+      "Anual"
+    );
+    expect(container.querySelector("#amount")).toHaveTextContent("128.029,52");
     expect(toast.success).toHaveBeenCalledWith("Valores padrão restaurados.");
 
     // Copy summary success
@@ -474,11 +485,85 @@ describe("CompoundInterestFeature", () => {
     );
 
     const rateInput = screen.getByLabelText("Taxa de Juros") as HTMLInputElement;
+    expect(rateInput.value).toBe("15,15");
+    expect(screen.getByLabelText("Unidade da Taxa de Juros")).toHaveTextContent(
+      "Anual"
+    );
     fireEvent.click(screen.getByTestId("preset-cdi-100"));
     expect(rateInput.value).toBe("15,15");
 
     fireEvent.click(screen.getByTestId("preset-ipca-plus"));
     expect(rateInput.value).toBe("11,14");
+  });
+
+  it("initializes and restores custom initialIndicators.taxaDi rate and does not overwrite manual edits on standalone mount", async () => {
+    const customSsrIndicators: MarketIndicators = {
+      ...MOCK_INDICATORS,
+      taxaDi: {
+        ...MOCK_INDICATORS.taxaDi,
+        value: 13.65,
+      },
+    };
+
+    const { unmount } = render(
+      <CompoundInterestFeature initialIndicators={customSsrIndicators} />
+    );
+
+    const ssrRateInput = screen.getByLabelText("Taxa de Juros") as HTMLInputElement;
+    expect(ssrRateInput.value).toBe("13,65");
+    expect(screen.getByLabelText("Unidade da Taxa de Juros")).toHaveTextContent(
+      "Anual"
+    );
+
+    fireEvent.change(ssrRateInput, { target: { value: "9,50" } });
+    expect(ssrRateInput.value).toBe("9,50");
+
+    fireEvent.click(screen.getByRole("button", { name: /Restaurar/i }));
+    expect(ssrRateInput.value).toBe("13,65");
+    expect(screen.getByLabelText("Unidade da Taxa de Juros")).toHaveTextContent(
+      "Anual"
+    );
+    unmount();
+
+    // Standalone mount: user edits rate before /api/indicators resolves -> manual edit is preserved
+    let resolveFetch!: (value: Response) => void;
+    vi.spyOn(globalThis, "fetch").mockReturnValueOnce(
+      new Promise<Response>((resolve) => {
+        resolveFetch = resolve;
+      })
+    );
+
+    render(<CompoundInterestFeature />);
+    const standaloneRateInput = screen.getByLabelText(
+      "Taxa de Juros"
+    ) as HTMLInputElement;
+    expect(standaloneRateInput.value).toBe("14,15");
+
+    fireEvent.change(standaloneRateInput, { target: { value: "8,50" } });
+    expect(standaloneRateInput.value).toBe("8,50");
+
+    await act(async () => {
+      resolveFetch(
+        createJsonResponse({
+          ...MOCK_INDICATORS,
+          taxaDi: { ...MOCK_INDICATORS.taxaDi, value: 15.15 },
+        })
+      );
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("preset-cdi-100")).toHaveTextContent(
+        "CDI 15,15%"
+      );
+    });
+    expect(standaloneRateInput.value).toBe("8,50");
+
+    // Restaurar uses the resolved active DI rate (15,15)
+    fireEvent.click(screen.getByRole("button", { name: /Restaurar/i }));
+    expect(standaloneRateInput.value).toBe("15,15");
+    expect(screen.getByLabelText("Unidade da Taxa de Juros")).toHaveTextContent(
+      "Anual"
+    );
   });
 
   it("shows skeleton while refreshing via refresh-bcb-indicators and handles success and HTTP 500 fallback", async () => {

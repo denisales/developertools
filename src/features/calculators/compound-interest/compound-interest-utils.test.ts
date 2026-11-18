@@ -48,7 +48,7 @@ describe("compound-interest-utils", () => {
       expect(DEFAULT_COMPOUND_INTEREST_INPUT).toEqual({
         initialValue: 1000,
         monthlyContribution: 500,
-        interestRate: 10,
+        interestRate: 14.15,
         rateUnit: "year",
         period: 10,
         periodUnit: "years",

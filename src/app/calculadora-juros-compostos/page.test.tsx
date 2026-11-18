@@ -111,5 +111,32 @@ describe("CalculadoraJurosCompostosPage", () => {
     expect(screen.getByTestId("preset-cdi-100")).toHaveTextContent(
       "CDI 14,15%"
     );
+    expect(screen.getByLabelText("Taxa de Juros")).toHaveValue("14,15");
+    expect(screen.getByLabelText("Unidade da Taxa de Juros")).toHaveTextContent(
+      "Anual"
+    );
+  });
+
+  it("initializes default rate from live SSR taxaDi value", async () => {
+    getMarketIndicatorsMock.mockResolvedValueOnce({
+      ...MOCK_SSR_INDICATORS,
+      taxaDi: {
+        ...MOCK_SSR_INDICATORS.taxaDi,
+        value: 13.65,
+      },
+    });
+
+    const pageElement = CalculadoraJurosCompostosPage();
+    const { children } = pageElement.props as {
+      children: React.ReactElement;
+    };
+    const serverComponent = children.type as () => Promise<React.ReactElement>;
+    const resolvedFeature = await serverComponent();
+
+    render(resolvedFeature);
+    expect(screen.getByLabelText("Taxa de Juros")).toHaveValue("13,65");
+    expect(screen.getByLabelText("Unidade da Taxa de Juros")).toHaveTextContent(
+      "Anual"
+    );
   });
 });

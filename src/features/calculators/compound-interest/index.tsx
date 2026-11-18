@@ -106,6 +106,28 @@ export function CompoundInterestFeature({
   );
   const activeControllerRef = React.useRef<AbortController | null>(null);
   const isMountedRef = React.useRef<boolean>(true);
+  const hasUserEditedRateRef = React.useRef<boolean>(false);
+
+  // Estados dos inputs financeiros
+  const [initialValue, setInitialValue] = React.useState<number>(
+    DEFAULT_COMPOUND_INTEREST_INPUT.initialValue
+  );
+  const [monthlyContribution, setMonthlyContribution] = React.useState<number>(
+    DEFAULT_COMPOUND_INTEREST_INPUT.monthlyContribution
+  );
+  const [rateText, setRateText] = React.useState<string>(() =>
+    formatRatePtBr(
+      initialIndicators?.taxaDi.value ??
+        DEFAULT_COMPOUND_INTEREST_INPUT.interestRate
+    )
+  );
+  const [rateUnit, setRateUnit] = React.useState<RatePeriodUnit>(
+    DEFAULT_COMPOUND_INTEREST_INPUT.rateUnit
+  );
+  const [periodText, setPeriodText] = React.useState<string>("10");
+  const [periodUnit, setPeriodUnit] = React.useState<TimePeriodUnit>(
+    DEFAULT_COMPOUND_INTEREST_INPUT.periodUnit
+  );
 
   const handleRefreshIndicators = React.useCallback(async () => {
     activeControllerRef.current?.abort();
@@ -131,6 +153,10 @@ export function CompoundInterestFeature({
         const nextIndicators = await fetchIndicatorsFromApi(controller.signal);
         if (!controller.signal.aborted && isMountedRef.current) {
           setIndicators(nextIndicators);
+          if (nextIndicators && !hasUserEditedRateRef.current) {
+            setRateText(formatRatePtBr(nextIndicators.taxaDi.value));
+            setRateUnit(DEFAULT_COMPOUND_INTEREST_INPUT.rateUnit);
+          }
           setIsLoadingIndicators(false);
         }
       })();
@@ -145,21 +171,6 @@ export function CompoundInterestFeature({
   const presets = React.useMemo(
     () => buildPresetsFromIndicators(indicators),
     [indicators]
-  );
-  // Estados dos inputs financeiros
-  const [initialValue, setInitialValue] = React.useState<number>(
-    DEFAULT_COMPOUND_INTEREST_INPUT.initialValue
-  );
-  const [monthlyContribution, setMonthlyContribution] = React.useState<number>(
-    DEFAULT_COMPOUND_INTEREST_INPUT.monthlyContribution
-  );
-  const [rateText, setRateText] = React.useState<string>("10,00");
-  const [rateUnit, setRateUnit] = React.useState<RatePeriodUnit>(
-    DEFAULT_COMPOUND_INTEREST_INPUT.rateUnit
-  );
-  const [periodText, setPeriodText] = React.useState<string>("10");
-  const [periodUnit, setPeriodUnit] = React.useState<TimePeriodUnit>(
-    DEFAULT_COMPOUND_INTEREST_INPUT.periodUnit
   );
 
   // Estado de visualização de gráfico e tabela
@@ -237,12 +248,14 @@ export function CompoundInterestFeature({
   }, [activeChartIndex, chartRows, result.monthlyEvolution]);
 
   const handleApplyPreset = (preset: CompoundInterestPreset) => {
-    setRateText(preset.rate.toFixed(2).replace(".", ","));
+    hasUserEditedRateRef.current = true;
+    setRateText(formatRatePtBr(preset.rate));
     setRateUnit(preset.rateUnit);
     toast.success(`Taxa ajustada para ${preset.label} (${preset.badge})`);
   };
 
   const handleClear = () => {
+    hasUserEditedRateRef.current = true;
     setInitialValue(0);
     setMonthlyContribution(0);
     setRateText("0,00");
@@ -252,12 +265,17 @@ export function CompoundInterestFeature({
   };
 
   const handleResetDefaults = () => {
+    hasUserEditedRateRef.current = false;
     setInitialValue(DEFAULT_COMPOUND_INTEREST_INPUT.initialValue);
     setMonthlyContribution(DEFAULT_COMPOUND_INTEREST_INPUT.monthlyContribution);
-    setRateText("10,00");
-    setRateUnit("year");
+    setRateText(
+      formatRatePtBr(
+        indicators?.taxaDi.value ?? DEFAULT_COMPOUND_INTEREST_INPUT.interestRate
+      )
+    );
+    setRateUnit(DEFAULT_COMPOUND_INTEREST_INPUT.rateUnit);
     setPeriodText("10");
-    setPeriodUnit("years");
+    setPeriodUnit(DEFAULT_COMPOUND_INTEREST_INPUT.periodUnit);
     setActiveChartIndex(null);
     toast.success("Valores padrão restaurados.");
   };
@@ -559,15 +577,23 @@ export function CompoundInterestFeature({
                       type="text"
                       inputMode="decimal"
                       value={rateText}
-                      onChange={(e) => setRateText(e.target.value)}
+                      onChange={(e) => {
+                        hasUserEditedRateRef.current = true;
+                        setRateText(e.target.value);
+                      }}
                       className="h-8 sm:h-10 pl-7 text-sm font-mono font-medium"
-                      placeholder="10,00"
+                      placeholder={formatRatePtBr(
+                        DEFAULT_COMPOUND_INTEREST_INPUT.interestRate
+                      )}
                       aria-label="Taxa de Juros"
                     />
                   </div>
                   <Select
                     value={rateUnit}
-                    onValueChange={(val) => setRateUnit(val as RatePeriodUnit)}
+                    onValueChange={(val) => {
+                      hasUserEditedRateRef.current = true;
+                      setRateUnit(val as RatePeriodUnit);
+                    }}
                   >
                     <SelectTrigger
                       id="select-rate"

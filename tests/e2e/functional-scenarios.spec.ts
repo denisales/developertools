@@ -318,6 +318,8 @@ test.describe("Functional E2E Scenarios — All Screens (Desktop & Mobile)", () 
 
     await expect(initialInput).toHaveValue("1.000,00");
     await expect(monthlyInput).toHaveValue("500,00");
+    await expect(rateInput).toHaveValue("14,15");
+    await expect(rateSelect).toContainText("Anual");
 
     // 1. Click preset chip "Selic 14,25%" then "1% a.m."
     await page.getByRole("button", { name: /Selic 14,25%/i }).click();
@@ -391,7 +393,7 @@ test.describe("Functional E2E Scenarios — All Screens (Desktop & Mobile)", () 
     await page.getByRole("button", { name: "Restaurar" }).click();
     await expect(initialInput).toHaveValue("1.000,00");
     await expect(monthlyInput).toHaveValue("500,00");
-    await expect(rateInput).toHaveValue("10,00");
+    await expect(rateInput).toHaveValue("14,15");
     await expect(rateSelect).toContainText("Anual");
     await expect(periodInput).toHaveValue("10");
     await expect(periodSelect).toContainText("Anos");
@@ -530,6 +532,8 @@ test.describe("Functional E2E Scenarios — All Screens (Desktop & Mobile)", () 
     await expect(cdiPreset).toContainText("CDI 14,15%");
     await expect(selicPreset).toContainText("Selic 14,25%");
     await expect(ipcaPreset).toContainText("IPCA+ 10,77%");
+    await expect(page.locator("#rate")).toHaveValue("14,15");
+    await expect(page.locator("#select-rate")).toContainText("Anual");
 
     await cdiPreset.click();
     await expect(page.locator("#rate")).toHaveValue(/^14[,.]15$/);

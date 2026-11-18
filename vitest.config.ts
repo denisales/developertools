@@ -25,6 +25,7 @@ export default defineConfig({
         "src/app/api/**/*.ts",
         "src/components/layout/sidebar-nav.tsx",
         "src/components/layout/site-header.tsx",
+        "src/components/layout/tool-page-header.tsx",
       ],
       exclude: ["src/**/*.test.{ts,tsx}", "src/**/*.d.ts"],
       thresholds: {

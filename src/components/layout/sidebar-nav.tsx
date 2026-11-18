@@ -44,14 +44,14 @@ export function SidebarNav({
   };
 
   return (
-    <nav className={cn("flex flex-col gap-4 px-3 py-3.5", className)}>
+    <nav className={cn("flex flex-col gap-5 px-3.5 py-4", className)}>
       {/* Visão Geral / Catálogo */}
       <div>
         <Link
           href="/"
           onClick={onNavigate}
           className={cn(
-            "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-semibold transition-all",
+            "flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-semibold transition-all",
             pathname === "/"
               ? "bg-primary text-primary-foreground shadow-2xs"
               : "text-foreground/85 hover:bg-accent hover:text-foreground"
@@ -69,11 +69,11 @@ export function SidebarNav({
 
       {/* Ferramentas Ativas (Acesso Imediato) */}
       <div>
-        <div className="mb-1.5 flex items-center gap-1.5 px-3 text-xs font-bold tracking-wider text-primary uppercase">
+        <div className="mb-2 flex items-center gap-1.5 px-3 text-xs font-bold tracking-wider text-primary uppercase">
           <Sparkles className="size-3.5" />
           <span>Ferramentas Ativas</span>
         </div>
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-1.5">
           {priorityTools.map((tool) => {
             const isActive = pathname === tool.href;
             return (
@@ -82,7 +82,7 @@ export function SidebarNav({
                 href={tool.href}
                 onClick={onNavigate}
                 className={cn(
-                  "group flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all",
+                  "group flex items-center justify-between gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-all",
                   isActive
                     ? "bg-primary text-primary-foreground font-semibold shadow-2xs"
                     : "text-foreground/85 hover:bg-accent hover:text-foreground"
@@ -115,11 +115,11 @@ export function SidebarNav({
       </div>
 
       {/* Categorias do Catálogo */}
-      <div className="border-t border-border/70 pt-3">
-        <div className="mb-1.5 px-3 text-xs font-bold tracking-wider text-muted-foreground uppercase">
+      <div className="border-t border-border/70 pt-4">
+        <div className="mb-2 px-3 text-xs font-bold tracking-wider text-muted-foreground uppercase">
           Catálogo por Categoria
         </div>
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-2">
           {TOOL_CATEGORIES.map((category) => {
             const isOpen = openCategories[category.id];
             const tools = TOOLS_REGISTRY.filter(
@@ -131,7 +131,7 @@ export function SidebarNav({
                   type="button"
                   onClick={() => toggleCategory(category.id)}
                   aria-expanded={isOpen}
-                  className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground cursor-pointer"
+                  className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-xs sm:text-[13px] font-semibold text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground cursor-pointer"
                 >
                   <span>{category.shortLabel}</span>
                   <span className="flex items-center gap-1.5">
@@ -148,7 +148,7 @@ export function SidebarNav({
                 </button>
 
                 {isOpen && (
-                  <div className="mt-0.5 flex flex-col gap-0.5 pl-2">
+                  <div className="mt-1 flex flex-col gap-1 pl-2">
                     {tools.map((tool) => {
                       const isActive =
                         pathname === tool.href.split("?")[0] &&
@@ -159,7 +159,7 @@ export function SidebarNav({
                           href={tool.href}
                           onClick={onNavigate}
                           className={cn(
-                            "flex items-center justify-between gap-2 rounded-lg px-2.5 py-1.5 text-xs transition-colors",
+                            "flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-[13px] transition-colors",
                             isActive
                               ? "bg-accent font-semibold text-foreground"
                               : "text-muted-foreground hover:bg-accent/60 hover:text-foreground"

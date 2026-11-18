@@ -14,14 +14,14 @@ export function AppShell({ children }: AppShellProps) {
 
       <div className="flex w-full flex-1">
         {/* Desktop Sidebar */}
-        <aside className="hidden w-60 shrink-0 border-r border-border/80 bg-card/40 lg:block">
+        <aside className="hidden w-[268px] shrink-0 border-r border-border/80 bg-card/40 lg:block">
           <div className="sticky top-14 max-h-[calc(100dvh-3.5rem)] overflow-y-auto">
             <SidebarNav defaultExpanded />
           </div>
         </aside>
 
         {/* Main Workspace */}
-        <main className="min-w-0 flex-1 px-3 py-3 sm:px-6 sm:py-6 lg:px-8">
+        <main className="min-w-0 flex-1 px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
           <div className="mx-auto w-full max-w-[1440px]">{children}</div>
         </main>
       </div>

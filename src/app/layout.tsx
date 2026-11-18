@@ -20,11 +20,11 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "DevToolsBR — Geradores, Validadores (4Devs) & Calculadoras",
+    default: "DevToolsBR — Geradores, Validadores & Calculadoras Online",
     template: "%s | DevToolsBR",
   },
   description:
-    "Plataforma moderna e responsiva de ferramentas para desenvolvedores e investidores: Gerador de CPF, Gerador de CNPJ, Calculadora de Juros Compostos e catálogo 4Devs.",
+    "Plataforma moderna e responsiva de ferramentas para desenvolvedores e investidores: Gerador de CPF, Gerador de CNPJ, Calculadora de Juros Compostos e utilitários.",
 };
 
 export default function RootLayout({

@@ -82,9 +82,9 @@ export function SiteHeader() {
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border/80 bg-background/95 backdrop-blur-md">
-      <div className="mx-auto flex h-16 max-w-[1440px] items-center justify-between gap-4 px-4 sm:h-[4.25rem] sm:px-6 lg:px-8">
+      <div className="flex h-14 w-full items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
         {/* Left: Mobile Drawer Trigger + Brand + Contextual Breadcrumb */}
-        <div className="flex min-w-0 items-center gap-3 sm:gap-4">
+        <div className="flex min-w-0 items-center gap-3">
           <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
             <SheetTrigger asChild>
               <Button
@@ -93,13 +93,13 @@ export function SiteHeader() {
                 className="shrink-0 lg:hidden"
                 aria-label="Abrir menu de ferramentas"
               >
-                <Menu className="size-5" />
+                <Menu className="size-4" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="w-80 overflow-y-auto p-0">
-              <SheetHeader className="border-b px-6 py-5 text-left">
-                <SheetTitle className="flex items-center gap-3 text-base font-bold">
-                  <div className="flex size-8 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-xs">
+            <SheetContent side="left" className="w-72 overflow-y-auto p-0">
+              <SheetHeader className="border-b px-4 py-4 text-left">
+                <SheetTitle className="flex items-center gap-2.5 text-base font-bold">
+                  <div className="flex size-7 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-2xs">
                     <Blocks className="size-4" />
                   </div>
                   <span>DevToolsBR</span>
@@ -114,38 +114,38 @@ export function SiteHeader() {
 
           <Link
             href="/"
-            className="flex shrink-0 items-center gap-3 font-bold tracking-tight transition-opacity hover:opacity-90"
+            className="flex shrink-0 items-center gap-2.5 font-bold tracking-tight transition-opacity hover:opacity-90"
           >
-            <div className="flex size-10 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-xs">
-              <Blocks className="size-5" />
+            <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-2xs">
+              <Blocks className="size-4" />
             </div>
-            <div className="flex flex-col">
-              <span className="text-base leading-tight font-extrabold sm:text-lg">
+            <div className="flex items-baseline gap-2">
+              <span className="text-base leading-none font-extrabold">
                 DevTools<span className="text-primary">BR</span>
               </span>
-              <span className="hidden text-xs font-medium text-muted-foreground sm:inline">
-                Suite 4Devs & FinTools
+              <span className="hidden text-xs font-medium text-muted-foreground xl:inline">
+                Utilitários & Finanças
               </span>
             </div>
           </Link>
 
           {/* Contextual Desktop Breadcrumb */}
-          <div className="hidden items-center gap-2.5 border-l border-border/80 pl-5 text-sm md:flex">
+          <div className="hidden items-center gap-2 border-l border-border/80 pl-4 text-xs sm:text-sm md:flex">
             <Link
               href="/"
               className="flex items-center gap-1.5 font-medium text-muted-foreground transition-colors hover:text-foreground"
             >
-              <Home className="size-4" />
+              <Home className="size-3.5" />
               <span>Catálogo</span>
             </Link>
             {activeTool ? (
               <>
-                <ChevronRight className="size-4 text-muted-foreground/60" />
+                <ChevronRight className="size-3.5 text-muted-foreground/60" />
                 <span className="text-muted-foreground">
                   {activeTool.categoryLabel}
                 </span>
-                <ChevronRight className="size-4 text-muted-foreground/60" />
-                <span className="inline-flex items-center gap-2 rounded-lg bg-primary/10 px-2.5 py-1 font-semibold text-primary">
+                <ChevronRight className="size-3.5 text-muted-foreground/60" />
+                <span className="inline-flex items-center gap-1.5 rounded-md bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
                   <ToolIcon name={activeTool.iconName} className="size-3.5" />
                   <span className="truncate max-w-[200px] xl:max-w-none">
                     {activeTool.shortName}
@@ -154,7 +154,7 @@ export function SiteHeader() {
               </>
             ) : (
               <>
-                <ChevronRight className="size-4 text-muted-foreground/60" />
+                <ChevronRight className="size-3.5 text-muted-foreground/60" />
                 <span className="inline-flex items-center gap-1.5 font-semibold text-foreground">
                   <Sparkles className="size-3.5 text-primary" />
                   <span>Visão Geral</span>
@@ -165,10 +165,10 @@ export function SiteHeader() {
         </div>
 
         {/* Right: Global Search + Theme Toggle */}
-        <div className="flex flex-1 items-center justify-end gap-3">
-          <div className="relative w-full max-w-xs sm:max-w-md">
+        <div className="flex flex-1 items-center justify-end gap-2.5">
+          <div className="relative w-full max-w-xs sm:max-w-sm">
             <div className="relative flex items-center">
-              <Search className="pointer-events-none absolute left-3.5 size-4 text-muted-foreground" />
+              <Search className="pointer-events-none absolute left-3 size-4 text-muted-foreground" />
               <Input
                 ref={searchInputRef}
                 type="search"
@@ -177,19 +177,19 @@ export function SiteHeader() {
                 onFocus={() => setSearchFocused(true)}
                 onBlur={() => setTimeout(() => setSearchFocused(false), 180)}
                 placeholder="Buscar ferramenta (CPF, CNPJ, Juros)..."
-                className="h-10 rounded-xl border-border/80 bg-muted/50 pr-14 pl-10 text-sm transition-all focus-visible:bg-background"
+                className="h-9 rounded-lg border-border/80 bg-muted/50 pr-12 pl-9 text-xs sm:text-sm transition-all focus-visible:bg-background"
               />
               {searchQuery ? (
                 <button
                   type="button"
                   onClick={() => setSearchQuery("")}
-                  className="absolute right-3 rounded-md p-0.5 text-muted-foreground hover:text-foreground cursor-pointer"
+                  className="absolute right-2.5 rounded-md p-0.5 text-muted-foreground hover:text-foreground cursor-pointer"
                   aria-label="Limpar busca"
                 >
-                  <X className="size-4" />
+                  <X className="size-3.5" />
                 </button>
               ) : (
-                <kbd className="pointer-events-none absolute right-3 hidden h-6 items-center gap-0.5 rounded-md border bg-background px-1.5 font-mono text-xs font-medium text-muted-foreground shadow-2xs sm:inline-flex">
+                <kbd className="pointer-events-none absolute right-2.5 hidden h-5 items-center gap-0.5 rounded border bg-background px-1.5 font-mono text-xs font-medium text-muted-foreground shadow-2xs sm:inline-flex">
                   ⌘K
                 </kbd>
               )}
@@ -197,13 +197,13 @@ export function SiteHeader() {
 
             {/* Dropdown Search Results */}
             {searchFocused && searchQuery.trim().length > 0 && (
-              <div className="absolute top-12 right-0 left-0 z-50 overflow-hidden rounded-2xl border bg-popover p-2 shadow-xl">
+              <div className="absolute top-11 right-0 left-0 z-50 overflow-hidden rounded-xl border bg-popover p-1.5 shadow-xl">
                 {filteredTools.length === 0 ? (
-                  <div className="px-4 py-6 text-center text-sm text-muted-foreground">
+                  <div className="px-4 py-5 text-center text-sm text-muted-foreground">
                     Nenhuma ferramenta encontrada para &ldquo;{searchQuery}&rdquo;
                   </div>
                 ) : (
-                  <div className="flex flex-col gap-1">
+                  <div className="flex flex-col gap-0.5">
                     {filteredTools.map((tool) => (
                       <button
                         key={tool.id}
@@ -212,10 +212,10 @@ export function SiteHeader() {
                           router.push(tool.href);
                           setSearchQuery("");
                         }}
-                        className="flex w-full items-center justify-between gap-3 rounded-xl px-3.5 py-2.5 text-left text-sm transition-colors hover:bg-accent cursor-pointer"
+                        className="flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-left text-sm transition-colors hover:bg-accent cursor-pointer"
                       >
-                        <div className="flex min-w-0 items-center gap-3">
-                          <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                        <div className="flex min-w-0 items-center gap-2.5">
+                          <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
                             <ToolIcon name={tool.iconName} className="size-4" />
                           </div>
                           <div className="min-w-0">
@@ -249,7 +249,7 @@ export function SiteHeader() {
             onClick={toggleTheme}
             aria-label="Alternar tema claro/escuro"
             title={isDark ? "Mudar para modo claro" : "Mudar para modo escuro"}
-            className="shrink-0 rounded-xl"
+            className="size-9 shrink-0 rounded-lg"
           >
             {isDark ? (
               <Sun className="size-4 text-amber-400" />

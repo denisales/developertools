@@ -83,7 +83,6 @@ export const TOOLS_REGISTRY: ToolDefinition[] = [
       "pessoa fisica",
       "documento",
       "teste",
-      "4devs",
     ],
   },
   {
@@ -93,7 +92,7 @@ export const TOOLS_REGISTRY: ToolDefinition[] = [
     name: "Gerador e Validador de CNPJ",
     shortName: "Gerador de CNPJ",
     description:
-      "Gere números de CNPJ válidos (numéricos e alfanuméricos IN RFB 2229), escolha matriz ou filial, gere em lote e valide CNPJs.",
+      "Gere números de CNPJ válidos (numéricos e alfanuméricos), escolha matriz ou filial, gere em lote e valide CNPJs.",
     category: "geradores",
     categoryLabel: "Geradores",
     iconName: "Building2",
@@ -107,7 +106,6 @@ export const TOOLS_REGISTRY: ToolDefinition[] = [
       "empresa",
       "pessoa juridica",
       "cnpj alfanumerico",
-      "4devs",
     ],
   },
   {
@@ -126,7 +124,6 @@ export const TOOLS_REGISTRY: ToolDefinition[] = [
     badge: "Destaque",
     keywords: [
       "juros compostos",
-      "investidor10",
       "calculadora financeira",
       "investimentos",
       "rendimento",
@@ -136,7 +133,7 @@ export const TOOLS_REGISTRY: ToolDefinition[] = [
   },
 
   // ==========================================
-  // GERADORES (CATÁLOGO 4DEVS)
+  // GERADORES DE DOCUMENTOS E DADOS
   // ==========================================
   {
     id: "gerador-de-rg",
@@ -164,7 +161,7 @@ export const TOOLS_REGISTRY: ToolDefinition[] = [
     categoryLabel: "Geradores",
     iconName: "Car",
     status: "coming-soon",
-    keywords: ["cnh", "habilitacao", "motorista", "gerador"],
+    keywords: ["cnh", "habilitacao", "pis", "gerador"],
   },
   {
     id: "gerador-de-pis",
@@ -201,12 +198,12 @@ export const TOOLS_REGISTRY: ToolDefinition[] = [
     name: "Gerador de Cartão de Crédito",
     shortName: "Cartão de Crédito",
     description:
-      "Gere cartões de teste válidos pelo algoritmo de Luhn (Visa, Mastercard, Elo, Amex, Hipercard).",
+      "Gere cartões de teste válidos (Visa, Mastercard, Elo, Amex, Hipercard) para homologação de pagamentos.",
     category: "geradores",
     categoryLabel: "Geradores",
     iconName: "CreditCard",
     status: "coming-soon",
-    keywords: ["cartao de credito", "luhn", "visa", "mastercard", "checkout"],
+    keywords: ["cartao de credito", "visa", "mastercard", "checkout"],
   },
   {
     id: "gerador-conta-bancaria",
@@ -294,7 +291,7 @@ export const TOOLS_REGISTRY: ToolDefinition[] = [
   },
 
   // ==========================================
-  // VALIDADORES (CATÁLOGO 4DEVS)
+  // VALIDADORES DE DOCUMENTOS
   // ==========================================
   {
     id: "validador-de-cpf",
@@ -303,12 +300,12 @@ export const TOOLS_REGISTRY: ToolDefinition[] = [
     name: "Validador de CPF",
     shortName: "Validador de CPF",
     description:
-      "Verifique se um CPF é matematicamente válido pelo Módulo 11 e identifique sua região fiscal de origem.",
+      "Verifique se um CPF é válido e identifique sua região fiscal de origem.",
     category: "validadores",
     categoryLabel: "Validadores",
     iconName: "ShieldCheck",
     status: "ready",
-    keywords: ["validar cpf", "validador cpf", "verificar cpf", "mod 11"],
+    keywords: ["validar cpf", "validador cpf", "verificar cpf"],
   },
   {
     id: "validador-de-cnpj",
@@ -345,16 +342,16 @@ export const TOOLS_REGISTRY: ToolDefinition[] = [
     name: "Validador de Cartão de Crédito",
     shortName: "Validador de Cartão",
     description:
-      "Valide números de cartão de crédito via algoritmo de Luhn e identifique a bandeira emissora.",
+      "Valide números de cartão de crédito e identifique a bandeira emissora.",
     category: "validadores",
     categoryLabel: "Validadores",
     iconName: "CheckCircle2",
     status: "coming-soon",
-    keywords: ["validar cartao", "luhn", "bandeira cartao"],
+    keywords: ["validar cartao", "bandeira cartao"],
   },
 
   // ==========================================
-  // CALCULADORAS (INVESTIDOR10 & 4DEVS)
+  // CALCULADORAS FINANCEIRAS E MATEMÁTICAS
   // ==========================================
   {
     id: "calculadora-porcentagem",
@@ -400,7 +397,7 @@ export const TOOLS_REGISTRY: ToolDefinition[] = [
   },
 
   // ==========================================
-  // UTILITÁRIOS DEV & TEXTO (CATÁLOGO 4DEVS)
+  // UTILITÁRIOS DEV & TEXTO
   // ==========================================
   {
     id: "contador-caracteres",

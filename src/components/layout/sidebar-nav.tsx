@@ -23,16 +23,16 @@ export function SidebarNav({ onNavigate, className }: SidebarNavProps) {
   const priorityTools = getPriorityTools();
 
   return (
-    <nav className={cn("flex flex-col gap-7 px-4 py-6", className)}>
+    <nav className={cn("flex flex-col gap-5 px-3 py-4", className)}>
       {/* Visão Geral / Catálogo */}
       <div>
         <Link
           href="/"
           onClick={onNavigate}
           className={cn(
-            "flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-semibold transition-all",
+            "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-semibold transition-all",
             pathname === "/"
-              ? "bg-primary text-primary-foreground shadow-xs"
+              ? "bg-primary text-primary-foreground shadow-2xs"
               : "text-foreground/85 hover:bg-accent hover:text-foreground"
           )}
         >
@@ -48,11 +48,11 @@ export function SidebarNav({ onNavigate, className }: SidebarNavProps) {
 
       {/* Ferramentas Prioritárias */}
       <div>
-        <div className="mb-2.5 flex items-center gap-2 px-3 text-xs font-bold tracking-wider text-primary uppercase">
+        <div className="mb-1.5 flex items-center gap-1.5 px-3 text-xs font-bold tracking-wider text-primary uppercase">
           <Sparkles className="size-3.5" />
           <span>Mais Acessados</span>
         </div>
-        <div className="flex flex-col gap-1.5">
+        <div className="flex flex-col gap-1">
           {priorityTools.map((tool) => {
             const isActive = pathname === tool.href;
             return (
@@ -61,13 +61,13 @@ export function SidebarNav({ onNavigate, className }: SidebarNavProps) {
                 href={tool.href}
                 onClick={onNavigate}
                 className={cn(
-                  "group flex items-center justify-between gap-2 rounded-xl px-3.5 py-2.5 text-sm font-semibold transition-all",
+                  "group flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all",
                   isActive
-                    ? "bg-primary text-primary-foreground shadow-xs"
+                    ? "bg-primary text-primary-foreground font-semibold shadow-2xs"
                     : "text-foreground/85 hover:bg-accent hover:text-foreground"
                 )}
               >
-                <span className="flex min-w-0 items-center gap-3">
+                <span className="flex min-w-0 items-center gap-2.5">
                   <ToolIcon
                     name={tool.iconName}
                     className={cn(
@@ -82,7 +82,7 @@ export function SidebarNav({ onNavigate, className }: SidebarNavProps) {
                 {tool.badge && (
                   <Badge
                     variant={isActive ? "secondary" : "outline"}
-                    className="shrink-0 px-2 py-0.5 text-xs font-medium"
+                    className="shrink-0 px-1.5 py-0 text-xs font-medium"
                   >
                     {tool.badge}
                   </Badge>
@@ -98,10 +98,10 @@ export function SidebarNav({ onNavigate, className }: SidebarNavProps) {
         const tools = TOOLS_REGISTRY.filter((t) => t.category === category.id);
         return (
           <div key={category.id}>
-            <div className="mb-2 px-3 text-xs font-bold tracking-wider text-muted-foreground uppercase">
+            <div className="mb-1.5 px-3 text-xs font-bold tracking-wider text-muted-foreground uppercase">
               {category.shortLabel}
             </div>
-            <div className="flex flex-col gap-1">
+            <div className="flex flex-col gap-0.5">
               {tools.map((tool) => {
                 const isActive =
                   pathname === tool.href.split("?")[0] &&
@@ -112,13 +112,13 @@ export function SidebarNav({ onNavigate, className }: SidebarNavProps) {
                     href={tool.href}
                     onClick={onNavigate}
                     className={cn(
-                      "flex items-center justify-between gap-2 rounded-xl px-3.5 py-2 text-sm transition-colors",
+                      "flex items-center justify-between gap-2 rounded-lg px-3 py-1.5 text-sm transition-colors",
                       isActive
                         ? "bg-accent font-semibold text-foreground"
                         : "text-muted-foreground hover:bg-accent/60 hover:text-foreground"
                     )}
                   >
-                    <span className="flex min-w-0 items-center gap-3">
+                    <span className="flex min-w-0 items-center gap-2.5">
                       <ToolIcon
                         name={tool.iconName}
                         className={cn(
@@ -131,7 +131,7 @@ export function SidebarNav({ onNavigate, className }: SidebarNavProps) {
                       <span className="truncate">{tool.shortName}</span>
                     </span>
                     {tool.status === "coming-soon" && (
-                      <span className="shrink-0 rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                      <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-xs font-medium text-muted-foreground">
                         Breve
                       </span>
                     )}

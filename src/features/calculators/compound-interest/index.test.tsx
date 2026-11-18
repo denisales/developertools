@@ -1,6 +1,14 @@
-import { act, fireEvent, render, screen, within } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { toast } from "sonner";
+import type { MarketIndicators } from "@/services/bcb/bcb-client";
 import CompoundInterestFeature from "./index";
 
 vi.mock("sonner", () => ({
@@ -11,9 +19,89 @@ vi.mock("sonner", () => ({
   },
 }));
 
+const MOCK_INDICATORS: MarketIndicators = {
+  selicMeta: {
+    seriesId: 432,
+    name: "Taxa Selic Meta",
+    unit: "% a.a.",
+    value: 14.25,
+    date: "18/11/2026",
+    source: "bcb",
+  },
+  taxaDi: {
+    seriesId: 4389,
+    name: "Taxa DI (CDI)",
+    unit: "% a.a.",
+    value: 14.15,
+    date: "18/11/2026",
+    source: "bcb",
+  },
+  ipcaMensal: {
+    seriesId: 433,
+    name: "IPCA Mensal",
+    unit: "% a.m.",
+    value: 0.42,
+    date: "18/11/2026",
+    source: "bcb",
+  },
+  ipca12Meses: {
+    seriesId: 13522,
+    name: "IPCA Acumulado 12m",
+    unit: "% a.a.",
+    value: 4.5,
+    date: "18/11/2026",
+    source: "bcb",
+  },
+  dolarPtaxVenda: {
+    seriesId: 1,
+    name: "Dólar PTAX Venda",
+    unit: "R$",
+    value: 5.7845,
+    date: "18/11/2026",
+    source: "bcb",
+  },
+  dolarPtaxCompra: {
+    seriesId: 10813,
+    name: "Dólar PTAX Compra",
+    unit: "R$",
+    value: 5.7839,
+    date: "18/11/2026",
+    source: "bcb",
+  },
+  poupancaAnual: {
+    seriesId: 195,
+    name: "Poupança Anual",
+    unit: "% a.a.",
+    value: 6.17,
+    date: "18/11/2026",
+    source: "bcb",
+  },
+  ipcaPlus6Anual: {
+    seriesId: 13522,
+    name: "IPCA + 6% a.a.",
+    unit: "% a.a.",
+    value: 10.77,
+    date: "18/11/2026",
+    source: "bcb",
+  },
+  updatedAt: "2026-11-18T05:45:00.000Z",
+  usedFallback: false,
+};
+
+function createJsonResponse(body: unknown, ok = true, status = 200): Response {
+  return {
+    ok,
+    status,
+    json: async () => body,
+  } as Response;
+}
+
 describe("CompoundInterestFeature", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      createJsonResponse(MOCK_INDICATORS)
+    );
     Object.defineProperty(navigator, "clipboard", {
       configurable: true,
       value: {
@@ -27,8 +115,17 @@ describe("CompoundInterestFeature", () => {
     vi.restoreAllMocks();
   });
 
-  it("renders default simulation summary, charts, and educational section", () => {
-    const { container } = render(<CompoundInterestFeature />);
+  it("renders default simulation summary, charts, and educational section", async () => {
+    const { container } = render(
+      <CompoundInterestFeature initialIndicators={MOCK_INDICATORS} />
+    );
+
+    await waitFor(() => {
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        "/api/indicators",
+        expect.objectContaining({ cache: "no-store" })
+      );
+    });
 
     expect(
       screen.getByRole("heading", { name: /Calculadora de Juros Compostos/i })
@@ -281,5 +378,148 @@ describe("CompoundInterestFeature", () => {
     expect(toast.error).toHaveBeenCalledWith(
       "Não foi possível copiar o resumo automaticamente."
     );
+  });
+
+  it("hydrates presets and reference caption dynamically from /api/indicators", async () => {
+    const dynamicIndicators: MarketIndicators = {
+      ...MOCK_INDICATORS,
+      selicMeta: {
+        ...MOCK_INDICATORS.selicMeta,
+        value: 15.25,
+        date: "20/11/2026",
+      },
+      taxaDi: {
+        ...MOCK_INDICATORS.taxaDi,
+        value: 15.15,
+        date: "20/11/2026",
+      },
+      ipca12Meses: {
+        ...MOCK_INDICATORS.ipca12Meses,
+        value: 4.85,
+        date: "20/11/2026",
+      },
+      ipcaPlus6Anual: {
+        ...MOCK_INDICATORS.ipcaPlus6Anual,
+        value: 11.14,
+        date: "20/11/2026",
+      },
+      poupancaAnual: {
+        ...MOCK_INDICATORS.poupancaAnual,
+        value: 7.12,
+        date: "20/11/2026",
+      },
+      dolarPtaxVenda: {
+        ...MOCK_INDICATORS.dolarPtaxVenda,
+        value: 5.92,
+        date: "20/11/2026",
+      },
+      usedFallback: false,
+    };
+
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(createJsonResponse(dynamicIndicators));
+
+    render(<CompoundInterestFeature />);
+
+    expect(screen.getByTestId("bcb-presets-bar")).toBeInTheDocument();
+    expect(screen.getByTestId("bcb-indicators-status")).toHaveTextContent(
+      /Atualizando cotações oficiais/i
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("preset-selic")).toHaveTextContent(
+        "Selic 15,25%"
+      );
+    });
+
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "/api/indicators",
+      expect.objectContaining({ cache: "no-store" })
+    );
+    expect(screen.getByTestId("preset-cdi-100")).toHaveTextContent(
+      "CDI 15,15%"
+    );
+    expect(screen.getByTestId("preset-ipca-plus")).toHaveTextContent(
+      "IPCA+ 11,14%"
+    );
+    expect(screen.getByTestId("preset-poupanca")).toHaveTextContent(
+      "Poupança 7,12%"
+    );
+    expect(screen.getByTestId("bcb-indicators-status")).toHaveTextContent(
+      "Taxas BCB • Ref. 20/11/2026 • IPCA 12m: 4,85% • Dólar PTAX: R$ 5,92"
+    );
+
+    const rateInput = screen.getByLabelText("Taxa de Juros") as HTMLInputElement;
+    fireEvent.click(screen.getByTestId("preset-cdi-100"));
+    expect(rateInput.value).toBe("15,15");
+
+    fireEvent.click(screen.getByTestId("preset-ipca-plus"));
+    expect(rateInput.value).toBe("11,14");
+  });
+
+  it("displays reserve reference label when /api/indicators responds with usedFallback=true", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      createJsonResponse({
+        ...MOCK_INDICATORS,
+        usedFallback: true,
+      })
+    );
+
+    render(<CompoundInterestFeature />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("bcb-indicators-status")).toHaveTextContent(
+        "Taxas BCB (ref. reserva)"
+      );
+    });
+  });
+
+  it("falls back gracefully when /api/indicators returns HTTP 500 or rejects", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      createJsonResponse({ error: "BCB unavailable" }, false, 500)
+    );
+
+    const { unmount } = render(<CompoundInterestFeature />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("bcb-indicators-status")).toHaveTextContent(
+        "Taxas de referência padrão • Selic 14,25% • CDI 14,15% • IPCA+ 10,77%"
+      );
+    });
+
+    const rateInput = screen.getByLabelText("Taxa de Juros") as HTMLInputElement;
+    fireEvent.click(screen.getByTestId("preset-cdi-100"));
+    expect(rateInput.value).toBe("14,15");
+    unmount();
+
+    vi.spyOn(globalThis, "fetch").mockRejectedValueOnce(
+      new Error("Network error")
+    );
+    render(<CompoundInterestFeature />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("bcb-indicators-status")).toHaveTextContent(
+        "Taxas de referência padrão"
+      );
+    });
+    expect(screen.getByTestId("preset-selic")).toHaveTextContent(
+      "Selic 14,25%"
+    );
+  });
+
+  it("aborts pending /api/indicators fetch on unmount", () => {
+    let capturedSignal: AbortSignal | undefined;
+    vi.spyOn(globalThis, "fetch").mockImplementationOnce(
+      (_input, init?: RequestInit) => {
+        capturedSignal = init?.signal ?? undefined;
+        return new Promise<Response>(() => {});
+      }
+    );
+
+    const { unmount } = render(<CompoundInterestFeature />);
+    expect(capturedSignal?.aborted).toBe(false);
+    unmount();
+    expect(capturedSignal?.aborted).toBe(true);
   });
 });

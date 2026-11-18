@@ -1,18 +1,24 @@
 import { describe, expect, it } from "vitest";
+import type { MarketIndicators } from "@/services/bcb/bcb-client";
 import {
   COMPOUND_INTEREST_PRESETS,
   DEFAULT_COMPOUND_INTEREST_INPUT,
+  buildPresetsFromIndicators,
   calculateClosedFormFutureValue,
   calculateCompoundInterest,
   formatCompactBRL,
   formatCurrencyBRL,
   formatDecimalBR,
+  formatPresetChipLabel,
+  formatRatePtBr,
   generateEvolutionCsv,
+  isMarketIndicators,
   parseCurrencyInputBR,
   roundCents,
   toEffectiveAnnualRate,
   toEffectiveMonthlyRate,
   toTotalMonths,
+  type CompoundInterestPreset,
   type EvolutionRow,
 } from "./compound-interest-utils";
 
@@ -314,6 +320,135 @@ describe("compound-interest-utils", () => {
         "Ano;Juros no Período (R$);Total Investido (R$);Total em Juros (R$);Total Acumulado (R$)"
       );
       expect(yearlyLines[2]).toBe("1;120,50;7.000,00;120,50;7.120,50");
+    });
+  });
+
+  describe("dynamic BCB indicator helpers", () => {
+    const sampleIndicators: MarketIndicators = {
+      selicMeta: {
+        seriesId: 432,
+        name: "Taxa Selic Meta",
+        unit: "% a.a.",
+        value: 14.25,
+        date: "18/11/2026",
+        source: "bcb",
+      },
+      taxaDi: {
+        seriesId: 4389,
+        name: "Taxa DI (CDI)",
+        unit: "% a.a.",
+        value: 14.15,
+        date: "18/11/2026",
+        source: "bcb",
+      },
+      ipcaMensal: {
+        seriesId: 433,
+        name: "IPCA Mensal",
+        unit: "% a.m.",
+        value: 0.42,
+        date: "18/11/2026",
+        source: "bcb",
+      },
+      ipca12Meses: {
+        seriesId: 13522,
+        name: "IPCA Acumulado 12m",
+        unit: "% a.a.",
+        value: 4.5,
+        date: "18/11/2026",
+        source: "bcb",
+      },
+      dolarPtaxVenda: {
+        seriesId: 1,
+        name: "Dólar PTAX Venda",
+        unit: "R$",
+        value: 5.7845,
+        date: "18/11/2026",
+        source: "bcb",
+      },
+      dolarPtaxCompra: {
+        seriesId: 10813,
+        name: "Dólar PTAX Compra",
+        unit: "R$",
+        value: 5.7839,
+        date: "18/11/2026",
+        source: "bcb",
+      },
+      poupancaAnual: {
+        seriesId: 195,
+        name: "Poupança Anual",
+        unit: "% a.a.",
+        value: 6.17,
+        date: "18/11/2026",
+        source: "bcb",
+      },
+      ipcaPlus6Anual: {
+        seriesId: 13522,
+        name: "IPCA + 6% a.a.",
+        unit: "% a.a.",
+        value: 10.77,
+        date: "18/11/2026",
+        source: "bcb",
+      },
+      updatedAt: "2026-11-18T05:45:00.000Z",
+      usedFallback: false,
+    };
+
+    it("validates MarketIndicators runtime payloads", () => {
+      expect(isMarketIndicators(sampleIndicators)).toBe(true);
+      expect(isMarketIndicators(null)).toBe(false);
+      expect(isMarketIndicators("invalid")).toBe(false);
+      expect(
+        isMarketIndicators({
+          ...sampleIndicators,
+          selicMeta: null,
+        })
+      ).toBe(false);
+      expect(
+        isMarketIndicators({
+          ...sampleIndicators,
+          taxaDi: { value: "14.15", date: "18/11/2026" },
+        })
+      ).toBe(false);
+    });
+
+    it("formats PT-BR rates and builds presets from dynamic BCB indicators", () => {
+      expect(formatRatePtBr(14.25)).toBe("14,25");
+      expect(formatRatePtBr(Number.NaN)).toBe("0,00");
+
+      expect(buildPresetsFromIndicators(null)).toBe(COMPOUND_INTEREST_PRESETS);
+
+      const dynamicPresets = buildPresetsFromIndicators({
+        ...sampleIndicators,
+        selicMeta: { ...sampleIndicators.selicMeta, value: 15.0 },
+        taxaDi: { ...sampleIndicators.taxaDi, value: 14.9 },
+        ipcaPlus6Anual: { ...sampleIndicators.ipcaPlus6Anual, value: 11.2 },
+        poupancaAnual: { ...sampleIndicators.poupancaAnual, value: 7.45 },
+      });
+
+      expect(dynamicPresets.map((p) => p.rate)).toEqual([
+        15.0,
+        14.9,
+        11.2,
+        1.0,
+        7.45,
+      ]);
+      expect(dynamicPresets.map(formatPresetChipLabel)).toEqual([
+        "Selic 15,00%",
+        "CDI 14,90%",
+        "IPCA+ 11,20%",
+        "1% a.m.",
+        "Poupança 7,45%",
+      ]);
+
+      const customPreset: CompoundInterestPreset = {
+        id: "custom",
+        label: "Custom",
+        description: "Taxa personalizada",
+        rate: 8.5,
+        rateUnit: "year",
+        badge: "8,50% a.a.",
+      };
+      expect(formatPresetChipLabel(customPreset)).toBe("Custom 8,50% a.a.");
     });
   });
 });

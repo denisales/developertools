@@ -16,7 +16,7 @@ export function AppShell({ children }: AppShellProps) {
         {/* Desktop Sidebar */}
         <aside className="hidden w-60 shrink-0 border-r border-border/80 bg-card/40 lg:block">
           <div className="sticky top-14 max-h-[calc(100dvh-3.5rem)] overflow-y-auto">
-            <SidebarNav />
+            <SidebarNav defaultExpanded />
           </div>
         </aside>
 

@@ -27,6 +27,8 @@ export const metadata: Metadata = {
     "Plataforma moderna e responsiva de ferramentas para desenvolvedores e investidores: Gerador de CPF, Gerador de CNPJ, Calculadora de Juros Compostos e utilitários.",
 };
 
+const THEME_INIT_SCRIPT = `(function(){try{var t=localStorage.getItem("theme");var d=t==="dark"||(t!=="light"&&window.matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.classList.toggle("dark",d);}catch(e){}})();`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -38,6 +40,9 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${plusJakartaSans.variable} ${jetbrainsMono.variable}`}
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+      </head>
       <body className="min-h-dvh font-sans text-base leading-relaxed antialiased">
         <AppShell>{children}</AppShell>
         <Toaster richColors position="bottom-right" />

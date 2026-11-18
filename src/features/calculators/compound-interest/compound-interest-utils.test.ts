@@ -3,6 +3,8 @@ import type { MarketIndicators } from "@/services/bcb/bcb-client";
 import {
   COMPOUND_INTEREST_PRESETS,
   DEFAULT_COMPOUND_INTEREST_INPUT,
+  EXEMPT_TAX_BRACKET,
+  INCOME_TAX_BRACKETS,
   buildPresetsFromIndicators,
   calculateClosedFormFutureValue,
   calculateCompoundInterest,
@@ -12,6 +14,7 @@ import {
   formatPresetChipLabel,
   formatRatePtBr,
   generateEvolutionCsv,
+  getIncomeTaxBracket,
   isMarketIndicators,
   parseCurrencyInputBR,
   roundCents,
@@ -135,7 +138,15 @@ describe("compound-interest-utils", () => {
         totalInvested: 7000,
         totalInterest: 443.25,
         totalAmount: 7443.25,
+        irRatePercent: 20,
+        irAmount: 88.65,
+        netInterest: 354.6,
+        netAmount: 7354.6,
       });
+      expect(result.irRatePercent).toBe(20);
+      expect(result.irAmount).toBe(88.65);
+      expect(result.netTotalInterest).toBe(354.6);
+      expect(result.netFinalAmount).toBe(7354.6);
     });
 
     it("matches golden scenario 2: monthly rate over 12 months", () => {
@@ -286,7 +297,7 @@ describe("compound-interest-utils", () => {
       expect(parseCurrencyInputBR("999999999999999")).toBe(999_999_999.99);
     });
 
-    it("generates CSV for both monthly and yearly modes", () => {
+    it("generates CSV for both monthly and yearly modes in gross and net views", () => {
       const rows: EvolutionRow[] = [
         {
           month: 0,
@@ -295,6 +306,10 @@ describe("compound-interest-utils", () => {
           totalInvested: 1000,
           totalInterest: 0,
           totalAmount: 1000,
+          irRatePercent: 0,
+          irAmount: 0,
+          netInterest: 0,
+          netAmount: 1000,
         },
         {
           month: 12,
@@ -303,6 +318,10 @@ describe("compound-interest-utils", () => {
           totalInvested: 7000,
           totalInterest: 120.5,
           totalAmount: 7120.5,
+          irRatePercent: 20,
+          irAmount: 24.1,
+          netInterest: 96.4,
+          netAmount: 7096.4,
         },
       ];
 
@@ -314,12 +333,33 @@ describe("compound-interest-utils", () => {
       expect(monthlyLines[1]).toBe("0;0,00;1.000,00;0,00;1.000,00");
       expect(monthlyLines[2]).toBe("12;120,50;7.000,00;120,50;7.120,50");
 
-      const yearlyCsv = generateEvolutionCsv(rows, "yearly");
+      const yearlyCsv = generateEvolutionCsv(rows, "yearly", "gross");
       const yearlyLines = yearlyCsv.split("\n");
       expect(yearlyLines[0]).toBe(
         "Ano;Juros no Período (R$);Total Investido (R$);Total em Juros (R$);Total Acumulado (R$)"
       );
       expect(yearlyLines[2]).toBe("1;120,50;7.000,00;120,50;7.120,50");
+
+      const monthlyNetCsv = generateEvolutionCsv(rows, "monthly", "net");
+      const monthlyNetLines = monthlyNetCsv.split("\n");
+      expect(monthlyNetLines[0]).toBe(
+        "Mês;Juros no Período (R$);Total Investido (R$);Total em Juros (R$);IR (%);Imposto de Renda (R$);Juros Líquidos (R$);Total Líquido (R$)"
+      );
+      expect(monthlyNetLines[1]).toBe(
+        "0;0,00;1.000,00;0,00;0,00;0,00;0,00;1.000,00"
+      );
+      expect(monthlyNetLines[2]).toBe(
+        "12;120,50;7.000,00;120,50;20,00;24,10;96,40;7.096,40"
+      );
+
+      const yearlyNetCsv = generateEvolutionCsv(rows, "yearly", "net");
+      const yearlyNetLines = yearlyNetCsv.split("\n");
+      expect(yearlyNetLines[0]).toBe(
+        "Ano;Juros no Período (R$);Total Investido (R$);Total em Juros (R$);IR (%);Imposto de Renda (R$);Juros Líquidos (R$);Total Líquido (R$)"
+      );
+      expect(yearlyNetLines[2]).toBe(
+        "1;120,50;7.000,00;120,50;20,00;24,10;96,40;7.096,40"
+      );
     });
   });
 
@@ -449,6 +489,156 @@ describe("compound-interest-utils", () => {
         badge: "8,50% a.a.",
       };
       expect(formatPresetChipLabel(customPreset)).toBe("Custom 8,50% a.a.");
+    });
+  });
+
+  describe("income tax (IR) regressive brackets and net value engine", () => {
+    it("exposes all 4 regressive IR brackets and resolves each bracket accurately by month/day count", () => {
+      expect(INCOME_TAX_BRACKETS).toHaveLength(4);
+      expect(INCOME_TAX_BRACKETS.map((b) => b.ratePercent)).toEqual([
+        22.5, 20.0, 17.5, 15.0,
+      ]);
+
+      // <= 180 dias (<= 6 meses) -> 22.5%
+      expect(getIncomeTaxBracket(1)).toMatchObject({
+        ratePercent: 22.5,
+        label: "Até 180 dias (até 6 meses)",
+      });
+      expect(getIncomeTaxBracket(6)).toMatchObject({
+        ratePercent: 22.5,
+        label: "Até 180 dias (até 6 meses)",
+      });
+
+      // 181 a 360 dias (7 a 12 meses) -> 20.0%
+      expect(getIncomeTaxBracket(7)).toMatchObject({
+        ratePercent: 20.0,
+        label: "De 181 a 360 dias (7 a 12 meses)",
+      });
+      expect(getIncomeTaxBracket(12)).toMatchObject({
+        ratePercent: 20.0,
+        label: "De 181 a 360 dias (7 a 12 meses)",
+      });
+
+      // 361 a 720 dias (13 a 24 meses) -> 17.5%
+      expect(getIncomeTaxBracket(13)).toMatchObject({
+        ratePercent: 17.5,
+        label: "De 361 a 720 dias (13 a 24 meses)",
+      });
+      expect(getIncomeTaxBracket(24)).toMatchObject({
+        ratePercent: 17.5,
+        label: "De 361 a 720 dias (13 a 24 meses)",
+      });
+
+      // > 720 dias (> 24 meses) -> 15.0%
+      expect(getIncomeTaxBracket(25)).toMatchObject({
+        ratePercent: 15.0,
+        label: "Acima de 720 dias (acima de 24 meses)",
+      });
+      expect(getIncomeTaxBracket(120)).toMatchObject({
+        ratePercent: 15.0,
+        label: "Acima de 720 dias (acima de 24 meses)",
+      });
+
+      // Non-finite or negative months fall back safely to 0 -> 22.5%
+      expect(getIncomeTaxBracket(-3).ratePercent).toBe(22.5);
+      expect(getIncomeTaxBracket(Number.NaN).ratePercent).toBe(22.5);
+
+      // Exempt regime returns 0% regardless of term
+      expect(getIncomeTaxBracket(6, "exempt")).toEqual(EXEMPT_TAX_BRACKET);
+      expect(getIncomeTaxBracket(120, "exempt")).toMatchObject({
+        ratePercent: 0,
+        label: "Isento de IR (LCI, LCA, Poupança)",
+      });
+    });
+
+    it("computes net values across all 4 brackets and tracks per-month IR in EvolutionRow", () => {
+      const base = {
+        initialValue: 10000,
+        monthlyContribution: 1000,
+        interestRate: 1,
+        rateUnit: "month" as const,
+      };
+
+      // 6 months -> 22.5%
+      const r6 = calculateCompoundInterest({
+        ...base,
+        period: 6,
+        periodUnit: "months",
+      });
+      expect(r6.irRatePercent).toBe(22.5);
+      expect(r6.irAmount).toBe(roundCents(r6.totalInterest * 0.225));
+      expect(r6.netTotalInterest).toBe(roundCents(r6.totalInterest - r6.irAmount));
+      expect(r6.netFinalAmount).toBe(roundCents(r6.finalAmount - r6.irAmount));
+
+      // 12 months -> 20.0%
+      const r12 = calculateCompoundInterest({
+        ...base,
+        period: 12,
+        periodUnit: "months",
+      });
+      expect(r12.irRatePercent).toBe(20.0);
+      expect(r12.irAmount).toBe(390.15);
+      expect(r12.netTotalInterest).toBe(1560.6);
+      expect(r12.netFinalAmount).toBe(23560.6);
+
+      // 24 months -> 17.5%
+      const r24 = calculateCompoundInterest({
+        ...base,
+        period: 24,
+        periodUnit: "months",
+      });
+      expect(r24.irRatePercent).toBe(17.5);
+      expect(r24.irAmount).toBe(roundCents(r24.totalInterest * 0.175));
+      expect(r24.netFinalAmount).toBe(roundCents(r24.finalAmount - r24.irAmount));
+
+      // 30 months -> 15.0% and verify step transitions across EvolutionRows
+      const r30 = calculateCompoundInterest({
+        ...base,
+        period: 30,
+        periodUnit: "months",
+      });
+      expect(r30.irRatePercent).toBe(15.0);
+      expect(r30.monthlyEvolution[0]).toMatchObject({
+        month: 0,
+        irRatePercent: 0,
+        irAmount: 0,
+        netInterest: 0,
+        netAmount: 10000,
+      });
+      expect(r30.monthlyEvolution[6].irRatePercent).toBe(22.5);
+      expect(r30.monthlyEvolution[7].irRatePercent).toBe(20.0);
+      expect(r30.monthlyEvolution[13].irRatePercent).toBe(17.5);
+      expect(r30.monthlyEvolution[25].irRatePercent).toBe(15.0);
+      expect(
+        r30.netInvestedPercentage + r30.netInterestPercentage
+      ).toBeCloseTo(100, 2);
+    });
+
+    it("computes default 10-year CDI scenario and exempt (LCI/LCA) scenario accurately", () => {
+      const regressive = calculateCompoundInterest(DEFAULT_COMPOUND_INTEREST_INPUT);
+      expect(regressive.taxRegime).toBe("regressive");
+      expect(regressive.irRatePercent).toBe(15);
+      expect(regressive.irAmount).toBe(10054.43);
+      expect(regressive.netTotalInterest).toBe(56975.09);
+      expect(regressive.netFinalAmount).toBe(117975.09);
+      expect(regressive.netInvestedPercentage).toBe(51.71);
+      expect(regressive.netInterestPercentage).toBe(48.29);
+
+      const exempt = calculateCompoundInterest(
+        DEFAULT_COMPOUND_INTEREST_INPUT,
+        "exempt"
+      );
+      expect(exempt.taxRegime).toBe("exempt");
+      expect(exempt.irRatePercent).toBe(0);
+      expect(exempt.irBracketLabel).toBe("Isento de IR (LCI, LCA, Poupança)");
+      expect(exempt.irAmount).toBe(0);
+      expect(exempt.netTotalInterest).toBe(exempt.totalInterest);
+      expect(exempt.netFinalAmount).toBe(exempt.finalAmount);
+      expect(exempt.netInvestedPercentage).toBe(exempt.investedPercentage);
+      expect(exempt.netInterestPercentage).toBe(exempt.interestPercentage);
+      expect(exempt.monthlyEvolution[120].irRatePercent).toBe(0);
+      expect(exempt.monthlyEvolution[120].irAmount).toBe(0);
+      expect(exempt.monthlyEvolution[120].netAmount).toBe(exempt.finalAmount);
     });
   });
 });

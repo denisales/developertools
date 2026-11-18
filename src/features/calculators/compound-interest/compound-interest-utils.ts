@@ -2,6 +2,61 @@ import type { MarketIndicators } from "@/services/bcb/bcb-client";
 
 export type RatePeriodUnit = "month" | "year";
 export type TimePeriodUnit = "months" | "years";
+export type TaxRegime = "regressive" | "exempt";
+export type ResultViewMode = "gross" | "net";
+
+export interface IncomeTaxBracket {
+  id: "up-to-180" | "181-to-360" | "361-to-720" | "above-720" | "exempt";
+  maxDays: number | null;
+  maxMonths: number | null;
+  ratePercent: number;
+  label: string;
+  shortLabel: string;
+}
+
+export const INCOME_TAX_BRACKETS: readonly IncomeTaxBracket[] = [
+  {
+    id: "up-to-180",
+    maxDays: 180,
+    maxMonths: 6,
+    ratePercent: 22.5,
+    label: "Até 180 dias (até 6 meses)",
+    shortLabel: "Até 180 dias",
+  },
+  {
+    id: "181-to-360",
+    maxDays: 360,
+    maxMonths: 12,
+    ratePercent: 20.0,
+    label: "De 181 a 360 dias (7 a 12 meses)",
+    shortLabel: "181 a 360 dias",
+  },
+  {
+    id: "361-to-720",
+    maxDays: 720,
+    maxMonths: 24,
+    ratePercent: 17.5,
+    label: "De 361 a 720 dias (13 a 24 meses)",
+    shortLabel: "361 a 720 dias",
+  },
+  {
+    id: "above-720",
+    maxDays: null,
+    maxMonths: null,
+    ratePercent: 15.0,
+    label: "Acima de 720 dias (acima de 24 meses)",
+    shortLabel: "Acima de 720 dias",
+  },
+];
+
+export const EXEMPT_TAX_BRACKET: IncomeTaxBracket = {
+  id: "exempt",
+  maxDays: null,
+  maxMonths: null,
+  ratePercent: 0,
+  label: "Isento de IR (LCI, LCA, Poupança)",
+  shortLabel: "Isento de IR",
+};
 
 export interface CompoundInterestInput {
   initialValue: number; // R$
@@ -19,6 +74,10 @@ export interface EvolutionRow {
   totalInvested: number;
   totalInterest: number;
   totalAmount: number;
+  irRatePercent: number;
+  irAmount: number;
+  netInterest: number;
+  netAmount: number;
 }
 
 export interface CompoundInterestResult {
@@ -27,6 +86,14 @@ export interface CompoundInterestResult {
   totalInterest: number;
   investedPercentage: number;
   interestPercentage: number;
+  taxRegime: TaxRegime;
+  irRatePercent: number;
+  irBracketLabel: string;
+  irAmount: number;
+  netFinalAmount: number;
+  netTotalInterest: number;
+  netInvestedPercentage: number;
+  netInterestPercentage: number;
   effectiveMonthlyRate: number;
   effectiveAnnualRate: number;
   totalMonths: number;
@@ -142,10 +209,41 @@ export function toTotalMonths(period: number, periodUnit: TimePeriodUnit): numbe
 }
 
 /**
- * Calcula os Juros Compostos mês a mês com capitalização composta exata.
+ * Retorna a faixa aplicável da tabela regressiva de IR da Renda Fixa (ou isenção)
+ * considerando `estimatedDays = totalMonths * 30`.
+ */
+export function getIncomeTaxBracket(
+  totalMonths: number,
+  taxRegime: TaxRegime = "regressive"
+): IncomeTaxBracket {
+  if (taxRegime === "exempt") {
+    return EXEMPT_TAX_BRACKET;
+  }
+
+  const safeMonths = Math.max(
+    0,
+    Number.isFinite(totalMonths) ? totalMonths : 0
+  );
+  const estimatedDays = safeMonths * 30;
+
+  if (estimatedDays <= 180) {
+    return INCOME_TAX_BRACKETS[0];
+  }
+  if (estimatedDays <= 360) {
+    return INCOME_TAX_BRACKETS[1];
+  }
+  if (estimatedDays <= 720) {
+    return INCOME_TAX_BRACKETS[2];
+  }
+  return INCOME_TAX_BRACKETS[3];
+}
+
+/**
+ * Calcula os Juros Compostos mês a mês com capitalização composta exata e tributação de IR.
  */
 export function calculateCompoundInterest(
-  input: CompoundInterestInput
+  input: CompoundInterestInput,
+  taxRegime: TaxRegime = "regressive"
 ): CompoundInterestResult {
   const initialValue = Math.max(
     0,
@@ -168,14 +266,20 @@ export function calculateCompoundInterest(
   let cumulativeInvested = initialValue;
   let cumulativeInterest = 0;
 
+  const roundedInitial = roundCents(initialValue);
+
   // Estado Inicial (Mês 0)
   monthlyEvolution.push({
     month: 0,
     year: 0,
     periodInterest: 0,
-    totalInvested: roundCents(initialValue),
+    totalInvested: roundedInitial,
     totalInterest: 0,
-    totalAmount: roundCents(initialValue),
+    totalAmount: roundedInitial,
+    irRatePercent: 0,
+    irAmount: 0,
+    netInterest: 0,
+    netAmount: roundedInitial,
   });
 
   // Iteração Mês 1 até Mês N
@@ -185,13 +289,27 @@ export function calculateCompoundInterest(
     cumulativeInvested = initialValue + m * monthlyContribution;
     cumulativeInterest = currentBalance - cumulativeInvested;
 
+    const roundedTotalInvested = roundCents(cumulativeInvested);
+    const roundedTotalInterest = roundCents(cumulativeInterest);
+    const roundedTotalAmount = roundCents(currentBalance);
+    const rowIrRatePercent = getIncomeTaxBracket(m, taxRegime).ratePercent;
+    const rowIrAmount = roundCents(
+      roundedTotalInterest * (rowIrRatePercent / 100)
+    );
+    const rowNetInterest = roundCents(roundedTotalInterest - rowIrAmount);
+    const rowNetAmount = roundCents(roundedTotalAmount - rowIrAmount);
+
     monthlyEvolution.push({
       month: m,
       year: Math.ceil(m / 12),
       periodInterest: roundCents(periodInterest),
-      totalInvested: roundCents(cumulativeInvested),
-      totalInterest: roundCents(cumulativeInterest),
-      totalAmount: roundCents(currentBalance),
+      totalInvested: roundedTotalInvested,
+      totalInterest: roundedTotalInterest,
+      totalAmount: roundedTotalAmount,
+      irRatePercent: rowIrRatePercent,
+      irAmount: rowIrAmount,
+      netInterest: rowNetInterest,
+      netAmount: rowNetAmount,
     });
   }
 
@@ -211,6 +329,10 @@ export function calculateCompoundInterest(
           totalInvested: row.totalInvested,
           totalInterest: row.totalInterest,
           totalAmount: row.totalAmount,
+          irRatePercent: row.irRatePercent,
+          irAmount: row.irAmount,
+          netInterest: row.netInterest,
+          netAmount: row.netAmount,
         });
       }
     }
@@ -226,12 +348,34 @@ export function calculateCompoundInterest(
   const interestPercentage =
     finalAmount > 0 ? roundCents(100 - investedPercentage) : 0;
 
+  const finalBracket = getIncomeTaxBracket(totalMonths, taxRegime);
+  const irRatePercent = finalBracket.ratePercent;
+  const irBracketLabel = finalBracket.label;
+  const irAmount = finalRow.irAmount;
+  const netFinalAmount = finalRow.netAmount;
+  const netTotalInterest = finalRow.netInterest;
+
+  const netInvestedPercentage =
+    netFinalAmount > 0
+      ? roundCents((totalInvested / netFinalAmount) * 100)
+      : 100;
+  const netInterestPercentage =
+    netFinalAmount > 0 ? roundCents(100 - netInvestedPercentage) : 0;
+
   return {
     finalAmount,
     totalInvested,
     totalInterest,
     investedPercentage,
     interestPercentage,
+    taxRegime,
+    irRatePercent,
+    irBracketLabel,
+    irAmount,
+    netFinalAmount,
+    netTotalInterest,
+    netInvestedPercentage,
+    netInterestPercentage,
     effectiveMonthlyRate,
     effectiveAnnualRate,
     totalMonths,
@@ -340,10 +484,41 @@ export function parseCurrencyInputBR(rawValue: string): number {
  */
 export function generateEvolutionCsv(
   rows: EvolutionRow[],
-  mode: "monthly" | "yearly"
+  mode: "monthly" | "yearly",
+  viewMode: ResultViewMode = "gross"
 ): string {
+  const periodLabel = mode === "monthly" ? "Mês" : "Ano";
+
+  if (viewMode === "net") {
+    const header = [
+      periodLabel,
+      "Juros no Período (R$)",
+      "Total Investido (R$)",
+      "Total em Juros (R$)",
+      "IR (%)",
+      "Imposto de Renda (R$)",
+      "Juros Líquidos (R$)",
+      "Total Líquido (R$)",
+    ].join(";");
+
+    const lines = rows.map((row) =>
+      [
+        mode === "monthly" ? row.month : row.year,
+        formatDecimalBR(row.periodInterest),
+        formatDecimalBR(row.totalInvested),
+        formatDecimalBR(row.totalInterest),
+        formatRatePtBr(row.irRatePercent),
+        formatDecimalBR(row.irAmount),
+        formatDecimalBR(row.netInterest),
+        formatDecimalBR(row.netAmount),
+      ].join(";")
+    );
+
+    return [header, ...lines].join("\n");
+  }
+
   const header = [
-    mode === "monthly" ? "Mês" : "Ano",
+    periodLabel,
     "Juros no Período (R$)",
     "Total Investido (R$)",
     "Total em Juros (R$)",

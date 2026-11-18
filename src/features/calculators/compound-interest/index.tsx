@@ -20,6 +20,8 @@ import {
   Info,
   ChevronDown,
   ChevronUp,
+  Receipt,
+  ShieldCheck,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -56,6 +58,7 @@ import type { MarketIndicators } from "@/services/bcb/bcb-client";
 import { BcbPresetsSkeleton } from "./compound-interest-skeleton";
 import {
   DEFAULT_COMPOUND_INTEREST_INPUT,
+  INCOME_TAX_BRACKETS,
   buildPresetsFromIndicators,
   calculateCompoundInterest,
   formatCompactBRL,
@@ -64,11 +67,14 @@ import {
   formatPresetChipLabel,
   formatRatePtBr,
   generateEvolutionCsv,
+  getIncomeTaxBracket,
   isMarketIndicators,
   parseCurrencyInputBR,
   type CompoundInterestPreset,
   type EvolutionRow,
   type RatePeriodUnit,
+  type ResultViewMode,
+  type TaxRegime,
   type TimePeriodUnit,
 } from "./compound-interest-utils";
 
@@ -173,7 +179,9 @@ export function CompoundInterestFeature({
     [indicators]
   );
 
-  // Estado de visualização de gráfico e tabela
+  // Estado de visualização de gráfico, tabela e tributação (IR)
+  const [viewMode, setViewMode] = React.useState<ResultViewMode>("gross");
+  const [taxRegime, setTaxRegime] = React.useState<TaxRegime>("regressive");
   const [tableMode, setTableMode] = React.useState<"monthly" | "yearly">(
     "monthly"
   );
@@ -196,14 +204,17 @@ export function CompoundInterestFeature({
   }, [periodText]);
 
   const result = React.useMemo(() => {
-    return calculateCompoundInterest({
-      initialValue,
-      monthlyContribution,
-      interestRate: parsedRate,
-      rateUnit,
-      period: parsedPeriod,
-      periodUnit,
-    });
+    return calculateCompoundInterest(
+      {
+        initialValue,
+        monthlyContribution,
+        interestRate: parsedRate,
+        rateUnit,
+        period: parsedPeriod,
+        periodUnit,
+      },
+      taxRegime
+    );
   }, [
     initialValue,
     monthlyContribution,
@@ -211,7 +222,13 @@ export function CompoundInterestFeature({
     rateUnit,
     parsedPeriod,
     periodUnit,
+    taxRegime,
   ]);
+
+  const regressiveBracket = React.useMemo(
+    () => getIncomeTaxBracket(result.totalMonths, "regressive"),
+    [result.totalMonths]
+  );
 
   // Pontos exibidos no gráfico de evolução (agrupa por ano se > 36 meses para leitura limpa no mobile/desktop)
   const chartRows = React.useMemo<EvolutionRow[]>(() => {
@@ -276,21 +293,32 @@ export function CompoundInterestFeature({
     setRateUnit(DEFAULT_COMPOUND_INTEREST_INPUT.rateUnit);
     setPeriodText("10");
     setPeriodUnit(DEFAULT_COMPOUND_INTEREST_INPUT.periodUnit);
+    setViewMode("gross");
+    setTaxRegime("regressive");
     setActiveChartIndex(null);
     toast.success("Valores padrão restaurados.");
   };
 
   const handleCopySummary = async () => {
+    const regimeDescription =
+      taxRegime === "exempt"
+        ? "Isento de IR (LCI, LCA, Poupança)"
+        : "Tabela Regressiva de IR (Renda Fixa)";
+    const formattedIrRate = result.irRatePercent.toFixed(1).replace(".", ",");
     const text = [
       "📊 Simulação de Juros Compostos — DevToolsBR",
       `• Valor Inicial: ${formatCurrencyBRL(initialValue)}`,
       `• Aporte Mensal: ${formatCurrencyBRL(monthlyContribution)}`,
       `• Taxa de Juros: ${rateText}% (${rateUnit === "year" ? "ao ano" : "ao mês"})`,
       `• Período: ${result.totalMonths} meses (${(result.totalMonths / 12).toFixed(1).replace(".0", "")} anos)`,
+      `• Regime Tributário: ${regimeDescription}`,
+      `• Alíquota IR: ${formattedIrRate}% (${result.irBracketLabel})`,
       "────────────────────────────",
-      `💰 Valor Total Final: ${formatCurrencyBRL(result.finalAmount)}`,
-      `📥 Total Investido: ${formatCurrencyBRL(result.totalInvested)} (${result.investedPercentage.toFixed(1)}%)`,
-      `📈 Total em Juros: ${formatCurrencyBRL(result.totalInterest)} (${result.interestPercentage.toFixed(1)}%)`,
+      `💰 Valor Total Final (Bruto): ${formatCurrencyBRL(result.finalAmount)}`,
+      `🧾 IR Estimado: -${formatCurrencyBRL(result.irAmount)} (${formattedIrRate}%)`,
+      `💵 Valor Líquido Final: ${formatCurrencyBRL(result.netFinalAmount)}`,
+      `📥 Total Investido: ${formatCurrencyBRL(result.totalInvested)} (${(viewMode === "net" ? result.netInvestedPercentage : result.investedPercentage).toFixed(1)}%)`,
+      `📈 Total em Juros (Bruto / Líquido): ${formatCurrencyBRL(result.totalInterest)} / ${formatCurrencyBRL(result.netTotalInterest)}`,
     ].join("\n");
 
     try {
@@ -306,14 +334,14 @@ export function CompoundInterestFeature({
   const handleDownloadCsv = () => {
     const rows =
       tableMode === "monthly" ? result.monthlyEvolution : result.yearlyEvolution;
-    const csv = generateEvolutionCsv(rows, tableMode);
+    const csv = generateEvolutionCsv(rows, tableMode, viewMode);
     const blob = new Blob(["\uFEFF" + csv], {
       type: "text/csv;charset=utf-8;",
     });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `juros-compostos-${tableMode}-${result.totalMonths}m.csv`;
+    link.download = `juros-compostos-${tableMode}-${viewMode}-${result.totalMonths}m.csv`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -321,11 +349,25 @@ export function CompoundInterestFeature({
     toast.success("Planilha CSV exportada com sucesso!");
   };
 
+  const isNetView = viewMode === "net";
+  const displayedFinalAmount = isNetView
+    ? result.netFinalAmount
+    : result.finalAmount;
+  const displayedTotalInterest = isNetView
+    ? result.netTotalInterest
+    : result.totalInterest;
+  const displayedInvestedPct = isNetView
+    ? result.netInvestedPercentage
+    : result.investedPercentage;
+  const displayedInterestPct = isNetView
+    ? result.netInterestPercentage
+    : result.interestPercentage;
+
   // Cálculo do gráfico de rosca (Donut SVG)
   const donutRadius = 62;
   const donutCircumference = 2 * Math.PI * donutRadius;
   const interestArcLength =
-    (result.interestPercentage / 100) * donutCircumference;
+    (displayedInterestPct / 100) * donutCircumference;
   const investedArcLength = donutCircumference - interestArcLength;
 
   // Linhas da tabela ativa
@@ -337,10 +379,17 @@ export function CompoundInterestFeature({
       : activeTableRows;
 
   const multiplier =
-    result.totalInvested > 0 ? result.finalAmount / result.totalInvested : 1;
+    result.totalInvested > 0 ? displayedFinalAmount / result.totalInvested : 1;
+
+  const formattedRegressiveRate = regressiveBracket.ratePercent
+    .toFixed(1)
+    .replace(".", ",");
+  const formattedActiveIrRate = result.irRatePercent
+    .toFixed(1)
+    .replace(".", ",");
 
   return (
-    <div className="w-full space-y-1.5 sm:space-y-5 pb-8">
+    <div className="w-full space-y-1 sm:space-y-4 pb-8">
       {/* Cabeçalho Compacto da Ferramenta */}
       <div className="mb-0.5 sm:mb-2 space-y-0.5 sm:space-y-1">
         <div className="flex items-center justify-between gap-2">
@@ -670,13 +719,13 @@ export function CompoundInterestFeature({
             </div>
 
             {/* Barra de Ações Compacta */}
-            <div className="flex items-center justify-between gap-2 border-t pt-1.5 sm:pt-3">
+            <div className="flex items-center justify-between gap-2 border-t pt-1 sm:pt-3">
               <Button
                 id="btn-clear"
                 type="button"
                 variant="outline"
                 onClick={handleClear}
-                className="h-8 sm:h-9 gap-1.5 px-3 text-xs font-medium"
+                className="h-7 sm:h-9 gap-1.5 px-3 text-xs font-medium"
               >
                 <RotateCcw className="size-3.5" />
                 Limpar
@@ -684,7 +733,7 @@ export function CompoundInterestFeature({
 
               <Button
                 type="submit"
-                className="h-8 sm:h-9 gap-1.5 bg-emerald-600 px-4 text-xs font-semibold text-white hover:bg-emerald-700"
+                className="h-7 sm:h-9 gap-1.5 bg-emerald-600 px-3 sm:px-4 text-xs font-semibold text-white hover:bg-emerald-700"
               >
                 <Calculator className="size-3.5" />
                 Calcular Juros Compostos
@@ -694,19 +743,97 @@ export function CompoundInterestFeature({
         </CardContent>
       </Card>
 
+      {/* Controles Compactos de Visão (Bruto vs Líquido) e Regime de IR */}
+      <div
+        data-testid="tax-controls-bar"
+        className="flex items-center justify-between gap-1.5 sm:gap-2 rounded-lg border border-border/80 bg-muted/40 px-1.5 py-1 sm:px-3 sm:py-1.5"
+      >
+        <div
+          role="group"
+          aria-label="Modo de visualização do resultado"
+          className="inline-flex items-center rounded-md bg-background p-0.5 border border-border/60"
+        >
+          <button
+            type="button"
+            data-testid="view-mode-gross"
+            aria-pressed={viewMode === "gross"}
+            onClick={() => setViewMode("gross")}
+            className={`h-6 sm:h-7 rounded px-2 sm:px-2.5 text-xs font-medium transition-colors cursor-pointer ${
+              viewMode === "gross"
+                ? "bg-emerald-600 text-white shadow-2xs"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <span className="sm:hidden">Bruto</span>
+            <span className="hidden sm:inline">Valor Bruto</span>
+          </button>
+          <button
+            type="button"
+            data-testid="view-mode-net"
+            aria-pressed={viewMode === "net"}
+            onClick={() => setViewMode("net")}
+            className={`h-6 sm:h-7 rounded px-2 sm:px-2.5 text-xs font-medium transition-colors cursor-pointer ${
+              viewMode === "net"
+                ? "bg-emerald-600 text-white shadow-2xs"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <span className="sm:hidden">Líquido</span>
+            <span className="hidden sm:inline">Valor Líquido (IR)</span>
+          </button>
+        </div>
+
+        <div
+          role="group"
+          aria-label="Regime tributário"
+          className="inline-flex items-center rounded-md bg-background p-0.5 border border-border/60"
+        >
+          <button
+            type="button"
+            data-testid="tax-regime-regressive"
+            aria-pressed={taxRegime === "regressive"}
+            onClick={() => setTaxRegime("regressive")}
+            className={`h-6 sm:h-7 rounded px-2 sm:px-2.5 text-xs font-medium transition-colors cursor-pointer ${
+              taxRegime === "regressive"
+                ? "bg-primary text-primary-foreground shadow-2xs"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <span className="sm:hidden">IR {formattedRegressiveRate}%</span>
+            <span className="hidden sm:inline">
+              Tabela IR ({formattedRegressiveRate}%)
+            </span>
+          </button>
+          <button
+            type="button"
+            data-testid="tax-regime-exempt"
+            aria-pressed={taxRegime === "exempt"}
+            onClick={() => setTaxRegime("exempt")}
+            className={`h-6 sm:h-7 rounded px-2 sm:px-2.5 text-xs font-medium transition-colors cursor-pointer ${
+              taxRegime === "exempt"
+                ? "bg-sky-600 text-white shadow-2xs"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <span className="sm:hidden">Isento</span>
+            <span className="hidden sm:inline">Isento (LCI/LCA)</span>
+          </button>
+        </div>
+      </div>
+
       {/* Seção 1: Os 3 Cards de Resumo Imediatamente Abaixo dos Inputs (#result) */}
       <div
         id="result"
         className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4"
       >
         {/* Card 1: Valor Total Final */}
-        <Card className="relative overflow-hidden border-emerald-500/40 bg-gradient-to-br from-emerald-500/10 via-background to-background gap-1 sm:gap-2 p-2.5 sm:p-4 shadow-sm">
-          <CardHeader className="p-0 pb-1">
+        <Card className="relative overflow-hidden border-emerald-500/40 bg-gradient-to-br from-emerald-500/10 via-background to-background gap-0.5 sm:gap-2 p-2 sm:p-4 shadow-sm">
+          <CardHeader className="p-0 pb-0.5 sm:pb-1">
             <div className="flex items-center justify-between gap-2">
               <span className="text-xs font-semibold tracking-wider text-emerald-700 uppercase dark:text-emerald-400">
-                Valor Total Final
+                {isNetView ? "Valor Líquido Final" : "Valor Total Final"}
               </span>
-              <div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+              <div className="flex size-6 sm:size-7 shrink-0 items-center justify-center rounded-md bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
                 <Wallet className="size-3.5" />
               </div>
             </div>
@@ -716,7 +843,7 @@ export function CompoundInterestFeature({
               id="amount"
               className="text-lg sm:text-2xl font-bold font-mono tracking-tight text-emerald-700 dark:text-emerald-300"
             >
-              {formatCurrencyBRL(result.finalAmount)}
+              {formatCurrencyBRL(displayedFinalAmount)}
             </div>
             <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
               <Badge
@@ -725,7 +852,31 @@ export function CompoundInterestFeature({
               >
                 {multiplier.toFixed(2).replace(".", ",")}x o investido
               </Badge>
-              <span>após {result.totalMonths} meses</span>
+              {isNetView ? (
+                <Badge
+                  variant="secondary"
+                  data-testid="ir-deduction-badge"
+                  className={
+                    taxRegime === "exempt"
+                      ? "bg-sky-500/15 px-1.5 py-0 font-mono text-xs text-sky-700 dark:text-sky-300"
+                      : "bg-rose-500/10 px-1.5 py-0 font-mono text-xs text-rose-700 dark:text-rose-300"
+                  }
+                >
+                  {taxRegime === "exempt"
+                    ? "Isento de IR (0,0%)"
+                    : `IR ${formattedActiveIrRate}%: -${formatCurrencyBRL(result.irAmount)}`}
+                </Badge>
+              ) : (
+                <>
+                  <span>após {result.totalMonths} meses</span>
+                  <span
+                    data-testid="net-preview-hint"
+                    className="hidden sm:inline font-mono text-emerald-700/80 dark:text-emerald-300/80"
+                  >
+                    • Líquido: {formatCurrencyBRL(result.netFinalAmount)}
+                  </span>
+                </>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -754,8 +905,7 @@ export function CompoundInterestFeature({
                 variant="secondary"
                 className="bg-blue-500/15 px-1.5 py-0 font-mono text-xs text-blue-700 dark:text-blue-300"
               >
-                {result.investedPercentage.toFixed(1).replace(".", ",")}% do
-                total
+                {displayedInvestedPct.toFixed(1).replace(".", ",")}% do total
               </Badge>
               <span>Desembolso próprio</span>
             </div>
@@ -767,7 +917,7 @@ export function CompoundInterestFeature({
           <CardHeader className="p-0 pb-1">
             <div className="flex items-center justify-between gap-2">
               <span className="text-xs font-semibold tracking-wider text-amber-700 uppercase dark:text-amber-400">
-                Total em Juros
+                {isNetView ? "Juros Líquidos" : "Total em Juros"}
               </span>
               <div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-amber-500/15 text-amber-600 dark:text-amber-400">
                 <Coins className="size-3.5" />
@@ -779,17 +929,22 @@ export function CompoundInterestFeature({
               id="interest"
               className="text-lg sm:text-2xl font-bold font-mono tracking-tight text-amber-700 dark:text-amber-300"
             >
-              {formatCurrencyBRL(result.totalInterest)}
+              {formatCurrencyBRL(displayedTotalInterest)}
             </div>
             <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
               <Badge
                 variant="secondary"
                 className="bg-amber-500/15 px-1.5 py-0 font-mono text-xs text-amber-800 dark:text-amber-300"
               >
-                {result.interestPercentage.toFixed(1).replace(".", ",")}% do
-                total
+                {displayedInterestPct.toFixed(1).replace(".", ",")}% do total
               </Badge>
-              <span>Rendimento composto</span>
+              <span>
+                {isNetView
+                  ? taxRegime === "exempt"
+                    ? "Rendimento isento de IR"
+                    : `Após IR (${formattedActiveIrRate}%)`
+                  : "Rendimento composto"}
+              </span>
             </div>
           </CardContent>
         </Card>
@@ -830,7 +985,7 @@ export function CompoundInterestFeature({
                   className="text-blue-500/85"
                 />
                 {/* Fatia de Juros (Esmeralda) */}
-                {result.interestPercentage > 0 && (
+                {displayedInterestPct > 0 && (
                   <circle
                     cx="80"
                     cy="80"
@@ -846,10 +1001,10 @@ export function CompoundInterestFeature({
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
                 <span className="text-xs font-medium text-muted-foreground">
-                  Juros no Final
+                  {isNetView ? "Juros Líquidos" : "Juros no Final"}
                 </span>
                 <span className="mt-0.5 font-mono text-lg sm:text-2xl font-bold text-emerald-600 dark:text-emerald-400">
-                  {result.interestPercentage.toFixed(1).replace(".", ",")}%
+                  {displayedInterestPct.toFixed(1).replace(".", ",")}%
                 </span>
               </div>
             </div>
@@ -864,14 +1019,14 @@ export function CompoundInterestFeature({
                   </span>
                   <span className="font-mono font-semibold">
                     {formatCurrencyBRL(result.totalInvested)} (
-                    {result.investedPercentage.toFixed(1).replace(".", ",")}%)
+                    {displayedInvestedPct.toFixed(1).replace(".", ",")}%)
                   </span>
                 </div>
                 <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
                   <div
                     className="h-full bg-blue-500 transition-all duration-300"
                     style={{
-                      width: `${Math.min(100, result.investedPercentage)}%`,
+                      width: `${Math.min(100, displayedInvestedPct)}%`,
                     }}
                   />
                 </div>
@@ -881,18 +1036,18 @@ export function CompoundInterestFeature({
                 <div className="flex items-center justify-between gap-2 text-xs sm:text-sm">
                   <span className="flex items-center gap-1.5 font-medium">
                     <span className="size-2.5 rounded-full bg-emerald-500" />
-                    Total em Juros
+                    {isNetView ? "Juros Líquidos" : "Total em Juros"}
                   </span>
                   <span className="font-mono font-semibold text-emerald-600 dark:text-emerald-400">
-                    {formatCurrencyBRL(result.totalInterest)} (
-                    {result.interestPercentage.toFixed(1).replace(".", ",")}%)
+                    {formatCurrencyBRL(displayedTotalInterest)} (
+                    {displayedInterestPct.toFixed(1).replace(".", ",")}%)
                   </span>
                 </div>
                 <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
                   <div
                     className="h-full bg-emerald-500 transition-all duration-300"
                     style={{
-                      width: `${Math.min(100, result.interestPercentage)}%`,
+                      width: `${Math.min(100, displayedInterestPct)}%`,
                     }}
                   />
                 </div>
@@ -913,6 +1068,7 @@ export function CompoundInterestFeature({
                 <CardDescription className="text-xs sm:text-sm leading-relaxed">
                   Toque ou passe o mouse nas colunas para inspecionar cada{" "}
                   {chartUsesYears ? "ano" : "mês"}
+                  {isNetView ? " (valores líquidos após IR)" : ""}
                 </CardDescription>
               </div>
               <div className="flex items-center gap-3 text-xs font-medium">
@@ -922,7 +1078,7 @@ export function CompoundInterestFeature({
                 </span>
                 <span className="flex items-center gap-1.5">
                   <span className="size-2.5 rounded-xs bg-emerald-500" />
-                  Juros Acumulados
+                  {isNetView ? "Juros Líquidos" : "Juros Acumulados"}
                 </span>
               </div>
             </div>
@@ -952,18 +1108,26 @@ export function CompoundInterestFeature({
               </div>
               <div className="space-y-0.5">
                 <span className="text-xs font-medium text-muted-foreground">
-                  Total em Juros
+                  {isNetView ? "Juros Líquidos" : "Total em Juros"}
                 </span>
                 <p className="font-mono font-semibold text-emerald-600 dark:text-emerald-400">
-                  {formatCurrencyBRL(inspectedRow.totalInterest)}
+                  {formatCurrencyBRL(
+                    isNetView
+                      ? inspectedRow.netInterest
+                      : inspectedRow.totalInterest
+                  )}
                 </p>
               </div>
               <div className="space-y-0.5">
                 <span className="text-xs font-medium text-muted-foreground">
-                  Acumulado
+                  {isNetView ? "Líquido Acumulado" : "Acumulado"}
                 </span>
                 <p className="font-mono font-bold text-foreground">
-                  {formatCurrencyBRL(inspectedRow.totalAmount)}
+                  {formatCurrencyBRL(
+                    isNetView
+                      ? inspectedRow.netAmount
+                      : inspectedRow.totalAmount
+                  )}
                 </p>
               </div>
             </div>
@@ -972,14 +1136,18 @@ export function CompoundInterestFeature({
             <div className="relative pt-1">
               <div className="flex h-48 sm:h-56 items-end gap-1 sm:gap-1.5 border-b border-l border-border/70 px-2 pt-3 pb-1">
                 {chartRows.map((row, idx) => {
-                  const maxAmount = Math.max(result.finalAmount, 1);
+                  const maxAmount = Math.max(displayedFinalAmount, 1);
+                  const rowInterest = isNetView
+                    ? row.netInterest
+                    : row.totalInterest;
+                  const rowAmount = isNetView ? row.netAmount : row.totalAmount;
                   const investedHeightPct = Math.max(
                     0,
                     (row.totalInvested / maxAmount) * 100
                   );
                   const interestHeightPct = Math.max(
                     0,
-                    (row.totalInterest / maxAmount) * 100
+                    (rowInterest / maxAmount) * 100
                   );
                   const isActive =
                     activeChartIndex === idx ||
@@ -995,7 +1163,7 @@ export function CompoundInterestFeature({
                       className={`group relative flex h-full flex-1 flex-col justify-end rounded-t transition-all focus:outline-none cursor-pointer ${
                         isActive ? "bg-muted/60" : "hover:bg-muted/30"
                       }`}
-                      aria-label={`Período ${row.month}: Acumulado ${formatCurrencyBRL(row.totalAmount)}`}
+                      aria-label={`Período ${row.month}: Acumulado ${formatCurrencyBRL(rowAmount)}`}
                     >
                       {/* Topo da Pilha: Juros */}
                       <div
@@ -1006,13 +1174,13 @@ export function CompoundInterestFeature({
                         }`}
                         style={{
                           height: `${interestHeightPct}%`,
-                          minHeight: row.totalInterest > 0 ? "2px" : "0px",
+                          minHeight: rowInterest > 0 ? "2px" : "0px",
                         }}
                       />
                       {/* Base da Pilha: Total Investido */}
                       <div
                         className={`w-full bg-blue-500 transition-all duration-300 ${
-                          row.totalInterest <= 0 ? "rounded-t-xs" : ""
+                          rowInterest <= 0 ? "rounded-t-xs" : ""
                         } ${isActive ? "opacity-100" : "opacity-85 group-hover:opacity-100"}`}
                         style={{
                           height: `${investedHeightPct}%`,
@@ -1030,11 +1198,15 @@ export function CompoundInterestFeature({
                 <span>
                   Meio (
                   {formatCompactBRL(
-                    chartRows[Math.floor(chartRows.length / 2)]?.totalAmount ?? 0
+                    (() => {
+                      const midRow = chartRows[Math.floor(chartRows.length / 2)];
+                      if (!midRow) return 0;
+                      return isNetView ? midRow.netAmount : midRow.totalAmount;
+                    })()
                   )}
                   )
                 </span>
-                <span>Final ({formatCompactBRL(result.finalAmount)})</span>
+                <span>Final ({formatCompactBRL(displayedFinalAmount)})</span>
               </div>
             </div>
           </CardContent>
@@ -1051,7 +1223,9 @@ export function CompoundInterestFeature({
                 Tabela de Evolução Detalhada
               </CardTitle>
               <CardDescription className="text-xs sm:text-sm leading-relaxed">
-                Acompanhe o efeito dos juros compostos período a período.
+                {isNetView
+                  ? "Acompanhe juros, alíquota de IR por prazo e valor líquido período a período."
+                  : "Acompanhe o efeito dos juros compostos período a período."}
               </CardDescription>
             </div>
 
@@ -1096,12 +1270,31 @@ export function CompoundInterestFeature({
                   <TableHead className="px-3 py-2 text-right text-xs font-semibold uppercase tracking-wider">
                     Total Investido
                   </TableHead>
-                  <TableHead className="px-3 py-2 text-right text-xs font-semibold uppercase tracking-wider">
-                    Total Juros
-                  </TableHead>
-                  <TableHead className="px-3 py-2 text-right text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
-                    Acumulado
-                  </TableHead>
+                  {isNetView ? (
+                    <>
+                      <TableHead className="px-3 py-2 text-right text-xs font-semibold uppercase tracking-wider">
+                        IR (%)
+                      </TableHead>
+                      <TableHead className="px-3 py-2 text-right text-xs font-semibold uppercase tracking-wider text-rose-700 dark:text-rose-400">
+                        IR (R$)
+                      </TableHead>
+                      <TableHead className="px-3 py-2 text-right text-xs font-semibold uppercase tracking-wider">
+                        Juros Líquidos
+                      </TableHead>
+                      <TableHead className="px-3 py-2 text-right text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+                        Total Líquido
+                      </TableHead>
+                    </>
+                  ) : (
+                    <>
+                      <TableHead className="px-3 py-2 text-right text-xs font-semibold uppercase tracking-wider">
+                        Total Juros
+                      </TableHead>
+                      <TableHead className="px-3 py-2 text-right text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+                        Acumulado
+                      </TableHead>
+                    </>
+                  )}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -1136,12 +1329,33 @@ export function CompoundInterestFeature({
                     <TableCell className="px-3 py-2 text-right text-xs font-mono text-blue-600 dark:text-blue-400">
                       {formatCurrencyBRL(row.totalInvested)}
                     </TableCell>
-                    <TableCell className="px-3 py-2 text-right text-xs font-mono text-amber-600 dark:text-amber-400">
-                      {formatCurrencyBRL(row.totalInterest)}
-                    </TableCell>
-                    <TableCell className="px-3 py-2 text-right text-xs font-mono font-bold text-emerald-700 dark:text-emerald-400">
-                      {formatCurrencyBRL(row.totalAmount)}
-                    </TableCell>
+                    {isNetView ? (
+                      <>
+                        <TableCell className="px-3 py-2 text-right text-xs font-mono text-muted-foreground">
+                          {row.month === 0
+                            ? "—"
+                            : `${row.irRatePercent.toFixed(1).replace(".", ",")}%`}
+                        </TableCell>
+                        <TableCell className="px-3 py-2 text-right text-xs font-mono text-rose-600 dark:text-rose-400">
+                          {formatCurrencyBRL(row.irAmount)}
+                        </TableCell>
+                        <TableCell className="px-3 py-2 text-right text-xs font-mono text-amber-600 dark:text-amber-400">
+                          {formatCurrencyBRL(row.netInterest)}
+                        </TableCell>
+                        <TableCell className="px-3 py-2 text-right text-xs font-mono font-bold text-emerald-700 dark:text-emerald-400">
+                          {formatCurrencyBRL(row.netAmount)}
+                        </TableCell>
+                      </>
+                    ) : (
+                      <>
+                        <TableCell className="px-3 py-2 text-right text-xs font-mono text-amber-600 dark:text-amber-400">
+                          {formatCurrencyBRL(row.totalInterest)}
+                        </TableCell>
+                        <TableCell className="px-3 py-2 text-right text-xs font-mono font-bold text-emerald-700 dark:text-emerald-400">
+                          {formatCurrencyBRL(row.totalAmount)}
+                        </TableCell>
+                      </>
+                    )}
                   </TableRow>
                 ))}
               </TableBody>
@@ -1170,6 +1384,120 @@ export function CompoundInterestFeature({
               </Button>
             </div>
           )}
+        </CardContent>
+      </Card>
+
+      {/* Seção 3.5: Tabela Regressiva de Imposto de Renda (Renda Fixa) */}
+      <Card
+        data-testid="ir-brackets-card"
+        className="min-w-0 overflow-hidden p-3.5 sm:p-5"
+      >
+        <CardHeader className="p-0 pb-2">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-0.5">
+              <CardTitle className="flex items-center gap-2 text-base font-bold sm:text-lg">
+                <Receipt className="size-4 text-primary sm:size-5" />
+                Tabela Regressiva de IR (Renda Fixa)
+              </CardTitle>
+              <CardDescription className="text-xs sm:text-sm leading-relaxed">
+                O Imposto de Renda incide apenas sobre os rendimentos (juros) no
+                resgate, conforme o prazo da aplicação ({result.totalMonths}{" "}
+                meses ≈ {result.totalMonths * 30} dias).
+              </CardDescription>
+            </div>
+
+            {taxRegime === "exempt" ? (
+              <Badge
+                variant="secondary"
+                data-testid="ir-exempt-badge"
+                className="w-fit gap-1 bg-sky-500/15 px-2.5 py-1 font-mono text-xs text-sky-700 dark:text-sky-300"
+              >
+                <ShieldCheck className="size-3.5" />
+                Isento de IR (0,0%)
+              </Badge>
+            ) : (
+              <Badge
+                variant="secondary"
+                data-testid="ir-active-rate-badge"
+                className="w-fit bg-emerald-500/15 px-2.5 py-1 font-mono text-xs text-emerald-700 dark:text-emerald-300"
+              >
+                Faixa atual: {formattedActiveIrRate}%
+              </Badge>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-3 p-0">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
+            {INCOME_TAX_BRACKETS.map((bracket) => {
+              const isActive =
+                taxRegime === "regressive" &&
+                regressiveBracket.id === bracket.id;
+              const formattedRate = bracket.ratePercent
+                .toFixed(1)
+                .replace(".", ",");
+
+              return (
+                <div
+                  key={bracket.id}
+                  data-testid={`ir-bracket-${bracket.id}`}
+                  data-active={isActive ? "true" : "false"}
+                  className={`rounded-xl border p-3 transition-colors ${
+                    isActive
+                      ? "border-emerald-500 bg-emerald-500/10 shadow-2xs"
+                      : "border-border bg-muted/30"
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span
+                      className={`font-mono text-base font-bold ${
+                        isActive
+                          ? "text-emerald-700 dark:text-emerald-300"
+                          : "text-foreground"
+                      }`}
+                    >
+                      {formattedRate}%
+                    </span>
+                    {isActive && (
+                      <Badge
+                        variant="secondary"
+                        className="bg-emerald-600 px-1.5 py-0 text-xs text-white"
+                      >
+                        Aplicada
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {bracket.label}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="grid grid-cols-1 gap-2 rounded-xl border bg-muted/30 p-3 text-xs sm:grid-cols-3">
+            <div className="flex items-center justify-between sm:block sm:space-y-0.5">
+              <span className="text-muted-foreground">Valor Total Bruto</span>
+              <p className="font-mono font-semibold text-foreground">
+                {formatCurrencyBRL(result.finalAmount)}
+              </p>
+            </div>
+            <div className="flex items-center justify-between sm:block sm:space-y-0.5">
+              <span className="text-muted-foreground">
+                IR Estimado ({formattedActiveIrRate}%)
+              </span>
+              <p className="font-mono font-semibold text-rose-600 dark:text-rose-400">
+                -{formatCurrencyBRL(result.irAmount)}
+              </p>
+            </div>
+            <div className="flex items-center justify-between sm:block sm:space-y-0.5">
+              <span className="text-muted-foreground">
+                Valor Líquido Final
+              </span>
+              <p className="font-mono font-bold text-emerald-700 dark:text-emerald-300">
+                {formatCurrencyBRL(result.netFinalAmount)}
+              </p>
+            </div>
+          </div>
         </CardContent>
       </Card>
 

@@ -10,6 +10,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { toast } from "sonner";
 import type { MarketIndicators } from "@/services/bcb/bcb-client";
 import CompoundInterestFeature from "./index";
+import {
+  BcbPresetsSkeleton,
+  CompoundInterestSkeleton,
+} from "./compound-interest-skeleton";
 
 vi.mock("sonner", () => ({
   toast: {
@@ -115,17 +119,21 @@ describe("CompoundInterestFeature", () => {
     vi.restoreAllMocks();
   });
 
-  it("renders default simulation summary, charts, and educational section", async () => {
+  it("renders SSR initialIndicators immediately with zero mount fetch and zero flicker", () => {
     const { container } = render(
       <CompoundInterestFeature initialIndicators={MOCK_INDICATORS} />
     );
 
-    await waitFor(() => {
-      expect(globalThis.fetch).toHaveBeenCalledWith(
-        "/api/indicators",
-        expect.objectContaining({ cache: "no-store" })
-      );
-    });
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+    expect(screen.queryByTestId("bcb-presets-skeleton")).not.toBeInTheDocument();
+    expect(screen.getByTestId("bcb-presets-bar")).toBeInTheDocument();
+    expect(screen.getByTestId("bcb-indicators-status")).toHaveTextContent(
+      "Taxas BCB • Ref. 18/11/2026 • IPCA 12m: 4,50% • Dólar PTAX: R$ 5,78"
+    );
+    expect(screen.getByTestId("preset-cdi-100")).toHaveTextContent(
+      "CDI 14,15%"
+    );
+    expect(screen.getByTestId("refresh-bcb-indicators")).toBeInTheDocument();
 
     expect(
       screen.getByRole("heading", { name: /Calculadora de Juros Compostos/i })
@@ -158,7 +166,7 @@ describe("CompoundInterestFeature", () => {
   });
 
   it("applies all preset chips and updates rate and equivalence display", () => {
-    render(<CompoundInterestFeature />);
+    render(<CompoundInterestFeature initialIndicators={MOCK_INDICATORS} />);
 
     const presetExpectations = [
       { chip: "Selic 14,25%", rateValue: "14,25", equivSuffix: "% a.m." },
@@ -182,7 +190,9 @@ describe("CompoundInterestFeature", () => {
   });
 
   it("updates inputs, quick increments, selects (Anual/Mensal, Anos/Meses), and submits form", () => {
-    const { container } = render(<CompoundInterestFeature />);
+    const { container } = render(
+      <CompoundInterestFeature initialIndicators={MOCK_INDICATORS} />
+    );
 
     const initialInput = screen.getByLabelText("Valor Inicial em Reais");
     const monthlyInput = screen.getByLabelText("Aporte Mensal em Reais");
@@ -247,7 +257,7 @@ describe("CompoundInterestFeature", () => {
   });
 
   it("interacts with chart bars via hover, focus, and click and updates inspection panel", () => {
-    render(<CompoundInterestFeature />);
+    render(<CompoundInterestFeature initialIndicators={MOCK_INDICATORS} />);
 
     const chartSection = document.getElementById("resultGraphic");
     expect(chartSection).not.toBeNull();
@@ -283,7 +293,7 @@ describe("CompoundInterestFeature", () => {
       .spyOn(HTMLAnchorElement.prototype, "click")
       .mockImplementation(() => {});
 
-    render(<CompoundInterestFeature />);
+    render(<CompoundInterestFeature initialIndicators={MOCK_INDICATORS} />);
 
     const tableSection = document.getElementById("evolutionTable");
     expect(tableSection).not.toBeNull();
@@ -336,7 +346,9 @@ describe("CompoundInterestFeature", () => {
       value: { writeText: writeTextMock },
     });
 
-    const { container } = render(<CompoundInterestFeature />);
+    const { container } = render(
+      <CompoundInterestFeature initialIndicators={MOCK_INDICATORS} />
+    );
 
     // Clear all fields
     fireEvent.click(screen.getByRole("button", { name: /Limpar/i }));
@@ -380,7 +392,7 @@ describe("CompoundInterestFeature", () => {
     );
   });
 
-  it("hydrates presets and reference caption dynamically from /api/indicators", async () => {
+  it("shows bcb-presets-skeleton in standalone mode before /api/indicators resolves, then renders dynamic rates", async () => {
     const dynamicIndicators: MarketIndicators = {
       ...MOCK_INDICATORS,
       selicMeta: {
@@ -416,16 +428,26 @@ describe("CompoundInterestFeature", () => {
       usedFallback: false,
     };
 
+    let resolveFetch!: (value: Response) => void;
+    const pendingFetch = new Promise<Response>((resolve) => {
+      resolveFetch = resolve;
+    });
+
     const fetchSpy = vi
       .spyOn(globalThis, "fetch")
-      .mockResolvedValueOnce(createJsonResponse(dynamicIndicators));
+      .mockReturnValueOnce(pendingFetch);
 
     render(<CompoundInterestFeature />);
 
-    expect(screen.getByTestId("bcb-presets-bar")).toBeInTheDocument();
-    expect(screen.getByTestId("bcb-indicators-status")).toHaveTextContent(
-      /Atualizando cotações oficiais/i
-    );
+    // Skeleton must be shown instead of stale/default presets while loading
+    const skeleton = screen.getByTestId("bcb-presets-skeleton");
+    expect(skeleton).toBeInTheDocument();
+    expect(screen.queryByTestId("preset-cdi-100")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("bcb-indicators-status")).not.toBeInTheDocument();
+
+    await act(async () => {
+      resolveFetch(createJsonResponse(dynamicIndicators));
+    });
 
     await waitFor(() => {
       expect(screen.getByTestId("preset-selic")).toHaveTextContent(
@@ -433,6 +455,7 @@ describe("CompoundInterestFeature", () => {
       );
     });
 
+    expect(screen.queryByTestId("bcb-presets-skeleton")).not.toBeInTheDocument();
     expect(fetchSpy).toHaveBeenCalledWith(
       "/api/indicators",
       expect.objectContaining({ cache: "no-store" })
@@ -458,6 +481,70 @@ describe("CompoundInterestFeature", () => {
     expect(rateInput.value).toBe("11,14");
   });
 
+  it("shows skeleton while refreshing via refresh-bcb-indicators and handles success and HTTP 500 fallback", async () => {
+    const refreshedIndicators: MarketIndicators = {
+      ...MOCK_INDICATORS,
+      selicMeta: {
+        ...MOCK_INDICATORS.selicMeta,
+        value: 14.75,
+        date: "19/11/2026",
+      },
+      taxaDi: {
+        ...MOCK_INDICATORS.taxaDi,
+        value: 14.65,
+        date: "19/11/2026",
+      },
+    };
+
+    let resolveRefresh!: (value: Response) => void;
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementationOnce(
+        () =>
+          new Promise<Response>((resolve) => {
+            resolveRefresh = resolve;
+          })
+      );
+
+    render(<CompoundInterestFeature initialIndicators={MOCK_INDICATORS} />);
+    expect(fetchSpy).not.toHaveBeenCalled();
+
+    // Trigger manual refresh
+    fireEvent.click(screen.getByTestId("refresh-bcb-indicators"));
+
+    // Skeleton replaces old preset chips while loading (zero stale values shown)
+    expect(screen.getByTestId("bcb-presets-skeleton")).toBeInTheDocument();
+    expect(screen.queryByTestId("preset-cdi-100")).not.toBeInTheDocument();
+
+    await act(async () => {
+      resolveRefresh(createJsonResponse(refreshedIndicators));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("preset-cdi-100")).toHaveTextContent(
+        "CDI 14,65%"
+      );
+    });
+    expect(screen.getByTestId("bcb-indicators-status")).toHaveTextContent(
+      "Taxas BCB • Ref. 19/11/2026"
+    );
+
+    // Trigger second refresh that fails with HTTP 500
+    fetchSpy.mockResolvedValueOnce(
+      createJsonResponse({ error: "BCB unavailable" }, false, 500)
+    );
+    fireEvent.click(screen.getByTestId("refresh-bcb-indicators"));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("bcb-indicators-status")).toHaveTextContent(
+        "Taxas de referência padrão • Selic 14,25% • CDI 14,15% • IPCA+ 10,77%"
+      );
+    });
+    expect(screen.getByTestId("preset-cdi-100")).toHaveTextContent(
+      "CDI 14,15%"
+    );
+  });
+
   it("displays reserve reference label when /api/indicators responds with usedFallback=true", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
       createJsonResponse({
@@ -475,7 +562,7 @@ describe("CompoundInterestFeature", () => {
     });
   });
 
-  it("falls back gracefully when /api/indicators returns HTTP 500 or rejects", async () => {
+  it("falls back gracefully when /api/indicators returns HTTP 500, invalid JSON, or rejects", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
       createJsonResponse({ error: "BCB unavailable" }, false, 500)
     );
@@ -492,6 +579,17 @@ describe("CompoundInterestFeature", () => {
     fireEvent.click(screen.getByTestId("preset-cdi-100"));
     expect(rateInput.value).toBe("14,15");
     unmount();
+
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      createJsonResponse({ unexpected: true })
+    );
+    const { unmount: unmountInvalid } = render(<CompoundInterestFeature />);
+    await waitFor(() => {
+      expect(screen.getByTestId("bcb-indicators-status")).toHaveTextContent(
+        "Taxas de referência padrão"
+      );
+    });
+    unmountInvalid();
 
     vi.spyOn(globalThis, "fetch").mockRejectedValueOnce(
       new Error("Network error")
@@ -521,5 +619,33 @@ describe("CompoundInterestFeature", () => {
     expect(capturedSignal?.aborted).toBe(false);
     unmount();
     expect(capturedSignal?.aborted).toBe(true);
+  });
+});
+
+describe("CompoundInterestSkeleton & BcbPresetsSkeleton", () => {
+  it("renders 5 preset pill skeletons and 1 status caption inside #presets-bar", () => {
+    const { container } = render(<BcbPresetsSkeleton />);
+    const wrapper = screen.getByTestId("bcb-presets-skeleton");
+    expect(wrapper).toBeInTheDocument();
+
+    const presetsBar = container.querySelector("#presets-bar");
+    expect(presetsBar).not.toBeNull();
+    const pills = presetsBar?.querySelectorAll('[data-slot="skeleton"]');
+    expect(pills).toHaveLength(5);
+
+    const allSkeletons = wrapper.querySelectorAll('[data-slot="skeleton"]');
+    expect(allSkeletons).toHaveLength(6);
+  });
+
+  it("renders full-page CompoundInterestSkeleton with presets, 4 inputs, and 3 summary cards", () => {
+    const { container } = render(<CompoundInterestSkeleton />);
+    expect(
+      screen.getByTestId("compound-interest-skeleton")
+    ).toBeInTheDocument();
+    expect(screen.getByTestId("bcb-presets-skeleton")).toBeInTheDocument();
+
+    const cards = container.querySelectorAll('[data-slot="card"]');
+    // 1 main simulation card + 3 summary cards
+    expect(cards).toHaveLength(4);
   });
 });

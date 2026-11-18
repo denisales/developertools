@@ -5,6 +5,7 @@ import {
   TrendingUp,
   Calculator,
   RotateCcw,
+  RefreshCw,
   Download,
   Copy,
   Check,
@@ -52,6 +53,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 
 import type { MarketIndicators } from "@/services/bcb/bcb-client";
+import { BcbPresetsSkeleton } from "./compound-interest-skeleton";
 import {
   DEFAULT_COMPOUND_INTEREST_INPUT,
   buildPresetsFromIndicators,
@@ -74,6 +76,24 @@ export interface CompoundInterestFeatureProps {
   initialIndicators?: MarketIndicators;
 }
 
+async function fetchIndicatorsFromApi(
+  signal: AbortSignal
+): Promise<MarketIndicators | null> {
+  try {
+    const response = await fetch("/api/indicators", {
+      cache: "no-store",
+      signal,
+    });
+    if (!response.ok) {
+      return null;
+    }
+    const data: unknown = await response.json();
+    return isMarketIndicators(data) ? data : null;
+  } catch {
+    return null;
+  }
+}
+
 export function CompoundInterestFeature({
   initialIndicators,
 }: CompoundInterestFeatureProps = {}) {
@@ -84,40 +104,43 @@ export function CompoundInterestFeature({
   const [isLoadingIndicators, setIsLoadingIndicators] = React.useState<boolean>(
     initialIndicators === undefined
   );
+  const activeControllerRef = React.useRef<AbortController | null>(null);
+  const isMountedRef = React.useRef<boolean>(true);
+
+  const handleRefreshIndicators = React.useCallback(async () => {
+    activeControllerRef.current?.abort();
+    const controller = new AbortController();
+    activeControllerRef.current = controller;
+    setIsLoadingIndicators(true);
+
+    const nextIndicators = await fetchIndicatorsFromApi(controller.signal);
+    if (!controller.signal.aborted && isMountedRef.current) {
+      setIndicators(nextIndicators);
+      setIsLoadingIndicators(false);
+    }
+  }, []);
 
   React.useEffect(() => {
+    isMountedRef.current = true;
     const controller = new AbortController();
-    let isMounted = true;
+    activeControllerRef.current = controller;
 
-    async function loadIndicators() {
-      try {
-        const response = await fetch("/api/indicators", {
-          cache: "no-store",
-          signal: controller.signal,
-        });
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
-        }
-        const data: unknown = await response.json();
-        if (isMounted && isMarketIndicators(data)) {
-          setIndicators(data);
-        }
-      } catch {
-        // Fallback estático permanece ativo caso offline, erro HTTP ou abortado
-      } finally {
-        if (isMounted) {
+    // Só busca no cliente quando o componente é montado sem dados SSR iniciais
+    if (initialIndicators === undefined) {
+      void (async () => {
+        const nextIndicators = await fetchIndicatorsFromApi(controller.signal);
+        if (!controller.signal.aborted && isMountedRef.current) {
+          setIndicators(nextIndicators);
           setIsLoadingIndicators(false);
         }
-      }
+      })();
     }
 
-    void loadIndicators();
-
     return () => {
-      isMounted = false;
-      controller.abort();
+      isMountedRef.current = false;
+      activeControllerRef.current?.abort();
     };
-  }, []);
+  }, [initialIndicators]);
 
   const presets = React.useMemo(
     () => buildPresetsFromIndicators(indicators),
@@ -299,9 +322,9 @@ export function CompoundInterestFeature({
     result.totalInvested > 0 ? result.finalAmount / result.totalInvested : 1;
 
   return (
-    <div className="w-full space-y-2 sm:space-y-5 pb-8">
+    <div className="w-full space-y-1.5 sm:space-y-5 pb-8">
       {/* Cabeçalho Compacto da Ferramenta */}
-      <div className="mb-1 sm:mb-2 space-y-0.5 sm:space-y-1">
+      <div className="mb-0.5 sm:mb-2 space-y-0.5 sm:space-y-1">
         <div className="flex items-center justify-between gap-2">
           <div className="flex min-w-0 flex-1 items-center gap-2">
             <div className="flex size-7 sm:size-8 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
@@ -350,66 +373,82 @@ export function CompoundInterestFeature({
       </div>
 
       {/* Card Principal de Simulação com Presets Integrados (#feesCompostosForm) */}
-      <Card className="border-border/80 p-2.5 sm:p-5 shadow-xs">
-        <CardContent className="p-0 space-y-2 sm:space-y-4">
-          {/* Barra Horizontal Compacta de Presets (1 linha rolável sem barra visível) */}
-          <div className="space-y-1">
-            <div
-              id="presets-bar"
-              data-testid="bcb-presets-bar"
-              className="flex items-center gap-1.5 overflow-x-auto pb-0.5 no-scrollbar"
-            >
-              <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-muted-foreground shrink-0 pr-1">
-                <Sparkles className="size-3 text-amber-500" />
-                Taxas:
-              </span>
-              {presets.map((preset) => {
-                const isSelected =
-                  Math.abs(parsedRate - preset.rate) < 0.005 &&
-                  rateUnit === preset.rateUnit;
-                const chipLabel = formatPresetChipLabel(preset);
-                return (
-                  <button
-                    key={preset.id}
-                    type="button"
-                    data-testid={`preset-${preset.id}`}
-                    onClick={() => handleApplyPreset(preset)}
-                    title={preset.description}
-                    className={`inline-flex h-7 items-center px-2.5 text-xs font-medium rounded-md border shrink-0 transition-colors cursor-pointer ${
-                      isSelected
-                        ? "border-emerald-500 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 shadow-2xs"
-                        : "border-border bg-background hover:bg-muted/80 text-foreground"
-                    }`}
-                  >
-                    {chipLabel}
-                  </button>
-                );
-              })}
-            </div>
+      <Card className="border-border/80 gap-0 p-2 sm:p-5 shadow-xs">
+        <CardContent className="p-0 space-y-1.5 sm:space-y-4">
+          {/* Barra Horizontal Compacta de Presets ou Skeleton Loader */}
+          {isLoadingIndicators ? (
+            <BcbPresetsSkeleton />
+          ) : (
+            <div className="space-y-1">
+              <div
+                id="presets-bar"
+                data-testid="bcb-presets-bar"
+                className="flex items-center gap-1.5 overflow-x-auto pb-0.5 no-scrollbar"
+              >
+                <span className="inline-flex items-center gap-1 text-xs font-semibold text-muted-foreground shrink-0 pr-1">
+                  <Sparkles className="size-3 text-amber-500" />
+                  Taxas:
+                </span>
+                {presets.map((preset) => {
+                  const isSelected =
+                    Math.abs(parsedRate - preset.rate) < 0.005 &&
+                    rateUnit === preset.rateUnit;
+                  const chipLabel = formatPresetChipLabel(preset);
+                  return (
+                    <button
+                      key={preset.id}
+                      type="button"
+                      data-testid={`preset-${preset.id}`}
+                      onClick={() => handleApplyPreset(preset)}
+                      title={preset.description}
+                      className={`inline-flex h-7 items-center px-2.5 text-xs font-medium rounded-md border shrink-0 transition-colors cursor-pointer ${
+                        isSelected
+                          ? "border-emerald-500 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 shadow-2xs"
+                          : "border-border bg-background hover:bg-muted/80 text-foreground"
+                      }`}
+                    >
+                      {chipLabel}
+                    </button>
+                  );
+                })}
+              </div>
 
-            <div
-              data-testid="bcb-indicators-status"
-              className="flex items-center gap-1.5 overflow-x-auto whitespace-nowrap text-[10px] sm:text-xs leading-none text-muted-foreground no-scrollbar"
-            >
-              {indicators ? (
-                <span>
-                  {indicators.usedFallback
-                    ? "Taxas BCB (ref. reserva)"
-                    : "Taxas BCB"}{" "}
-                  • Ref. {indicators.taxaDi.date} • IPCA 12m:{" "}
-                  {formatRatePtBr(indicators.ipca12Meses.value)}% • Dólar PTAX:
-                  R$ {formatRatePtBr(indicators.dolarPtaxVenda.value)}
-                </span>
-              ) : isLoadingIndicators ? (
-                <span>Taxas BCB • Atualizando cotações oficiais...</span>
-              ) : (
-                <span>
-                  Taxas de referência padrão • Selic 14,25% • CDI 14,15% •
-                  IPCA+ 10,77%
-                </span>
-              )}
+              <div className="flex min-h-5 items-center justify-between gap-2">
+                <div
+                  data-testid="bcb-indicators-status"
+                  className="min-w-0 flex-1 overflow-x-auto whitespace-nowrap text-xs leading-none text-muted-foreground no-scrollbar"
+                >
+                  {indicators ? (
+                    <span>
+                      {indicators.usedFallback
+                        ? "Taxas BCB (ref. reserva)"
+                        : "Taxas BCB"}{" "}
+                      • Ref. {indicators.taxaDi.date} • IPCA 12m:{" "}
+                      {formatRatePtBr(indicators.ipca12Meses.value)}% • Dólar PTAX:
+                      R$ {formatRatePtBr(indicators.dolarPtaxVenda.value)}
+                    </span>
+                  ) : (
+                    <span>
+                      Taxas de referência padrão • Selic 14,25% • CDI 14,15% •
+                      IPCA+ 10,77%
+                    </span>
+                  )}
+                </div>
+
+                <button
+                  type="button"
+                  data-testid="refresh-bcb-indicators"
+                  aria-label="Atualizar taxas BCB"
+                  title="Atualizar taxas BCB"
+                  onClick={handleRefreshIndicators}
+                  className="inline-flex h-5 shrink-0 items-center gap-1 rounded px-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground cursor-pointer"
+                >
+                  <RefreshCw className="size-3" />
+                  <span className="hidden sm:inline">Atualizar</span>
+                </button>
+              </div>
             </div>
-          </div>
+          )}
 
           <form
             id="feesCompostosForm"
@@ -417,11 +456,11 @@ export function CompoundInterestFeature({
               e.preventDefault();
               toast.success("Simulação de juros compostos atualizada!");
             }}
-            className="space-y-2 sm:space-y-4"
+            className="space-y-1.5 sm:space-y-4"
           >
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 sm:gap-4">
               {/* Campo 1: Valor Inicial */}
-              <div className="space-y-1 sm:space-y-1.5">
+              <div className="space-y-0.5 sm:space-y-1.5">
                 <div className="flex items-center justify-between gap-1.5">
                   <Label htmlFor="mainValue" className="text-xs font-medium">
                     Valor Inicial
@@ -432,7 +471,7 @@ export function CompoundInterestFeature({
                         key={inc}
                         type="button"
                         onClick={() => setInitialValue((prev) => prev + inc)}
-                        className="rounded border bg-muted/50 px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground cursor-pointer"
+                        className="rounded border bg-muted/50 px-1.5 py-0.5 text-xs font-medium leading-none text-muted-foreground transition-colors hover:bg-muted hover:text-foreground cursor-pointer"
                       >
                         +{inc >= 1000 ? `${inc / 1000}k` : inc}
                       </button>
@@ -451,7 +490,7 @@ export function CompoundInterestFeature({
                     onChange={(e) =>
                       setInitialValue(parseCurrencyInputBR(e.target.value))
                     }
-                    className="h-9 sm:h-10 pl-8 text-sm font-mono font-medium"
+                    className="h-8 sm:h-10 pl-8 text-sm font-mono font-medium"
                     placeholder="0,00"
                     aria-label="Valor Inicial em Reais"
                   />
@@ -459,7 +498,7 @@ export function CompoundInterestFeature({
               </div>
 
               {/* Campo 2: Aporte Mensal */}
-              <div className="space-y-1 sm:space-y-1.5">
+              <div className="space-y-0.5 sm:space-y-1.5">
                 <div className="flex items-center justify-between gap-1.5">
                   <Label htmlFor="investment" className="text-xs font-medium">
                     Aporte Mensal
@@ -472,7 +511,7 @@ export function CompoundInterestFeature({
                         onClick={() =>
                           setMonthlyContribution((prev) => prev + inc)
                         }
-                        className="rounded border bg-muted/50 px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground cursor-pointer"
+                        className="rounded border bg-muted/50 px-1.5 py-0.5 text-xs font-medium leading-none text-muted-foreground transition-colors hover:bg-muted hover:text-foreground cursor-pointer"
                       >
                         +{inc >= 1000 ? `${inc / 1000}k` : inc}
                       </button>
@@ -491,7 +530,7 @@ export function CompoundInterestFeature({
                     onChange={(e) =>
                       setMonthlyContribution(parseCurrencyInputBR(e.target.value))
                     }
-                    className="h-9 sm:h-10 pl-8 text-sm font-mono font-medium"
+                    className="h-8 sm:h-10 pl-8 text-sm font-mono font-medium"
                     placeholder="0,00"
                     aria-label="Aporte Mensal em Reais"
                   />
@@ -499,12 +538,12 @@ export function CompoundInterestFeature({
               </div>
 
               {/* Campo 3: Taxa de Juros */}
-              <div className="space-y-1 sm:space-y-1.5">
+              <div className="space-y-0.5 sm:space-y-1.5">
                 <div className="flex items-center justify-between gap-1.5">
                   <Label htmlFor="rate" className="text-xs font-medium">
                     Taxa de Juros
                   </Label>
-                  <span className="rounded bg-emerald-500/10 px-1.5 py-0.5 font-mono text-[11px] font-medium text-emerald-700 dark:text-emerald-300">
+                  <span className="rounded bg-emerald-500/10 px-1.5 py-0.5 font-mono text-xs font-medium leading-none text-emerald-700 dark:text-emerald-300">
                     {rateUnit === "year"
                       ? `≈ ${(result.effectiveMonthlyRate * 100).toFixed(2).replace(".", ",")}% a.m.`
                       : `≈ ${(result.effectiveAnnualRate * 100).toFixed(2).replace(".", ",")}% a.a.`}
@@ -521,7 +560,7 @@ export function CompoundInterestFeature({
                       inputMode="decimal"
                       value={rateText}
                       onChange={(e) => setRateText(e.target.value)}
-                      className="h-9 sm:h-10 pl-7 text-sm font-mono font-medium"
+                      className="h-8 sm:h-10 pl-7 text-sm font-mono font-medium"
                       placeholder="10,00"
                       aria-label="Taxa de Juros"
                     />
@@ -532,7 +571,7 @@ export function CompoundInterestFeature({
                   >
                     <SelectTrigger
                       id="select-rate"
-                      className="h-9 sm:h-10 w-[105px] sm:w-[120px] shrink-0 px-2.5 text-xs font-medium"
+                      className="h-8 sm:h-10 w-[105px] sm:w-[120px] shrink-0 px-2.5 text-xs font-medium"
                       aria-label="Unidade da Taxa de Juros"
                     >
                       <SelectValue />
@@ -546,7 +585,7 @@ export function CompoundInterestFeature({
               </div>
 
               {/* Campo 4: Período */}
-              <div className="space-y-1 sm:space-y-1.5">
+              <div className="space-y-0.5 sm:space-y-1.5">
                 <div className="flex items-center justify-between gap-1.5">
                   <Label htmlFor="period" className="text-xs font-medium">
                     Período ({result.totalMonths}m)
@@ -560,7 +599,7 @@ export function CompoundInterestFeature({
                           setPeriodUnit("years");
                           setPeriodText(String(yr));
                         }}
-                        className={`rounded border px-1.5 py-0.5 text-[11px] font-medium transition-colors cursor-pointer ${
+                        className={`rounded border px-1.5 py-0.5 text-xs font-medium leading-none transition-colors cursor-pointer ${
                           periodUnit === "years" && parsedPeriod === yr
                             ? "border-primary bg-primary/10 text-primary"
                             : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -578,7 +617,7 @@ export function CompoundInterestFeature({
                     inputMode="numeric"
                     value={periodText}
                     onChange={(e) => setPeriodText(e.target.value)}
-                    className="h-9 sm:h-10 flex-1 text-sm font-mono font-medium"
+                    className="h-8 sm:h-10 flex-1 text-sm font-mono font-medium"
                     placeholder="10"
                     aria-label="Período da Simulação"
                   />
@@ -590,7 +629,7 @@ export function CompoundInterestFeature({
                   >
                     <SelectTrigger
                       id="select-period"
-                      className="h-9 sm:h-10 w-[105px] sm:w-[120px] shrink-0 px-2.5 text-xs font-medium"
+                      className="h-8 sm:h-10 w-[105px] sm:w-[120px] shrink-0 px-2.5 text-xs font-medium"
                       aria-label="Unidade do Período"
                     >
                       <SelectValue />
@@ -605,7 +644,7 @@ export function CompoundInterestFeature({
             </div>
 
             {/* Barra de Ações Compacta */}
-            <div className="flex items-center justify-between gap-2 border-t pt-2 sm:pt-3">
+            <div className="flex items-center justify-between gap-2 border-t pt-1.5 sm:pt-3">
               <Button
                 id="btn-clear"
                 type="button"
@@ -632,10 +671,10 @@ export function CompoundInterestFeature({
       {/* Seção 1: Os 3 Cards de Resumo Imediatamente Abaixo dos Inputs (#result) */}
       <div
         id="result"
-        className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-4"
+        className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4"
       >
         {/* Card 1: Valor Total Final */}
-        <Card className="relative overflow-hidden border-emerald-500/40 bg-gradient-to-br from-emerald-500/10 via-background to-background p-3 sm:p-4 shadow-sm">
+        <Card className="relative overflow-hidden border-emerald-500/40 bg-gradient-to-br from-emerald-500/10 via-background to-background gap-1 sm:gap-2 p-2.5 sm:p-4 shadow-sm">
           <CardHeader className="p-0 pb-1">
             <div className="flex items-center justify-between gap-2">
               <span className="text-xs font-semibold tracking-wider text-emerald-700 uppercase dark:text-emerald-400">
@@ -656,7 +695,7 @@ export function CompoundInterestFeature({
             <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
               <Badge
                 variant="secondary"
-                className="bg-emerald-500/15 px-1.5 py-0 font-mono text-[11px] text-emerald-700 dark:text-emerald-300"
+                className="bg-emerald-500/15 px-1.5 py-0 font-mono text-xs text-emerald-700 dark:text-emerald-300"
               >
                 {multiplier.toFixed(2).replace(".", ",")}x o investido
               </Badge>
@@ -666,7 +705,7 @@ export function CompoundInterestFeature({
         </Card>
 
         {/* Card 2: Total Investido */}
-        <Card className="border-blue-500/30 bg-gradient-to-br from-blue-500/5 via-background to-background p-3.5 sm:p-4 shadow-xs">
+        <Card className="border-blue-500/30 bg-gradient-to-br from-blue-500/5 via-background to-background gap-1 sm:gap-2 p-3 sm:p-4 shadow-xs">
           <CardHeader className="p-0 pb-1">
             <div className="flex items-center justify-between gap-2">
               <span className="text-xs font-semibold tracking-wider text-blue-700 uppercase dark:text-blue-400">
@@ -687,7 +726,7 @@ export function CompoundInterestFeature({
             <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
               <Badge
                 variant="secondary"
-                className="bg-blue-500/15 px-1.5 py-0 font-mono text-[11px] text-blue-700 dark:text-blue-300"
+                className="bg-blue-500/15 px-1.5 py-0 font-mono text-xs text-blue-700 dark:text-blue-300"
               >
                 {result.investedPercentage.toFixed(1).replace(".", ",")}% do
                 total
@@ -698,7 +737,7 @@ export function CompoundInterestFeature({
         </Card>
 
         {/* Card 3: Total em Juros */}
-        <Card className="border-amber-500/30 bg-gradient-to-br from-amber-500/10 via-background to-background p-3.5 sm:p-4 shadow-xs">
+        <Card className="border-amber-500/30 bg-gradient-to-br from-amber-500/10 via-background to-background gap-1 sm:gap-2 p-3 sm:p-4 shadow-xs">
           <CardHeader className="p-0 pb-1">
             <div className="flex items-center justify-between gap-2">
               <span className="text-xs font-semibold tracking-wider text-amber-700 uppercase dark:text-amber-400">
@@ -719,7 +758,7 @@ export function CompoundInterestFeature({
             <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
               <Badge
                 variant="secondary"
-                className="bg-amber-500/15 px-1.5 py-0 font-mono text-[11px] text-amber-800 dark:text-amber-300"
+                className="bg-amber-500/15 px-1.5 py-0 font-mono text-xs text-amber-800 dark:text-amber-300"
               >
                 {result.interestPercentage.toFixed(1).replace(".", ",")}% do
                 total
@@ -866,7 +905,7 @@ export function CompoundInterestFeature({
             {/* Painel de Inspeção Interativo (Tooltip Fixo Responsivo) */}
             <div className="grid grid-cols-2 gap-2.5 sm:gap-4 rounded-xl border bg-muted/40 p-3 sm:p-3.5 text-xs sm:grid-cols-4">
               <div className="space-y-0.5">
-                <span className="text-[11px] font-medium text-muted-foreground">
+                <span className="text-xs font-medium text-muted-foreground">
                   Período
                 </span>
                 <p className="font-semibold text-foreground">
@@ -878,7 +917,7 @@ export function CompoundInterestFeature({
                 </p>
               </div>
               <div className="space-y-0.5">
-                <span className="text-[11px] font-medium text-muted-foreground">
+                <span className="text-xs font-medium text-muted-foreground">
                   Total Investido
                 </span>
                 <p className="font-mono font-semibold text-blue-600 dark:text-blue-400">
@@ -886,7 +925,7 @@ export function CompoundInterestFeature({
                 </p>
               </div>
               <div className="space-y-0.5">
-                <span className="text-[11px] font-medium text-muted-foreground">
+                <span className="text-xs font-medium text-muted-foreground">
                   Total em Juros
                 </span>
                 <p className="font-mono font-semibold text-emerald-600 dark:text-emerald-400">
@@ -894,7 +933,7 @@ export function CompoundInterestFeature({
                 </p>
               </div>
               <div className="space-y-0.5">
-                <span className="text-[11px] font-medium text-muted-foreground">
+                <span className="text-xs font-medium text-muted-foreground">
                   Acumulado
                 </span>
                 <p className="font-mono font-bold text-foreground">
@@ -960,7 +999,7 @@ export function CompoundInterestFeature({
               </div>
 
               {/* Eixo X e Escala Resumida */}
-              <div className="mt-2 flex items-center justify-between font-mono text-[11px] sm:text-xs text-muted-foreground">
+              <div className="mt-2 flex items-center justify-between font-mono text-xs text-muted-foreground">
                 <span>Início (Mês 0)</span>
                 <span>
                   Meio (
@@ -1047,7 +1086,7 @@ export function CompoundInterestFeature({
                         row.month === 0 ? (
                           <Badge
                             variant="outline"
-                            className="px-1.5 py-0 font-mono text-[11px]"
+                            className="px-1.5 py-0 font-mono text-xs"
                           >
                             Mês 0
                           </Badge>
@@ -1057,7 +1096,7 @@ export function CompoundInterestFeature({
                       ) : row.month === 0 ? (
                         <Badge
                           variant="outline"
-                          className="px-1.5 py-0 font-mono text-[11px]"
+                          className="px-1.5 py-0 font-mono text-xs"
                         >
                           Início
                         </Badge>
